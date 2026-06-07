@@ -308,25 +308,7 @@ const CAPABILITIES = {
   doc: ['技术规范书', '可行性研究报告', '需规说明书'],
 }
 
-/* ── Compute endpoint 3D position from screen-space card edge ── */
-function getEndpointPos(nodePos, isRight, camera) {
-  const pos = nodePos.clone()
-  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).normalize()
-  const dist = pos.distanceTo(camera.position)
-  const fovRad = camera.fov * Math.PI / 180
-  const vh = window.innerHeight
-  const visibleHeightAtDist = 2 * dist * Math.tan(fovRad / 2)
-  const pixelTo3D = visibleHeightAtDist / vh
-  const cardHalfIn3D = 170 * pixelTo3D  // 340px / 2
-  return pos.add(right.clone().multiplyScalar(isRight ? cardHalfIn3D : -cardHalfIn3D))
-}
-
-/* ── Bubble positions (relative offsets from card center) ── */
-const BUBBLE_POSITIONS = [
-  { top: '-60px', left: '50%', transform: 'translateX(-50%)' },
-  { top: '50%',   left: '-30px', transform: 'translateX(-100%) translateY(-50%)' },
-  { top: '50%',   right: '-30px', transform: 'translateX(100%) translateY(-50%)' },
-]
+/* ── (Bubbles rendered via fixed overlay, no constants needed) ── */
 
 function initNodeFloating(sphere, camera) {
   window.__floatingNodeRefs = sphere.nodeRefs
@@ -401,12 +383,10 @@ function initNodeFloating(sphere, camera) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          const epPos = getEndpointPos(node.ref.obj.position, ep.classList.contains('right'), camera)
-          startDrag(key, epPos)
+          startDrag(key, node.ref.obj.position)
         })
         ep.addEventListener('mouseenter', () => {
-          const epPos = getEndpointPos(node.ref.obj.position, ep.classList.contains('right'), camera)
-          setDragTarget(key, epPos)
+          setDragTarget(key, node.ref.obj.position)
         })
         ep.addEventListener('mouseleave', () => {
           clearDragTarget()
@@ -469,25 +449,48 @@ function initNodeFloating(sphere, camera) {
   )
 }
 
-/* ── Create/show capability bubbles ── */
+/* ── Bubble overlay (fixed, never affects card layout) ── */
+let _bubbleOverlay = null
+function ensureBubbleOverlay() {
+  if (!_bubbleOverlay) {
+    _bubbleOverlay = document.createElement('div')
+    _bubbleOverlay.id = 'bubble-overlay'
+    _bubbleOverlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:200'
+    document.body.appendChild(_bubbleOverlay)
+  }
+  return _bubbleOverlay
+}
+
+/* ── Show bubbles via fixed overlay ── */
 function showBubbles(node, key) {
   const caps = CAPABILITIES[key]
   if (!caps || node.bubbles.length > 0) return
 
-  const el = node.ref.el
-  // Position parent must be relative for bubble positioning
-  el.style.position = 'relative'
+  const overlay = ensureBubbleOverlay()
+  const rect = node.ref.el.getBoundingClientRect()
+  // Card center in screen coords
+  const cx = rect.left + rect.width / 2
+  const cy = rect.top + rect.height / 2
+  const gap = 80 // px from card edge
+
+  const offsets = [
+    { left: cx, top: cy - rect.height / 2 - gap, transform: 'translateX(-50%)' },
+    { left: cx - rect.width / 2 - gap, top: cy, transform: 'translateX(-100%) translateY(-50%)' },
+    { left: cx + rect.width / 2 + gap, top: cy, transform: 'translateY(-50%)' },
+  ]
 
   caps.forEach((text, i) => {
     const bubble = document.createElement('div')
     bubble.className = 'bubble'
     bubble.textContent = `◈ ${text}`
-    const pos = BUBBLE_POSITIONS[i] || BUBBLE_POSITIONS[0]
-    Object.assign(bubble.style, pos)
-    el.appendChild(bubble)
+    const pos = offsets[i] || offsets[0]
+    bubble.style.left = pos.left + 'px'
+    bubble.style.top = pos.top + 'px'
+    bubble.style.transform = pos.transform
+    bubble.style.position = 'fixed'
+    overlay.appendChild(bubble)
     node.bubbles.push(bubble)
 
-    // Staggered appear
     requestAnimationFrame(() => {
       setTimeout(() => bubble.classList.add('visible'), i * 100)
     })
@@ -643,16 +646,17 @@ function finishReset(sphere, nodePositions) {
     ref.el.style.opacity = '1'
   })
 
-  // 4. Reset each node — keep same DOM element (CSS2DRenderer reference)
+  // 4. Clear bubble overlay
+  if (_bubbleOverlay) _bubbleOverlay.innerHTML = ''
+
+  // 5. Reset each node — keep same DOM element (CSS2DRenderer reference)
   sphere.nodeRefs.forEach((ref, i) => {
-    // Reset internal content, NOT the element itself
+    // Reset internal content
     const body = ref.el.querySelector('.pl-body')
     if (body) {
       body.querySelector('.pl-title').textContent = ref.data.label
       body.querySelector('.pl-desc').textContent = ref.data.desc
     }
-    // Remove any extras (bubbles, etc.)
-    ref.el.querySelectorAll('.bubble').forEach(b => b.remove())
     // Reset classes and inline styles
     ref.el.className = 'project-label'
     ref.el.style.cssText = ''
