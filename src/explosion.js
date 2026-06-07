@@ -310,9 +310,9 @@ const CAPABILITIES = {
 
 /* ── Bubble positions (relative offsets from card center) ── */
 const BUBBLE_POSITIONS = [
-  { top: '-38px', left: '50%', transform: 'translateX(-50%)' },
-  { top: '50%',   left: '-10px', transform: 'translateX(-100%) translateY(-50%)' },
-  { top: '50%',   right: '-10px', transform: 'translateX(100%) translateY(-50%)' },
+  { top: '-60px', left: '50%', transform: 'translateX(-50%)' },
+  { top: '50%',   left: '-30px', transform: 'translateX(-100%) translateY(-50%)' },
+  { top: '50%',   right: '-30px', transform: 'translateX(100%) translateY(-50%)' },
 ]
 
 function initNodeFloating(sphere) {
@@ -384,7 +384,11 @@ function initNodeFloating(sphere) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          startDrag(key, node.ref.obj.position)
+          // Offset start position by endpoint direction (left= -x, right= +x)
+          const isRight = ep.classList.contains('right')
+          const offset = new THREE.Vector3(isRight ? 0.5 : -0.5, 0, 0)
+          const startPos = node.ref.obj.position.clone().add(offset)
+          startDrag(key, startPos)
         })
         ep.addEventListener('mouseenter', () => {
           setDragTarget(key, node.ref.obj.position)
@@ -542,26 +546,27 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
     node.pos3D.y += node.velocity.y
     node.pos3D.z += node.velocity.z
 
-    // Boundary clamp (spherical)
+    // Hard spherical boundary + vertical + horizontal clamps
     const dist = Math.sqrt(node.pos3D.x ** 2 + node.pos3D.y ** 2 + node.pos3D.z ** 2)
     if (dist > BOUNDARY) {
       const norm = BOUNDARY / dist
       node.pos3D.x *= norm
       node.pos3D.y *= norm
       node.pos3D.z *= norm
-      node.velocity.x *= 0.5
-      node.velocity.y *= 0.5
-      node.velocity.z *= 0.5
+      node.velocity.multiplyScalar(0.5)
     }
 
-    // Vertical clamp (prevent clipping below viewport)
-    if (node.pos3D.y < Y_MIN) {
-      node.pos3D.y = Y_MIN
-      node.velocity.y *= -0.5
+    if (node.pos3D.y < Y_MIN) { node.pos3D.y = Y_MIN; node.velocity.y *= -0.5 }
+    if (node.pos3D.y > Y_MAX) { node.pos3D.y = Y_MAX; node.velocity.y *= -0.5 }
+
+    // Hard X/Z clamp to keep in horizontal view
+    if (Math.abs(node.pos3D.x) > BOUNDARY) {
+      node.pos3D.x = Math.sign(node.pos3D.x) * BOUNDARY
+      node.velocity.x *= -0.5
     }
-    if (node.pos3D.y > Y_MAX) {
-      node.pos3D.y = Y_MAX
-      node.velocity.y *= -0.5
+    if (Math.abs(node.pos3D.z) > BOUNDARY) {
+      node.pos3D.z = Math.sign(node.pos3D.z) * BOUNDARY
+      node.velocity.z *= -0.5
     }
 
     // ±5px floating oscillation
@@ -632,14 +637,19 @@ function finishReset(sphere, nodePositions) {
   })
 
   sphere.nodeRefs.forEach((ref, i) => {
-    const bubbles = ref.el.querySelectorAll('.bubble')
-    bubbles.forEach(b => b.remove())
+    // Remove all bubbles
+    ref.el.querySelectorAll('.bubble').forEach(b => b.remove())
+    // Remove drag/endpoint event listeners by replacing element
+    const newEl = ref.el.cloneNode(true)
+    ref.el.parentNode.replaceChild(newEl, ref.el)
+    ref.el = newEl
 
     ref.obj.position.set(nodePositions[i * 3], nodePositions[i * 3 + 1], nodePositions[i * 3 + 2])
+    // Forcefully reset inline styles
+    ref.el.style.cssText = ''
+    ref.el.className = 'project-label'
     ref.el.style.opacity = '1'
     ref.el.style.transform = 'scale(1)'
-    ref.el.classList.remove('card', 'iridescent')
-    ref.el.style.transition = ''
   })
 
   // Clear explosion state
