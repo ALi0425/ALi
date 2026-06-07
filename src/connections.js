@@ -426,16 +426,33 @@ export function updateConnections() {
    PUBLIC: triggerConnection (for testing)
    ═══════════════════════════════════════ */
 
-export function triggerConnection(fromKey, toKey, nodeRefs) {
+export function triggerConnection(fromKey, toKey, nodeRefs, useRight = true) {
   const from = nodeRefs.find(n => n.data.key === fromKey)
   const to = nodeRefs.find(n => n.data.key === toKey)
   if (!from || !to) return
 
+  // Compute endpoint positions
+  const fromPos = computeEndpointPos(from.obj.position, useRight)
+  const toPos = computeEndpointPos(to.obj.position, useRight)
+
   if (isValid(fromKey, toKey)) {
-    addConnection(fromKey, toKey, from.obj.position, to.obj.position)
+    addConnection(fromKey, toKey, fromPos, toPos)
   } else {
-    triggerInvalidBurst(from.obj.position, to.obj.position)
+    triggerInvalidBurst(fromPos, toPos)
   }
+}
+
+function computeEndpointPos(nodePos, isRight) {
+  if (!_camera) return nodePos.clone()
+  const pos = nodePos.clone()
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(_camera.quaternion).normalize()
+  const dist = pos.distanceTo(_camera.position)
+  const fovRad = _camera.fov * Math.PI / 180
+  const vh = window.innerHeight
+  const visibleHeightAtDist = 2 * dist * Math.tan(fovRad / 2)
+  const pixelTo3D = visibleHeightAtDist / vh
+  const cardHalfIn3D = 170 * pixelTo3D
+  return pos.add(right.clone().multiplyScalar(isRight ? cardHalfIn3D : -cardHalfIn3D))
 }
 
 /**

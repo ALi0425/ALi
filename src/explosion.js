@@ -308,6 +308,19 @@ const CAPABILITIES = {
   doc: ['技术规范书', '可行性研究报告', '需规说明书'],
 }
 
+/* ── Compute endpoint 3D position from screen-space card edge ── */
+function getEndpointPos(nodePos, isRight, camera) {
+  const pos = nodePos.clone()
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).normalize()
+  const dist = pos.distanceTo(camera.position)
+  const fovRad = camera.fov * Math.PI / 180
+  const vh = window.innerHeight
+  const visibleHeightAtDist = 2 * dist * Math.tan(fovRad / 2)
+  const pixelTo3D = visibleHeightAtDist / vh
+  const cardHalfIn3D = 170 * pixelTo3D  // 340px / 2
+  return pos.add(right.clone().multiplyScalar(isRight ? cardHalfIn3D : -cardHalfIn3D))
+}
+
 /* ── Bubble positions (relative offsets from card center) ── */
 const BUBBLE_POSITIONS = [
   { top: '-60px', left: '50%', transform: 'translateX(-50%)' },
@@ -388,10 +401,12 @@ function initNodeFloating(sphere, camera) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          startDrag(key, node.ref.obj.position)
+          const epPos = getEndpointPos(node.ref.obj.position, ep.classList.contains('right'), camera)
+          startDrag(key, epPos)
         })
         ep.addEventListener('mouseenter', () => {
-          setDragTarget(key, node.ref.obj.position)
+          const epPos = getEndpointPos(node.ref.obj.position, ep.classList.contains('right'), camera)
+          setDragTarget(key, epPos)
         })
         ep.addEventListener('mouseleave', () => {
           clearDragTarget()
