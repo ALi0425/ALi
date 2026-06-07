@@ -142,7 +142,7 @@ function startExplosion(scene, sphere, camera) {
     el.style.transform = 'scale(0.8)'
   })
 
-  runExplosionAnimation(sphere)
+  runExplosionAnimation(sphere, camera)
 }
 
 /* ═══════════════════════════════════════
@@ -229,7 +229,7 @@ function initBurstVelocities(sphere) {
    TWO‑PHASE ANIMATION
    ═══════════════════════════════════════ */
 
-function runExplosionAnimation(sphere) {
+function runExplosionAnimation(sphere, camera) {
   const pos = sphere.particlePos
   const vel = sphere.velocities
   const tgt = sphere.targets
@@ -288,7 +288,7 @@ function runExplosionAnimation(sphere) {
         'color: #ef4444; font-family: monospace;'
       )
 
-      initNodeFloating(sphere)
+      initNodeFloating(sphere, camera)
     }
   }
 
@@ -315,7 +315,7 @@ const BUBBLE_POSITIONS = [
   { top: '50%',   right: '-30px', transform: 'translateX(100%) translateY(-50%)' },
 ]
 
-function initNodeFloating(sphere) {
+function initNodeFloating(sphere, camera) {
   window.__floatingNodeRefs = sphere.nodeRefs
 
   const nodes = sphere.nodeRefs.map((ref, i) => {
@@ -384,11 +384,16 @@ function initNodeFloating(sphere) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          // Offset start position by endpoint direction (left= -x, right= +x)
+          // Compute endpoint 3D position from screen‑space offset
+          const pos = node.ref.obj.position
           const isRight = ep.classList.contains('right')
-          const offset = new THREE.Vector3(isRight ? 0.5 : -0.5, 0, 0)
-          const startPos = node.ref.obj.position.clone().add(offset)
-          startDrag(key, startPos)
+          const vec = new THREE.Vector3().copy(pos)
+          vec.project(camera)
+          // 340px card → half = 170px → normalized device coord offset
+          const pixelOffset = isRight ? 170 : -170
+          vec.x += (pixelOffset / window.innerWidth) * 2
+          vec.unproject(camera)
+          startDrag(key, vec)
         })
         ep.addEventListener('mouseenter', () => {
           setDragTarget(key, node.ref.obj.position)
@@ -542,32 +547,22 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
     node.velocity.y -= (node.pos3D.y - 0.5) * CENTER_ATTRACTION
     node.velocity.z -= node.pos3D.z * CENTER_ATTRACTION
 
+    // Pre‑clamp velocity to prevent leaving boundary
+    const nextX = node.pos3D.x + node.velocity.x
+    const nextY = node.pos3D.y + node.velocity.y
+    const nextZ = node.pos3D.z + node.velocity.z
+    if (Math.abs(nextX) > BOUNDARY) node.velocity.x *= -0.3
+    if (Math.abs(nextZ) > BOUNDARY) node.velocity.z *= -0.3
+    if (nextY > Y_MAX || nextY < Y_MIN) node.velocity.y *= -0.3
+
     node.pos3D.x += node.velocity.x
     node.pos3D.y += node.velocity.y
     node.pos3D.z += node.velocity.z
 
-    // Hard spherical boundary + vertical + horizontal clamps
-    const dist = Math.sqrt(node.pos3D.x ** 2 + node.pos3D.y ** 2 + node.pos3D.z ** 2)
-    if (dist > BOUNDARY) {
-      const norm = BOUNDARY / dist
-      node.pos3D.x *= norm
-      node.pos3D.y *= norm
-      node.pos3D.z *= norm
-      node.velocity.multiplyScalar(0.5)
-    }
-
-    if (node.pos3D.y < Y_MIN) { node.pos3D.y = Y_MIN; node.velocity.y *= -0.5 }
-    if (node.pos3D.y > Y_MAX) { node.pos3D.y = Y_MAX; node.velocity.y *= -0.5 }
-
-    // Hard X/Z clamp to keep in horizontal view
-    if (Math.abs(node.pos3D.x) > BOUNDARY) {
-      node.pos3D.x = Math.sign(node.pos3D.x) * BOUNDARY
-      node.velocity.x *= -0.5
-    }
-    if (Math.abs(node.pos3D.z) > BOUNDARY) {
-      node.pos3D.z = Math.sign(node.pos3D.z) * BOUNDARY
-      node.velocity.z *= -0.5
-    }
+    // Hard clamp — snap inside
+    node.pos3D.x = Math.max(-BOUNDARY, Math.min(BOUNDARY, node.pos3D.x))
+    node.pos3D.z = Math.max(-BOUNDARY, Math.min(BOUNDARY, node.pos3D.z))
+    node.pos3D.y = Math.max(Y_MIN, Math.min(Y_MAX, node.pos3D.y))
 
     // ±5px floating oscillation
     node.pos3D.y += Math.sin(time * 1.2 + node.floatPhase) * 0.0008
@@ -637,19 +632,17 @@ function finishReset(sphere, nodePositions) {
   })
 
   sphere.nodeRefs.forEach((ref, i) => {
-    // Remove all bubbles
     ref.el.querySelectorAll('.bubble').forEach(b => b.remove())
-    // Remove drag/endpoint event listeners by replacing element
-    const newEl = ref.el.cloneNode(true)
-    ref.el.parentNode.replaceChild(newEl, ref.el)
-    ref.el = newEl
 
+    // Reset position on sphere
     ref.obj.position.set(nodePositions[i * 3], nodePositions[i * 3 + 1], nodePositions[i * 3 + 2])
-    // Forcefully reset inline styles
+
+    // Reset element to sphere‑state (keep same DOM element, just change class/style)
     ref.el.style.cssText = ''
     ref.el.className = 'project-label'
     ref.el.style.opacity = '1'
     ref.el.style.transform = 'scale(1)'
+    ref.el.style.pointerEvents = 'none'
   })
 
   // Clear explosion state
