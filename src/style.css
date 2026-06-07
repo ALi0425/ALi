@@ -138,8 +138,14 @@ html, body {
   gap: 2px;
 }
 
+/* ── Endpoints hidden by default, visible only in card state ── */
+.project-label .endpoint {
+  display: none;
+}
+
 /* ── Connection endpoints (real DOM elements) ── */
 .project-label.card .endpoint {
+  display: block;  /* override hidden */
   position: absolute;
   width: 14px;
   height: 14px;

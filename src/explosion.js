@@ -388,17 +388,7 @@ function initNodeFloating(sphere, camera) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          // Compute endpoint at card edge: tangent to sphere × card half‑width
-          const pos = node.ref.obj.position
-          const dir = pos.clone().normalize()
-          // Tangent = cross(up, dir) for horizontal offset
-          const up = new THREE.Vector3(0, 1, 0)
-          const tangent = new THREE.Vector3().crossVectors(up, dir).normalize()
-          const cardHalf3D = 0.35  // visual half‑width in 3D space at this distance
-          const endpointPos = pos.clone().add(tangent.clone().multiplyScalar(
-            ep.classList.contains('right') ? cardHalf3D : -cardHalf3D
-          ))
-          startDrag(key, endpointPos)
+          startDrag(key, node.ref.obj.position)
         })
         ep.addEventListener('mouseenter', () => {
           setDragTarget(key, node.ref.obj.position)
