@@ -64,6 +64,8 @@ html, body {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
+  width: fit-content;
+  max-width: 220px;
 }
 
 .project-label .pl-title {
@@ -89,6 +91,7 @@ html, body {
 
 .project-label.card {
   width: 340px;
+  max-width: none;
   padding: 22px 28px;
   border-radius: 16px;
   border: 1.5px solid rgba(255, 255, 255, 0.2);

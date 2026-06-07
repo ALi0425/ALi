@@ -322,13 +322,13 @@ function initNodeFloating(sphere, camera) {
     const pos = ref.obj.position.clone()
     const dir = pos.clone().normalize()
 
-    // Fixed positions — 3 rows, no overlap
+    // Fixed positions — 3 rows, compact
     const rows = [
-      { x: -3.5, y:  3.0, z:  0 },
-      { x:  3.5, y:  3.0, z:  0 },
-      { x:  0,   y:  0.5, z:  0 },
-      { x: -3.5, y: -2.0, z:  0 },
-      { x:  3.5, y: -2.0, z:  0 },
+      { x: -3.2, y:  2.2, z:  0 },
+      { x:  3.2, y:  2.2, z:  0 },
+      { x:  0,   y:  0.2, z:  0 },
+      { x: -3.2, y: -1.8, z:  0 },
+      { x:  3.2, y: -1.8, z:  0 },
     ]
     const cfg = rows[i % rows.length]
     const scattered = new THREE.Vector3(cfg.x, cfg.y, cfg.z)
@@ -628,29 +628,19 @@ function finishReset(sphere, nodePositions) {
     ref.el.style.opacity = '1'
   })
 
-  // 4. Nuke all project nodes and rebuild from scratch
+  // 4. Reset each node — keep same DOM element (CSS2DRenderer reference)
   sphere.nodeRefs.forEach((ref, i) => {
-    // Completely reset the DOM element
-    const parent = ref.el.parentNode
-    const newEl = document.createElement('div')
-    newEl.className = 'project-label'
-    newEl.dataset.key = ref.data.key
-    newEl.innerHTML = [
-      '<span class="endpoint left" data-key="' + ref.data.key + '"></span>',
-      '<div class="pl-body">',
-      '  <span class="pl-title">' + ref.data.label + '</span>',
-      '  <span class="pl-desc">' + ref.data.desc + '</span>',
-      '</div>',
-      '<span class="endpoint right" data-key="' + ref.data.key + '"></span>'
-    ].join('\n')
-
-    // Replace in CSS2DObject
-    if (ref.obj.element && ref.obj.element.parentNode) {
-      ref.obj.element.parentNode.replaceChild(newEl, ref.obj.element)
+    // Reset internal content, NOT the element itself
+    const body = ref.el.querySelector('.pl-body')
+    if (body) {
+      body.querySelector('.pl-title').textContent = ref.data.label
+      body.querySelector('.pl-desc').textContent = ref.data.desc
     }
-    ref.obj.element = newEl
-    ref.el = newEl
-
+    // Remove any extras (bubbles, etc.)
+    ref.el.querySelectorAll('.bubble').forEach(b => b.remove())
+    // Reset classes and inline styles
+    ref.el.className = 'project-label'
+    ref.el.style.cssText = ''
     // Reset position on sphere
     ref.obj.position.set(
       nodePositions[i * 3],
