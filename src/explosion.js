@@ -322,20 +322,24 @@ function initNodeFloating(sphere, camera) {
     const pos = ref.obj.position.clone()
     const dir = pos.clone().normalize()
 
-    // Scatter across full viewport
-    const angleH = (i / sphere.nodeRefs.length) * Math.PI * 2
-    const angleV = (Math.random() - 0.5) * 0.6
-    const spreadRadius = 3 + Math.random() * 3
-    const scattered = new THREE.Vector3(
-      Math.cos(angleH) * Math.cos(angleV) * spreadRadius,
-      (Math.random() - 0.5) * 4,
-      Math.sin(angleH) * Math.cos(angleV) * spreadRadius
-    )
+    // Fixed positions — 3 rows, no overlap
+    const rows = [
+      { x: -3.5, y:  3.0, z:  0 },
+      { x:  3.5, y:  3.0, z:  0 },
+      { x:  0,   y:  0.5, z:  0 },
+      { x: -3.5, y: -2.0, z:  0 },
+      { x:  3.5, y: -2.0, z:  0 },
+    ]
+    const cfg = rows[i % rows.length]
+    const scattered = new THREE.Vector3(cfg.x, cfg.y, cfg.z)
+
+    // Set exact fixed position — no physics drift
+    ref.obj.position.set(scattered.x, scattered.y, scattered.z)
 
     return {
       ref,
       pos3D: ref.obj.position,
-      velocity: scattered.clone().multiplyScalar(0.01),
+      velocity: new THREE.Vector3(0, 0, 0),
       floatPhase: (i / sphere.nodeRefs.length) * Math.PI * 2,
       appeared: false,
       bubbles: [],
@@ -384,16 +388,17 @@ function initNodeFloating(sphere, camera) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          // Compute endpoint 3D position from screen‑space offset
+          // Compute endpoint at card edge: tangent to sphere × card half‑width
           const pos = node.ref.obj.position
-          const isRight = ep.classList.contains('right')
-          const vec = new THREE.Vector3().copy(pos)
-          vec.project(camera)
-          // 340px card → half = 170px → normalized device coord offset
-          const pixelOffset = isRight ? 170 : -170
-          vec.x += (pixelOffset / window.innerWidth) * 2
-          vec.unproject(camera)
-          startDrag(key, vec)
+          const dir = pos.clone().normalize()
+          // Tangent = cross(up, dir) for horizontal offset
+          const up = new THREE.Vector3(0, 1, 0)
+          const tangent = new THREE.Vector3().crossVectors(up, dir).normalize()
+          const cardHalf3D = 0.35  // visual half‑width in 3D space at this distance
+          const endpointPos = pos.clone().add(tangent.clone().multiplyScalar(
+            ep.classList.contains('right') ? cardHalf3D : -cardHalf3D
+          ))
+          startDrag(key, endpointPos)
         })
         ep.addEventListener('mouseenter', () => {
           setDragTarget(key, node.ref.obj.position)
@@ -503,13 +508,13 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
   sphere._floatTime += deltaMs * 0.001
   const time = sphere._floatTime
 
-  const REPULSION_RADIUS    = 7.0
-  const REPULSION_STRENGTH  = 0.012
-  const DAMPING             = 0.96
-  const CENTER_ATTRACTION   = 0.0003
-  const BOUNDARY            = 9.0
-  const Y_MIN               = -2.5
-  const Y_MAX               = 5.0
+  const REPULSION_RADIUS    = 3.0
+  const REPULSION_STRENGTH  = 0.001
+  const DAMPING             = 0.99
+  const CENTER_ATTRACTION   = 0.00001
+  const BOUNDARY            = 5.5
+  const Y_MIN               = -3.0
+  const Y_MAX               = 4.5
 
   // O(n²) repulsion — only 6 nodes, fine
   for (let i = 0; i < nodes.length; i++) {
@@ -618,34 +623,59 @@ export function resetExplosion(sphere) {
 }
 
 function finishReset(sphere, nodePositions) {
-  // Snap particles to exact original positions
+  // 1. Snap particles to exact original positions
   const pos = sphere.particlePos
   const orig = sphere.origPos
   for (let i = 0; i < pos.length; i++) pos[i] = orig[i]
   sphere.particleGeo.attributes.position.needsUpdate = true
 
-  // Close terminal, hide fixed name, restore ALL sphere info
+  // 2. Close terminal, hide fixed name
   closeTerminal()
   if (sphere.nameFixedEl) sphere.nameFixedEl.style.opacity = '0'
+
+  // 3. Restore ALL sphere personal info
   sphere.infoRefs.forEach((ref) => {
     ref.el.style.opacity = '1'
   })
 
+  // 4. Nuke all project nodes and rebuild from scratch
   sphere.nodeRefs.forEach((ref, i) => {
-    ref.el.querySelectorAll('.bubble').forEach(b => b.remove())
+    // Completely reset the DOM element
+    const parent = ref.el.parentNode
+    const newEl = document.createElement('div')
+    newEl.className = 'project-label'
+    newEl.dataset.key = ref.data.key
+    newEl.innerHTML = [
+      '<span class="endpoint left" data-key="' + ref.data.key + '"></span>',
+      '<div class="pl-body">',
+      '  <span class="pl-title">' + ref.data.label + '</span>',
+      '  <span class="pl-desc">' + ref.data.desc + '</span>',
+      '</div>',
+      '<span class="endpoint right" data-key="' + ref.data.key + '"></span>'
+    ].join('\n')
+
+    // Replace in CSS2DObject
+    if (ref.obj.element && ref.obj.element.parentNode) {
+      ref.obj.element.parentNode.replaceChild(newEl, ref.obj.element)
+    }
+    ref.obj.element = newEl
+    ref.el = newEl
 
     // Reset position on sphere
-    ref.obj.position.set(nodePositions[i * 3], nodePositions[i * 3 + 1], nodePositions[i * 3 + 2])
-
-    // Reset element to sphere‑state (keep same DOM element, just change class/style)
-    ref.el.style.cssText = ''
-    ref.el.className = 'project-label'
-    ref.el.style.opacity = '1'
-    ref.el.style.transform = 'scale(1)'
-    ref.el.style.pointerEvents = 'none'
+    ref.obj.position.set(
+      nodePositions[i * 3],
+      nodePositions[i * 3 + 1],
+      nodePositions[i * 3 + 2]
+    )
   })
 
-  // Clear explosion state
+  // 5. Reset sphere group rotation to match accumulated rotation
+  sphere.group.rotation.x = sphere._wobbleX || 0
+  sphere.group.rotation.y = sphere._autoRotY || 0
+  sphere.group.rotation.z = 0
+  sphere.group.scale.setScalar(1)
+
+  // 6. Clear explosion state
   sphere.exploding = false
   sphere.explosionProgress = 0
   sphere.velocities = null
@@ -654,12 +684,13 @@ function finishReset(sphere, nodePositions) {
   sphere._floatTime = 0
   _triggered = false
 
-  // Re‑show UI
+  // 7. Re‑show UI
   const guide = document.getElementById('guide-hint')
   if (guide) guide.style.opacity = ''
   const sysInfo = document.getElementById('system-info')
   if (sysInfo) sysInfo.style.opacity = ''
 
+  // 8. Transition state machine
   resetStateMachine()
 
   console.log(

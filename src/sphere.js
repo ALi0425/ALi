@@ -154,7 +154,7 @@ export function createSphere(scene) {
     font-family: 'Space Mono', 'Courier New', monospace;
     font-size: 16px; font-weight: 500;
     color: rgba(255,255,255,0.6);
-    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    position: fixed; bottom: 80px; right: 32px;
     z-index: 100;
     opacity: 0;
     transition: opacity 0.8s ease;
