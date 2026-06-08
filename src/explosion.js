@@ -391,6 +391,8 @@ function initNodeFloating(sphere, camera) {
       key,
       bx, by,
       _targetY: targetY,
+      _dragOffsetX: 0,
+      _dragOffsetY: 0,
       floatPhase: (i / sphere.nodeRefs.length) * Math.PI * 2,
       appeared: false,
       bubbles: [],
@@ -478,11 +480,10 @@ function initNodeFloating(sphere, camera) {
         })
       })
 
-      /* ── Smooth drag via transform translate ── */
+      /* ── Smooth drag ── */
       const body = el.querySelector('.pl-body') || el
       let dragStarted = false
       let startX = 0, startY = 0
-      let offsetX = 0, offsetY = 0
 
       body.addEventListener('mousedown', (e) => {
         if (e.target.closest('.endpoint') || e.target.closest('.bubble')) return
@@ -503,11 +504,10 @@ function initNodeFloating(sphere, camera) {
             el.style.transition = 'none'
           }
           if (dragStarted) {
-            offsetX += ev.clientX - startX
-            offsetY += ev.clientY - startY
+            node._dragOffsetX += ev.clientX - startX
+            node._dragOffsetY += ev.clientY - startY
             startX = ev.clientX
             startY = ev.clientY
-            el.style.transform = 'translate(calc(-50% + ' + offsetX + 'px), calc(-50% + ' + offsetY + 'px))'
           }
         }
 
@@ -603,23 +603,29 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
 
   const w = window.innerWidth, h = window.innerHeight
   const halfW = w / 2, halfH = h / 2
-  const scale = 68  // px per 3D unit at z=0 with this FOV
+  const scale = 68
 
   for (const node of nodes) {
-    if (!node.appeared) continue
-    if (node.dragging || node._pinned) continue
+    if (!node.appeared || node.dragging) continue
 
     const idx = nodes.indexOf(node)
     const x3d = [-3.0, 3.0, 0, -3.0, 3.0][idx] || 0
     const y3d = [2.0, 2.0, 0, -2.0, -2.0][idx] || 0
-
-    const sx = halfW + x3d * scale
-    const sy = halfH - y3d * scale
     const floatY = Math.sin(time * 1.2 + node.floatPhase) * 3
 
-    node.el.style.left = sx + 'px'
-    node.el.style.top = (sy + floatY) + 'px'
-    node.el.style.transform = 'translate(-50%, -50%)'
+    if (node._pinned) {
+      // Pinned: keep dragged position, add float on top
+      const bonus = Math.sin(time * 2.1 + node.floatPhase * 1.3) * 1.5
+      node.el.style.transform =
+        'translate(calc(-50% + ' + (node._dragOffsetX) + 'px), calc(-50% + ' + (node._dragOffsetY + floatY + bonus) + 'px))'
+    } else {
+      // Normal: base position + float
+      const sx = halfW + x3d * scale
+      const sy = halfH - y3d * scale
+      node.el.style.left = sx + 'px'
+      node.el.style.top = (sy + floatY) + 'px'
+      node.el.style.transform = 'translate(-50%, -50%)'
+    }
   }
 }
 
