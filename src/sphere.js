@@ -23,12 +23,23 @@ const INFO_DATA = [
 ]
 
 const TAG_DATA = [
-  '国产ERP 信息化项目', '全程项目管理', 'n8n低代码平台',
-  'vibe coding全栈交付', '4年企业级B端系统', '华北理工大学',
-  '工作流自动化', 'RAG与知识图谱', '业务逻辑抽象',
-  '大型项目协同', '结构化文档编制', '工作流编排',
-  '27岁', '多模态增量清洗', '复杂业务流程解构',
-  '权限协同与资源调配', '大模型落地产品',
+  { text: '国产ERP 信息化项目',   fontSize: 22 },
+  { text: '全程项目管理',        fontSize: 20 },
+  { text: 'n8n低代码平台',       fontSize: 20 },
+  { text: 'vibe coding全栈交付', fontSize: 18 },
+  { text: '4年企业级B端系统',    fontSize: 24 },
+  { text: '华北理工大学',         fontSize: 18 },
+  { text: '工作流自动化',        fontSize: 20 },
+  { text: 'RAG与知识图谱',       fontSize: 22 },
+  { text: '业务逻辑抽象',        fontSize: 18 },
+  { text: '大型项目协同',        fontSize: 24 },
+  { text: '结构化文档编制',       fontSize: 18 },
+  { text: '工作流编排',          fontSize: 20 },
+  { text: '27岁',               fontSize: 28 },
+  { text: '多模态增量清洗',       fontSize: 18 },
+  { text: '复杂业务流程解构',     fontSize: 20 },
+  { text: '权限协同与资源调配',   fontSize: 22 },
+  { text: '大模型落地产品',       fontSize: 24 },
 ]
 
 /* ── Project Data ── */
@@ -154,14 +165,22 @@ export function createSphere(scene) {
   const tagPositions = fibonacciPoints(TAG_DATA.length, SPHERE_RADIUS * 1.04)
   const tagRefs = []
 
-  TAG_DATA.forEach((text, i) => {
-    const span = document.createElement('span')
-    span.textContent = text
-    span.className = 'sphere-tag'
-    const obj = new CSS2DObject(span)
+  TAG_DATA.forEach((data, i) => {
+    const el = document.createElement('span')
+    el.textContent = data.text
+    el.style.cssText = `
+      font-family: 'Space Mono', 'Courier New', monospace;
+      font-size: ${data.fontSize}px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.9);
+      text-shadow: 0 0 12px rgba(34,197,94,0.2);
+      pointer-events: none; user-select: none; white-space: nowrap;
+      letter-spacing: 0.02em; line-height: 1.2;
+    `
+    const obj = new CSS2DObject(el)
     obj.position.set(tagPositions[i * 3], tagPositions[i * 3 + 1], tagPositions[i * 3 + 2])
     group.add(obj)
-    tagRefs.push({ obj, el: span, text })
+    tagRefs.push({ obj, el, data })
   })
 
   /* ── Fixed name for State 02 (top‑right, hidden initially) ── */
