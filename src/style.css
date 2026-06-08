@@ -227,7 +227,8 @@ html, body {
 .tt-window {
   position: relative;
   width: min(1400px, 95vw);
-  max-height: 88vh;
+  max-height: 96vh;
+  min-height: 70vh;
   background: rgba(16,16,18,0.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -282,7 +283,7 @@ html, body {
 
 /* ── Body: split ── */
 .tt-body {
-  display: flex; flex: 1; min-height: 380px; overflow: hidden;
+  display: flex; flex: 1; min-height: 480px; max-height: 82vh; overflow: hidden;
 }
 
 /* ── LEFT: browser card ── */
@@ -384,16 +385,28 @@ html, body {
 
 .cl-empty  { height: 6px; }
 
+.cl-project-name {
+  font-size: 15px; font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
 .cl-section {
-  color: #22c55e;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 12px;
-  margin: 8px 0 4px;
+  margin: 10px 0 5px;
   letter-spacing: 0.02em;
+  color: #ffffff;
+  display: flex; align-items: center; gap: 6px;
+}
+.cl-dot {
+  color: #22c55e;
+  font-size: 10px;
 }
 
 .cl-bullet {
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.85);
   padding-left: 0;
   margin: 2px 0;
 }
@@ -404,13 +417,13 @@ html, body {
 }
 
 .cl-highlight {
-  color: #eab308;
+  color: rgba(255,255,255,0.9);
   font-weight: 500;
   margin: 2px 0;
 }
 
 .cl-line {
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.7);
   padding-left: 0;
 }
 

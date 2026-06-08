@@ -174,6 +174,7 @@ function render(p) {
               <span class="cl-cmd">cat ${p.path}/README.md</span>
             </div>
             <div class="console-body">
+              <div class="cl-project-name">${p.title}</div>
               ${renderContent(p.content)}
             </div>
           </div>
@@ -187,28 +188,25 @@ function render(p) {
   _overlay.querySelector('.tt-backdrop').addEventListener('click', closeTerminal)
 }
 
-/* ── Render content with terminal‑style markup ── */
+/* ── Render content ── */
 function renderContent(text) {
   const lines = text.split('\n')
   return lines.map(line => {
     const t = line.trim()
     if (!t) return '<div class="cl-empty"></div>'
-
-    // Section headers 【】
+    // Section headers: 【X】→ ● X
     if (t.startsWith('【')) {
-      return `<div class="cl-section">${esc(t)}</div>`
+      const label = t.replace(/[【】]/g, '')
+      return `<div class="cl-section"><span class="cl-dot">●</span> ${esc(label)}</div>`
     }
-
     // Bullets →
     if (t.startsWith('→')) {
       return `<div class="cl-bullet"><span class="cl-arrow">→</span>${esc(t.slice(1).trim())}</div>`
     }
-
     // Metrics / numbers
     if (/\d+%/.test(t) || /\d+ 项/.test(t) || /^\d+/.test(t)) {
       return `<div class="cl-highlight">${esc(t)}</div>`
     }
-
     return `<div class="cl-line">${esc(t)}</div>`
   }).join('')
 }
