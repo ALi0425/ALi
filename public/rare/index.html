@@ -22,41 +22,55 @@
     // ── Project data per B‑node ──
     const DATA = {
       b1: { name:'科技管理应用', path:'~/projects/tech-mgmt',
-        modules:[{id:'m1',name:'项目管理',posX:100,posY:60,pages:[
-          {id:'p1',name:'立项申请',posX:120,posY:200,moduleId:'m1',fields:[
-            {id:'f1',name:'项目名称',fieldType:'string',posX:150,posY:280,pageId:'p1'},
-            {id:'f2',name:'预算金额',fieldType:'number',posX:150,posY:320,pageId:'p1'},
-            {id:'f3',name:'负责人',fieldType:'string',posX:150,posY:360,pageId:'p1'},
-          ],actions:[
-            {id:'a1',name:'提交审批',actionType:'submit',posX:280,posY:280,pageId:'p1'},
-          ]},
-          {id:'p2',name:'进度跟踪',posX:400,posY:200,moduleId:'m1',fields:[
-            {id:'f4',name:'完成度',fieldType:'percent',posX:430,posY:280,pageId:'p2'},
-            {id:'f5',name:'里程碑',fieldType:'string',posX:430,posY:320,pageId:'p2'},
-          ],actions:[
-            {id:'a2',name:'更新进度',actionType:'update',posX:560,posY:280,pageId:'p2'},
-          ]},
-        ]}, {id:'m2',name:'成果管理',posX:500,posY:60,pages:[
-          {id:'p3',name:'成果登记',posX:520,posY:200,moduleId:'m2',fields:[
-            {id:'f6',name:'成果名称',fieldType:'string',posX:550,posY:280,pageId:'p3'},
-            {id:'f7',name:'类型',fieldType:'select',posX:550,posY:320,pageId:'p3'},
-          ],actions:[
-            {id:'a3',name:'提交验收',actionType:'submit',posX:680,posY:280,pageId:'p3'},
-          ]},
+        modules:[{id:'m1',name:'科技项目管理',posX:60,posY:40,pages:[
+          {id:'p1',name:'项目立项',moduleId:'m1',fields:[
+            {id:'f1',name:'项目类型',fieldType:'string'},{id:'f2',name:'项目编号',fieldType:'string'},{id:'f3',name:'项目名称',fieldType:'string'},{id:'f4',name:'项目金额',fieldType:'string'},{id:'f5',name:'承建单位',fieldType:'string'},{id:'f6',name:'项目经理',fieldType:'string'},{id:'f7',name:'开始时间',fieldType:'string'},{id:'f8',name:'结束时间',fieldType:'string'},{id:'f9',name:'项目内容',fieldType:'string'},{id:'f10',name:'预期成果',fieldType:'string'}
+          ],actions:[{id:'a1',name:'新增',actionType:'submit'},{id:'a2',name:'删除',actionType:'delete'},{id:'a3',name:'保存',actionType:'save'},{id:'a4',name:'提交',actionType:'submit'}]},
+          {id:'p2',name:'进度管理',moduleId:'m1',fields:[
+            {id:'f11',name:'里程碑',fieldType:'string'},{id:'f12',name:'计划开始时间',fieldType:'string'},{id:'f13',name:'计划结束时间',fieldType:'string'},{id:'f14',name:'预期成果',fieldType:'string'}
+          ],actions:[{id:'a5',name:'上传交付物',actionType:'submit'},{id:'a6',name:'删除交付物',actionType:'delete'},{id:'a7',name:'提交',actionType:'submit'}]},
+          {id:'p3',name:'成员管理',moduleId:'m1',fields:[
+            {id:'f15',name:'姓名',fieldType:'string'},{id:'f16',name:'角色',fieldType:'string'},{id:'f17',name:'开始时间',fieldType:'string'},{id:'f18',name:'结束时间',fieldType:'string'}
+          ],actions:[{id:'a8',name:'新增',actionType:'submit'},{id:'a9',name:'删除',actionType:'delete'},{id:'a10',name:'入场',actionType:'submit'},{id:'a11',name:'退场',actionType:'submit'}]},
+          {id:'p4',name:'变更管理',moduleId:'m1',fields:[
+            {id:'f19',name:'变更类型',fieldType:'string'},{id:'f20',name:'变更原因',fieldType:'string'}
+          ],actions:[{id:'a12',name:'保存',actionType:'save'},{id:'a13',name:'提交',actionType:'submit'}]},
+          {id:'p5',name:'验收管理',moduleId:'m1',fields:[
+            {id:'f21',name:'执行进度',fieldType:'string'},{id:'f22',name:'验收评分',fieldType:'string'},{id:'f23',name:'验收材料',fieldType:'string'}
+          ],actions:[{id:'a14',name:'编辑',actionType:'edit'},{id:'a15',name:'提交',actionType:'submit'}]},
+        ]},
+        {id:'m2',name:'科技成果管理',posX:290,posY:40,pages:[
+          {id:'p6',name:'科技成果',moduleId:'m2',fields:[
+            {id:'f24',name:'成果登记',fieldType:'string'},{id:'f25',name:'成果名称',fieldType:'string'},{id:'f26',name:'成果编号',fieldType:'string'},{id:'f27',name:'上报单位',fieldType:'string'},{id:'f28',name:'成果转化',fieldType:'string'},{id:'f29',name:'转出单位',fieldType:'string'}
+          ],actions:[{id:'a16',name:'新增',actionType:'submit'},{id:'a17',name:'编辑',actionType:'edit'},{id:'a18',name:'删除',actionType:'delete'},{id:'a19',name:'提交',actionType:'submit'}]},
+        ]},
+        {id:'m3',name:'科技奖励评定',posX:520,posY:40,pages:[
+          {id:'p7',name:'奖励申报',moduleId:'m3',fields:[
+            {id:'f30',name:'成果名称',fieldType:'string'},{id:'f31',name:'申报单位',fieldType:'string'},{id:'f32',name:'奖励类型',fieldType:'string'},{id:'f33',name:'申报内容',fieldType:'string'},{id:'f34',name:'作证材料',fieldType:'string'}
+          ],actions:[{id:'a20',name:'新增',actionType:'submit'},{id:'a21',name:'编辑',actionType:'edit'},{id:'a22',name:'删除',actionType:'delete'},{id:'a23',name:'提交',actionType:'submit'}]},
+          {id:'p8',name:'奖励推荐',moduleId:'m3',fields:[
+            {id:'f35',name:'推荐单位',fieldType:'string'},{id:'f36',name:'推荐等级',fieldType:'string'}
+          ],actions:[{id:'a24',name:'推荐',actionType:'submit'},{id:'a25',name:'退回',actionType:'reject'}]},
+          {id:'p9',name:'形式审查',moduleId:'m3',fields:[],actions:[{id:'a26',name:'推荐',actionType:'submit'},{id:'a27',name:'退回',actionType:'reject'}]},
+          {id:'p10',name:'网络评分',moduleId:'m3',fields:[
+            {id:'f37',name:'评分',fieldType:'number'}
+          ],actions:[{id:'a28',name:'保存',actionType:'save'},{id:'a29',name:'提交',actionType:'submit'}]},
+          {id:'p11',name:'会议评审',moduleId:'m3',fields:[
+            {id:'f38',name:'投票',fieldType:'string'}
+          ],actions:[{id:'a30',name:'提交',actionType:'submit'}]},
+          {id:'p12',name:'拟授奖等级',moduleId:'m3',fields:[
+            {id:'f39',name:'获奖等级',fieldType:'string'}
+          ],actions:[{id:'a31',name:'导出',actionType:'export'}]},
+        ]},
+        {id:'m4',name:'科技查询统计',posX:750,posY:40,pages:[
+          {id:'p13',name:'科技项目',moduleId:'m4',fields:[
+            {id:'f40',name:'项目名称',fieldType:'string'},{id:'f41',name:'项目编号',fieldType:'string'},{id:'f42',name:'计划进度',fieldType:'string'},{id:'f43',name:'执行进度',fieldType:'string'},{id:'f44',name:'承建单位',fieldType:'string'},{id:'f45',name:'项目类型',fieldType:'string'}
+          ],actions:[{id:'a32',name:'查询',actionType:'query'},{id:'a33',name:'导出',actionType:'export'}]},
+          {id:'p14',name:'科技成果',moduleId:'m4',fields:[
+            {id:'f46',name:'专利',fieldType:'string'},{id:'f47',name:'论文',fieldType:'string'},{id:'f48',name:'软著',fieldType:'string'},{id:'f49',name:'专著',fieldType:'string'}
+          ],actions:[{id:'a34',name:'完成',actionType:'submit'}]},
         ]}],
-        edges:[{id:'e1',sourceId:'m1',targetId:'p1',flowType:'has',status:'active'},
-               {id:'e2',sourceId:'m1',targetId:'p2',flowType:'has',status:'active'},
-               {id:'e3',sourceId:'m2',targetId:'p3',flowType:'has',status:'active'},
-               {id:'e4',sourceId:'p1',targetId:'f1',flowType:'has',status:'active'},
-               {id:'e5',sourceId:'p1',targetId:'f2',flowType:'has',status:'active'},
-               {id:'e6',sourceId:'p1',targetId:'f3',flowType:'has',status:'active'},
-               {id:'e7',sourceId:'p1',targetId:'a1',flowType:'has',status:'active'},
-               {id:'e8',sourceId:'p2',targetId:'f4',flowType:'has',status:'active'},
-               {id:'e9',sourceId:'p2',targetId:'f5',flowType:'has',status:'active'},
-               {id:'e10',sourceId:'p2',targetId:'a2',flowType:'has',status:'active'},
-               {id:'e11',sourceId:'m2',targetId:'f6',flowType:'has',status:'active'},
-               {id:'e12',sourceId:'m2',targetId:'f7',flowType:'has',status:'active'},
-               {id:'e13',sourceId:'m2',targetId:'a3',flowType:'has',status:'active'}]},
+        edges:[]},
       b2: { name:'巡查问题在线管理', path:'~/projects/patrol',
         modules:[{id:'m1',name:'任务管理',posX:80,posY:60,pages:[
           {id:'p1',name:'创建任务',posX:100,posY:200,moduleId:'m1',fields:[
@@ -105,13 +119,21 @@
       },
     };
 
-    // ── Build full project response ──
+    // ── Build full project response + auto‑generate edges ──
     function buildProject(data) {
       const modules = data.modules.map(m => ({...m,projectId:'proj-1',_count:{pages:m.pages.length,fields:0,actions:0}}));
-      const pages = data.modules.flatMap(m => m.pages.map(p => ({...p,projectId:'proj-1'})));
-      const fields = data.modules.flatMap(m => m.pages.flatMap(p => (p.fields||[]).map(f => ({...f,projectId:'proj-1'}))));
-      const actions = data.modules.flatMap(m => m.pages.flatMap(p => (p.actions||[]).map(a => ({...a,projectId:'proj-1'}))));
-      const edges = (data.edges||[]).map(e => ({...e,projectId:'proj-1'}));
+      const pages = data.modules.flatMap(m => m.pages.map(p => ({...p,projectId:'proj-1',moduleId:m.id})));
+      const fields = data.modules.flatMap(m => m.pages.flatMap(p => (p.fields||[]).map(f => ({...f,projectId:'proj-1',pageId:p.id,moduleId:m.id}))));
+      const actions = data.modules.flatMap(m => m.pages.flatMap(p => (p.actions||[]).map(a => ({...a,projectId:'proj-1',pageId:p.id,moduleId:m.id}))));
+      let ei = 0;
+      const edges = [];
+      data.modules.forEach(m => {
+        (m.pages||[]).forEach(p => {
+          edges.push({id:'e'+(ei++),sourceId:m.id,targetId:p.id,flowType:'has',status:'active',projectId:'proj-1',label:''});
+          (p.fields||[]).forEach(f => edges.push({id:'e'+(ei++),sourceId:p.id,targetId:f.id,flowType:'has',status:'active',projectId:'proj-1',label:''}));
+          (p.actions||[]).forEach(a => edges.push({id:'e'+(ei++),sourceId:p.id,targetId:a.id,flowType:'has',status:'active',projectId:'proj-1',label:''}));
+        });
+      });
       return {
         id:'proj-1', name:data.name, description:'', status:'active',
         modules, pages, fields, actions, edges,
