@@ -12,7 +12,7 @@ import { getState, STATES } from './state.js'
 const SCHEMA = {
   'b1→a1': true,  'b1→a2': true,
   'b2→a1': true,  'b2→a2': true,
-  'doc→a1': true, 'doc→a2': true, 'doc→b1': true, 'doc→b2': true,
+  'b3→a1': true,  'b3→a2': true, 'b3→b1': true, 'b3→b2': true,
 }
 function isValid(from, to) {
   if (from === to) return false

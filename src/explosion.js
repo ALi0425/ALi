@@ -310,11 +310,11 @@ function runExplosionAnimation(sphere, camera) {
 
 /* ── Capability bubbles data ── */
 const CAPABILITIES = {
-  a1: ['n8n工作流自动化', 'GraphRAG双库分流', 'JSON Mode提取'],
-  a2: ['元数据逆向解析', '嵌套交互画布', '强Schema校验'],
-  b1: ['20+业务流程拆解', '纳管12805项成果', '效率提升60%+'],
-  b2: ['万级数据高效协同', '14家二级单位协同'],
-  doc: ['技术规范书', '可行性研究报告', '需规说明书'],
+  a1: ['GraphRAG', 'n8n工作流编排', 'LLM数据提取'],
+  a2: ['元数据逆向解析', '多层嵌套交互画布', 'LLM智能评估'],
+  b1: ['跨部门资源协同调度', '复杂B端业务流程解构', '大规模资产纳管'],
+  b2: ['合规化线上双审流程', '人才自动分配机制'],
+  b3: ['存量功能逻辑重构', '多单位权限划分', '多模块业务集成'],
 }
 
 /* ── (Bubbles rendered via fixed overlay) ── */

@@ -44,11 +44,11 @@ const TAG_DATA = [
 
 /* ── Project Data ── */
 const PROJECT_DATA = [
-  { label: 'OmniSight 策略导航',  key: 'a1',  desc: 'n8n · GraphRAG · JSON Mode' },
-  { label: 'RARE 智能逆向',    key: 'a2',  desc: '元数据逆向 · 嵌套画布 · Schema' },
-  { label: '科技管理 一/二期',    key: 'b1',  desc: '20+流程 · 12805项成果 · 60%+' },
-  { label: '科技管理 应用三期',   key: 'b2',  desc: '万级数据 · 14家二级单位' },
-  { label: '大厂正规军 交付物',   key: 'doc', desc: '技术规范 · 可研 · 需规' },
+  { label: 'OmniSight 知识图谱与蓝海分析', key: 'a1', desc: 'n8n · GraphRAG · LLM' },
+  { label: 'RARE 逆向资产与智能评估',    key: 'a2', desc: '元数据逆向 · 嵌套画布 · LLM' },
+  { label: '科技管理应用',              key: 'b1', desc: '3期项目 · 7项一级功能' },
+  { label: '巡查问题在线管理',           key: 'b2', desc: '4项一级功能 · 业务逻辑抽象' },
+  { label: '项目管理应用',              key: 'b3', desc: '复杂业务解构 · 53家单位' },
 ]
 
 /* ── Fibonacci sphere point generator ── */
