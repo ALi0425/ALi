@@ -227,12 +227,31 @@
         if (t.includes('资产管理')) el.style.display = 'none';
       });
 
-      // 3. Scale down canvas viewport (React Flow)
+      // 3. Fit canvas to show all nodes (React Flow fitView)
       if (!_canvasScaled) {
-        const vp = document.querySelector('[style*="transform"]');
-        if (vp && vp.parentElement && vp.style.transform.includes('scale')) {
-          vp.style.transform = 'scale(0.65) translate(0px, 0px)';
-          _canvasScaled = true;
+        const rf = document.querySelector('.react-flow');
+        if (rf) {
+          const vp = rf.querySelector('.react-flow__viewport');
+          const nodes = rf.querySelectorAll('.react-flow__node');
+          if (vp && nodes.length > 1) {
+            // Compute bounding box of all nodes
+            let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+            nodes.forEach(n => {
+              const r = n.getBoundingClientRect();
+              const rfRect = rf.getBoundingClientRect();
+              const x = r.left - rfRect.left, y = r.top - rfRect.top;
+              minX = Math.min(minX, x); minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x + r.width); maxY = Math.max(maxY, y + r.height);
+            });
+            const pad = 60;
+            const w = maxX - minX + pad * 2, h = maxY - minY + pad * 2;
+            const vw = rf.clientWidth, vh = rf.clientHeight;
+            const scale = Math.min(vw / w, vh / h, 1.2);
+            const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+            const tx = vw/2 - cx * scale, ty = vh/2 - cy * scale;
+            vp.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+            _canvasScaled = true;
+          }
         }
       }
 
