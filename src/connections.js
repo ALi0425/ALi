@@ -78,12 +78,25 @@ export function initConnections() {
    DRAG
    ═══════════════════════════════════════ */
 
+/* ── Pulse a‑node endpoints when b‑node drag starts ── */
+function pulseATargets(active) {
+  const keys = ['a1', 'a2']
+  keys.forEach(k => {
+    const card = document.querySelector(`.project-label.card[data-key="${k}"]`)
+    if (!card) return
+    const ep = card.querySelector('.endpoint.left')
+    if (ep) ep.classList.toggle('pulse', active)
+  })
+}
+
 export function startDrag(fromKey, fromScreenX, fromScreenY) {
   if (getState() !== STATES.FLOATING) return
   _dragging = true
   _dragFrom = { key: fromKey, sx: fromScreenX, sy: fromScreenY }
   _dragTo = null
   _dragPath = createPath('drag-line', 'rgba(34,197,94,0.5)', 0.6, 2)
+  // Pulse a‑node endpoints when dragging from b‑node
+  if (['b1','b2','b3'].includes(fromKey)) pulseATargets(true)
 }
 
 export function setDragTarget(key, sx, sy) {
@@ -112,6 +125,8 @@ document.addEventListener('mouseup', () => {
     const cy = (_dragFrom.sy + _dragTo.sy) / 2
     triggerInvalidBurst(cx, cy)
   }
+  // Stop pulse on any drag end
+  pulseATargets(false)
   if (_dragPath) { _dragPath.remove(); _dragPath = null }
   _dragFrom = null; _dragTo = null
 })
@@ -129,6 +144,9 @@ function addConnection(from, to) {
 
   const conn = { fromKey: from.key, toKey: to.key, fromSx: from.sx, fromSy: from.sy, toSx: to.sx, toSy: to.sy, path, glow, _flowTime: Math.random() * 100 }
   _connections.push(conn)
+
+  // Stop pulse when b→a connection established
+  pulseATargets(false)
 
   console.log(`%c🔗  ${from.key} → ${to.key} — VALID`, 'color:#22c55e;font-family:monospace')
   checkAllConnected()
