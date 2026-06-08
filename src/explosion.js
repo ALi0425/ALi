@@ -23,6 +23,7 @@ const FLOAT_STAGGER   = 120    // ms delay between node re-appearances
 
 /* ── Module-level state ── */
 let _triggered = false
+let _activeCamera = null
 
 /* ── Fibonacci (shared with sphere.js logic) ── */
 function fibonacciPoints(count, radius) {
@@ -56,6 +57,7 @@ function easeOutCubic(t) {
    ═══════════════════════════════════════ */
 
 export function initExplosion(scene, sphere, camera) {
+  _activeCamera = camera
   let clickTimer = null
   const DOUBLE_CLICK_DELAY = 280
 
@@ -341,34 +343,59 @@ function endpoint3D(nodePos, isRight, camera) {
 
 function initNodeFloating(sphere, camera) {
   window.__floatingNodeRefs = sphere.nodeRefs
+  const group = sphere.group
+  group.rotation.set(0, 0, 0)
+  group.scale.setScalar(1)
+  group.position.set(0, 0, 0)
+
+  // Hide CSS2DObject versions (keep on sphere group but hidden)
+  sphere.nodeRefs.forEach(ref => { ref.obj.visible = false })
+
+  // Create floating overlay for card elements
+  const overlay = document.getElementById('card-overlay') || (()=>{
+    const d = document.createElement('div')
+    d.id = 'card-overlay'
+    d.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:10'
+    document.body.appendChild(d)
+    return d
+  })()
+  overlay.innerHTML = ''
+
+  const base3D = [[-3.0,2.0],[3.0,2.0],[0,0],[-3.0,-2.0],[3.0,-2.0]]
+  const _vec3 = new THREE.Vector3()
 
   const nodes = sphere.nodeRefs.map((ref, i) => {
-    const pos = ref.obj.position.clone()
-    const dir = pos.clone().normalize()
+    const key = ref.data.key
+    const [bx, by] = base3D[i % base3D.length]
 
-    // Fixed positions — 3 rows, compact
-    const rows = [
-      { x: -3.2, y:  3.8, z:  0 },
-      { x:  3.2, y:  3.8, z:  0 },
-      { x:  0,   y:  1.8, z:  0 },
-      { x: -3.2, y:  0.3, z:  0 },
-      { x:  3.2, y:  0.3, z:  0 },
-    ]
-    const cfg = rows[i % rows.length]
-    const scattered = new THREE.Vector3(cfg.x, cfg.y, cfg.z)
+    // Create overlay card element
+    const cardEl = document.createElement('div')
+    cardEl.className = 'project-label card'
+    cardEl.style.cssText = 'pointer-events:auto;position:fixed;opacity:0'
+    cardEl.innerHTML = [
+      '<span class="endpoint left" data-key="'+key+'"></span>',
+      '<div class="pl-body"><span class="pl-title">'+ref.data.label+'</span><span class="pl-desc">'+ref.data.desc+'</span></div>',
+      '<span class="endpoint right" data-key="'+key+'"></span>'
+    ].join('')
+    overlay.appendChild(cardEl)
 
-    // Set exact fixed position — no physics drift
-    ref.obj.position.set(scattered.x, scattered.y, scattered.z)
+    // Pre-compute screen position from 3D
+    _vec3.set(bx, by, 0)
+    _vec3.project(camera)
+    const sx = (_vec3.x*0.5+0.5)*window.innerWidth
+    const sy = (-_vec3.y*0.5+0.5)*window.innerHeight
 
     return {
       ref,
-      pos3D: ref.obj.position,
-      velocity: new THREE.Vector3(0, 0, 0),
+      el: cardEl,
+      key,
+      bx, by,
+      screenX: sx, screenY: sy,
       floatPhase: (i / sphere.nodeRefs.length) * Math.PI * 2,
       appeared: false,
       bubbles: [],
       dragging: false,
-      dragOffset: new THREE.Vector3(),
+      _pinned: false,
     }
   })
 
@@ -377,14 +404,15 @@ function initNodeFloating(sphere, camera) {
 
   nodes.forEach((node, i) => {
     setTimeout(() => {
-      const el = node.ref.el
+      const el = node.el
       const key = node.ref.data.key
-      el.style.transition =
-        'opacity 0.8s cubic-bezier(0.1, 1, 0.1, 1)'
+      el.style.transition = 'opacity 0.8s cubic-bezier(0.1, 1, 0.1, 1)'
       el.style.opacity = '1'
-      el.style.transform = 'scale(1)'
-      el.classList.add('card')
       node.appeared = true
+
+      // Event listeners (once per element lifetime)
+      if (el.dataset._listeners) return
+      el.dataset._listeners = '1'
 
       /* ── State 03: Hover Iridescent ── */
       el.addEventListener('mouseenter', () => {
@@ -409,9 +437,9 @@ function initNodeFloating(sphere, camera) {
       /* ── State 03: Click → Terminal ── */
       el.addEventListener('click', (e) => {
         if (e.target.closest('.endpoint')) return
-        // Ensure drag flag is reset (safety for incomplete drags)
         node.dragging = false
         e.stopPropagation()
+        console.log('%c📋 terminal click: key='+key, 'color:#22c55e')
         openTerminal(key)
       })
 
@@ -420,28 +448,26 @@ function initNodeFloating(sphere, camera) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          startDrag(key, endpoint3D(node.ref.obj.position, ep.classList.contains('right'), camera))
+          startDrag(key, node.ref.obj.position)
         })
         ep.addEventListener('mouseenter', () => {
-          setDragTarget(key, endpoint3D(node.ref.obj.position, ep.classList.contains('right'), camera))
+          setDragTarget(key, node.ref.obj.position)
         })
         ep.addEventListener('mouseleave', () => {
           clearDragTarget()
         })
       })
 
-      /* ── NEW: Drag card body to reposition ── */
+      /* ── Drag card body to reposition ── */
       const body = el.querySelector('.pl-body') || el
       let dragStarted = false
       let startX = 0, startY = 0
-      const startPos = new THREE.Vector3()
 
       body.addEventListener('mousedown', (e) => {
         if (e.target.closest('.endpoint') || e.target.closest('.bubble')) return
         dragStarted = false
         startX = e.clientX
         startY = e.clientY
-        startPos.copy(node.pos3D)
         node.dragging = false
 
         const onMove = (ev) => {
@@ -451,12 +477,12 @@ function initNodeFloating(sphere, camera) {
             dragStarted = true
             node.dragging = true
             el.style.cursor = 'grabbing'
-            el.style.transition = 'none'
           }
           if (dragStarted) {
-            const scale = 0.012
-            node.pos3D.x = startPos.x + dx * scale
-            node.pos3D.y = startPos.y - dy * scale
+            el.style.left = (parseFloat(el.style.left) + dx) + 'px'
+            el.style.top = (parseFloat(el.style.top) + dy) + 'px'
+            startX = ev.clientX
+            startY = ev.clientY
           }
         }
 
@@ -465,8 +491,8 @@ function initNodeFloating(sphere, camera) {
           document.removeEventListener('mouseup', onUp)
           if (dragStarted) {
             node.dragging = false
+            node._pinned = true
             el.style.cursor = 'grab'
-            el.style.transition = ''
           }
         }
 
@@ -549,56 +575,25 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
   sphere._floatTime += deltaMs * 0.001
   const time = sphere._floatTime
 
-  const REP_RADIUS = 3.5, REP_STR = 0.003, DAMP = 0.96
-  const SPRING = 0.0008, BOUNDARY = 3.8, Y_MIN = -0.5, Y_MAX = 5.0
-
-  // Repulsion
-  for (let i = 0; i < nodes.length; i++) {
-    if (!nodes[i].appeared || nodes[i].dragging) continue
-    for (let j = i + 1; j < nodes.length; j++) {
-      if (!nodes[j].appeared || nodes[j].dragging) continue
-      const a = nodes[i].pos3D, b = nodes[j].pos3D
-      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z
-      const dist = Math.sqrt(dx*dx + dy*dy + dz*dz)
-      if (dist < REP_RADIUS && dist > 0.01) {
-        const f = ((REP_RADIUS - dist) / REP_RADIUS) * REP_STR / dist
-        nodes[i].velocity.x -= dx*f; nodes[i].velocity.y -= dy*f; nodes[i].velocity.z -= dz*f
-        nodes[j].velocity.x += dx*f; nodes[j].velocity.y += dy*f; nodes[j].velocity.z += dz*f
-      }
-    }
-  }
-
-  const basePositions = [[-3.2,3.8],[3.2,3.8],[0,1.8],[-3.2,0.3],[3.2,0.3]]
+  const w = window.innerWidth, h = window.innerHeight
+  const halfW = w / 2, halfH = h / 2
+  const scale = 68  // px per 3D unit at z=0 with this FOV
 
   for (const node of nodes) {
     if (!node.appeared) continue
-    if (node.dragging) continue
+    if (node.dragging || node._pinned) continue
 
     const idx = nodes.indexOf(node)
-    const [bx, by] = basePositions[idx] || [0,0]
+    const x3d = [-3.0, 3.0, 0, -3.0, 3.0][idx] || 0
+    const y3d = [2.0, 2.0, 0, -2.0, -2.0][idx] || 0
 
-    node.velocity.x *= DAMP; node.velocity.y *= DAMP; node.velocity.z *= DAMP
+    const sx = halfW + x3d * scale
+    const sy = halfH - y3d * scale
+    const floatY = Math.sin(time * 1.2 + node.floatPhase) * 3
 
-    // Gentle spring toward base (very weak — keeps nodes near center, doesn't fight drag)
-    node.velocity.x += (bx - node.pos3D.x) * SPRING
-    node.velocity.y += (by - node.pos3D.y) * SPRING
-
-    // Floating oscillation (additive to current position)
-    node.pos3D.y += Math.sin(time * 1.2 + node.floatPhase) * 0.003
-
-    // Pre-clamp velocity to stay within boundary
-    if (Math.abs(node.pos3D.x + node.velocity.x) > BOUNDARY) node.velocity.x *= -0.8
-    if (Math.abs(node.pos3D.z + node.velocity.z) > BOUNDARY) node.velocity.z *= -0.8
-    if (node.pos3D.y + node.velocity.y > Y_MAX || node.pos3D.y + node.velocity.y < Y_MIN) node.velocity.y *= -0.8
-
-    node.pos3D.x += node.velocity.x
-    node.pos3D.y += node.velocity.y
-    node.pos3D.z += node.velocity.z
-
-    // Hard clamp — absolute boundary
-    node.pos3D.x = Math.max(-BOUNDARY, Math.min(BOUNDARY, node.pos3D.x))
-    node.pos3D.z = Math.max(-BOUNDARY, Math.min(BOUNDARY, node.pos3D.z))
-    node.pos3D.y = Math.max(Y_MIN, Math.min(Y_MAX, node.pos3D.y))
+    node.el.style.left = sx + 'px'
+    node.el.style.top = (sy + floatY) + 'px'
+    node.el.style.transform = 'translate(-50%, -50%)'
   }
 }
 
@@ -618,6 +613,10 @@ export function resetExplosion(sphere) {
   const orig = sphere.origPos
   const count = pos.length / 3
 
+  // Clear pinned flags from all nodes
+  if (sphere._floatingNodes) {
+    sphere._floatingNodes.forEach(n => { n._pinned = false; n.dragging = false })
+  }
   sphere._floatingNodes = null
 
   const nodePositions = fibonacciPoints(sphere.nodeRefs.length, 4.8)
@@ -665,21 +664,23 @@ function finishReset(sphere, nodePositions) {
   sphere.infoRefs.forEach((ref) => { ref.el.style.opacity = '1' })
   if (sphere.tagRefs) sphere.tagRefs.forEach((ref) => { ref.el.style.opacity = '1' })
 
-  // 4. Clear bubble overlay
+  // 4. Clear overlays
   if (_bubbleOverlay) _bubbleOverlay.innerHTML = ''
+  const cardOverlay = document.getElementById('card-overlay')
+  if (cardOverlay) cardOverlay.remove()
 
-  // 5. Reset each node — keep same DOM element (CSS2DRenderer reference)
+  // 5. Restore CSS2DObjects visibility and sphere positions
   sphere.nodeRefs.forEach((ref, i) => {
-    // Reset internal content
     const body = ref.el.querySelector('.pl-body')
     if (body) {
-      body.querySelector('.pl-title').textContent = ref.data.label
-      body.querySelector('.pl-desc').textContent = ref.data.desc
+      const t = body.querySelector('.pl-title')
+      const d = body.querySelector('.pl-desc')
+      if (t) t.textContent = ref.data.label
+      if (d) d.textContent = ref.data.desc
     }
-    // Reset classes and inline styles
     ref.el.className = 'project-label'
     ref.el.style.cssText = ''
-    // Reset position on sphere
+    ref.obj.visible = true
     ref.obj.position.set(
       nodePositions[i * 3],
       nodePositions[i * 3 + 1],
