@@ -154,23 +154,17 @@ function updateDragLine(from, to) {
 }
 
 function getCurvePoints(from, to) {
-  // Rounded polyline: horizontal → rounded corner → vertical
+  // Clean right-angle polyline: horizontal → corner → vertical
   const mx = (from.x + to.x) / 2
   const my = (from.y + to.y) / 2
-  const radius = 0.5  // rounding radius
+  const mz = (from.z + to.z) / 2
 
-  // Two corner approach: creates a rounded L-shape
-  const pts = [
+  return [
     from,
-    new THREE.Vector3(from.x, my, (from.z + to.z) / 2),
-    new THREE.Vector3(mx, my, (from.z + to.z) / 2),
-    new THREE.Vector3(to.x, my, (from.z + to.z) / 2),
+    new THREE.Vector3(from.x, my, mz),
+    new THREE.Vector3(to.x, my, mz),
     to,
   ]
-
-  // CatmullRom creates a smooth curve through all points (rounded corner)
-  const curve = new THREE.CatmullRomCurve3(pts)
-  return curve.getPoints(24)
 }
 
 function createFlowLine() {

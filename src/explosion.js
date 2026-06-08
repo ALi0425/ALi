@@ -480,48 +480,41 @@ function initNodeFloating(sphere, camera) {
         })
       })
 
-      /* ── Smooth drag ── */
+      /* ── Simple pixel drag ── */
       const body = el.querySelector('.pl-body') || el
-      let dragStarted = false
-      let startX = 0, startY = 0
 
       body.addEventListener('mousedown', (e) => {
         if (e.target.closest('.endpoint') || e.target.closest('.bubble')) return
-        dragStarted = false
-        startX = e.clientX
-        startY = e.clientY
+        const startX = e.clientX, startY = e.clientY
+        const initLeft = parseFloat(el.style.left) || 0
+        const initTop  = parseFloat(el.style.top)  || 0
+        let moved = false
         node.dragging = false
 
         const onMove = (ev) => {
-          const dx = ev.clientX - startX
-          const dy = ev.clientY - startY
-          if (!dragStarted && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
-            dragStarted = true
-            node.dragging = true
-            startX = ev.clientX
-            startY = ev.clientY
+          const dx = ev.clientX - startX, dy = ev.clientY - startY
+          if (!moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+            moved = true; node.dragging = true
             el.style.cursor = 'grabbing'
             el.style.transition = 'none'
           }
-          if (dragStarted) {
-            node._dragOffsetX += ev.clientX - startX
-            node._dragOffsetY += ev.clientY - startY
-            startX = ev.clientX
-            startY = ev.clientY
+          if (moved) {
+            el.style.left = (initLeft + dx) + 'px'
+            el.style.top  = (initTop  + dy) + 'px'
+            el.style.transform = 'translate(-50%, -50%)'
+            node._pinLeft = initLeft + dx
+            node._pinTop  = initTop + dy
           }
         }
 
         const onUp = () => {
           document.removeEventListener('mousemove', onMove)
           document.removeEventListener('mouseup', onUp)
-          if (dragStarted) {
-            node.dragging = false
-            node._pinned = true
-            el.style.cursor = 'grab'
-            el.style.transition = ''
+          if (moved) {
+            node.dragging = false; node._pinned = true
+            el.style.cursor = 'grab'; el.style.transition = ''
           }
         }
-
         document.addEventListener('mousemove', onMove)
         document.addEventListener('mouseup', onUp)
       })
@@ -614,10 +607,13 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
     const floatY = Math.sin(time * 1.2 + node.floatPhase) * 3
 
     if (node._pinned) {
-      // Pinned: keep dragged position, add float on top
-      const bonus = Math.sin(time * 2.1 + node.floatPhase * 1.3) * 1.5
-      node.el.style.transform =
-        'translate(calc(-50% + ' + (node._dragOffsetX) + 'px), calc(-50% + ' + (node._dragOffsetY + floatY + bonus) + 'px))'
+      // Pinned: keep dragged left/top, add float via transform
+      const floatPx = Math.sin(time * 1.2 + node.floatPhase) * 2
+      if (node._pinLeft !== undefined) {
+        node.el.style.left = node._pinLeft + 'px'
+        node.el.style.top  = node._pinTop + 'px'
+      }
+      node.el.style.transform = 'translate(-50%, calc(-50% + ' + floatPx + 'px))'
     } else {
       // Normal: base position + float
       const sx = halfW + x3d * scale
