@@ -348,11 +348,11 @@ function initNodeFloating(sphere, camera) {
 
     // Fixed positions — 3 rows, compact
     const rows = [
-      { x: -3.2, y:  2.2, z:  0 },
-      { x:  3.2, y:  2.2, z:  0 },
-      { x:  0,   y:  0.2, z:  0 },
-      { x: -3.2, y: -1.8, z:  0 },
-      { x:  3.2, y: -1.8, z:  0 },
+      { x: -3.2, y:  3.8, z:  0 },
+      { x:  3.2, y:  3.8, z:  0 },
+      { x:  0,   y:  1.8, z:  0 },
+      { x: -3.2, y:  0.3, z:  0 },
+      { x:  3.2, y:  0.3, z:  0 },
     ]
     const cfg = rows[i % rows.length]
     const scattered = new THREE.Vector3(cfg.x, cfg.y, cfg.z)
@@ -380,7 +380,7 @@ function initNodeFloating(sphere, camera) {
       const el = node.ref.el
       const key = node.ref.data.key
       el.style.transition =
-        'opacity 0.8s cubic-bezier(0.1, 1, 0.1, 1), transform 0.8s cubic-bezier(0.1, 1, 0.1, 1)'
+        'opacity 0.8s cubic-bezier(0.1, 1, 0.1, 1)'
       el.style.opacity = '1'
       el.style.transform = 'scale(1)'
       el.classList.add('card')
@@ -454,12 +454,10 @@ function initNodeFloating(sphere, camera) {
             el.style.transition = 'none'
           }
           if (dragStarted) {
-            // Convert pixel delta to 3D delta (approximate)
             const scale = 0.012
             node.pos3D.x = startPos.x + dx * scale
             node.pos3D.y = startPos.y - dy * scale
-            // Zero out velocity so physics doesn't fight the drag
-            node.velocity.set(0, 0, 0)
+            node._dragAway = true
           }
         }
 
@@ -468,6 +466,7 @@ function initNodeFloating(sphere, camera) {
           document.removeEventListener('mouseup', onUp)
           if (dragStarted) {
             node.dragging = false
+            node._dragAway = true
             el.style.cursor = 'grab'
             el.style.transition = ''
           }
@@ -552,56 +551,32 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
   sphere._floatTime += deltaMs * 0.001
   const time = sphere._floatTime
 
-  const REPULSION_RADIUS = 3.5, REPULSION_STRENGTH = 0.005, DAMPING = 0.97
-  const CENTER_ATTRACTION = 0.0005, BOUNDARY = 4.0, Y_MIN = -1.5, Y_MAX = 2.5
-
-  // O(n²) repulsion
-  for (let i = 0; i < nodes.length; i++) {
-    if (!nodes[i].appeared || nodes[i].dragging) continue
-    for (let j = i + 1; j < nodes.length; j++) {
-      if (!nodes[j].appeared || nodes[j].dragging) continue
-      const a = nodes[i].pos3D, b = nodes[j].pos3D
-      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
-      if (dist < REPULSION_RADIUS && dist > 0.01) {
-        const f = ((REPULSION_RADIUS - dist) / REPULSION_RADIUS) * REPULSION_STRENGTH / dist
-        nodes[i].velocity.x -= dx * f; nodes[i].velocity.y -= dy * f; nodes[i].velocity.z -= dz * f
-        nodes[j].velocity.x += dx * f; nodes[j].velocity.y += dy * f; nodes[j].velocity.z += dz * f
-      }
-    }
-  }
+  const basePositions = [[-3.2,3.8],[3.2,3.8],[0,1.8],[-3.2,0.3],[3.2,0.3]]
 
   for (const node of nodes) {
     if (!node.appeared) continue
-    if (node.dragging) continue
 
-    node.velocity.x *= DAMPING
-    node.velocity.y *= DAMPING
-    node.velocity.z *= DAMPING
-
-    // Spring toward base position (from initial layout)
     const idx = nodes.indexOf(node)
-    const baseX = [-3.2, 3.2, 0, -3.2, 3.2][idx] || 0
-    const baseY = [2.2, 2.2, 0.2, -1.8, -1.8][idx] || 0
-    node.velocity.x += (baseX - node.pos3D.x) * 0.003
-    node.velocity.y += (baseY - node.pos3D.y) * 0.003
+    const [bx, by] = basePositions[idx] || [0,0]
 
-    // Subtle floating oscillation
-    node.pos3D.y += Math.sin(time * 1.2 + node.floatPhase) * 0.002
+    if (node.dragging) {
+      // During drag, just track the offset
+      continue
+    }
 
-    // Pre-clamp velocity
-    if (Math.abs(node.pos3D.x + node.velocity.x) > BOUNDARY) node.velocity.x *= -0.5
-    if (Math.abs(node.pos3D.z + node.velocity.z) > BOUNDARY) node.velocity.z *= -0.5
-    if (node.pos3D.y + node.velocity.y > Y_MAX || node.pos3D.y + node.velocity.y < Y_MIN) node.velocity.y *= -0.5
+    // Fixed base position + floating oscillation
+    node.pos3D.x = bx
+    node.pos3D.y = by + Math.sin(time * 1.2 + node.floatPhase) * 0.002
+    node.pos3D.z = 0
 
-    node.pos3D.x += node.velocity.x
-    node.pos3D.y += node.velocity.y
-    node.pos3D.z += node.velocity.z
-
-    // Hard clamp
-    node.pos3D.x = Math.max(-BOUNDARY, Math.min(BOUNDARY, node.pos3D.x))
-    node.pos3D.z = Math.max(-BOUNDARY, Math.min(BOUNDARY, node.pos3D.z))
-    node.pos3D.y = Math.max(Y_MIN, Math.min(Y_MAX, node.pos3D.y))
+    // If node was dragged away, ease back toward base
+    if (node._dragAway) {
+      const dx = bx - node.pos3D.x
+      const dy = by - node.pos3D.y
+      node.pos3D.x += dx * 0.02
+      node.pos3D.y += dy * 0.02
+      if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) node._dragAway = false
+    }
   }
 }
 
