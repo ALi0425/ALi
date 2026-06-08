@@ -351,10 +351,12 @@ function initNodeFloating(sphere, camera) {
     cardEl.className = 'project-label card'
     cardEl.dataset.key = key
     cardEl.style.cssText = 'pointer-events:auto;position:fixed;opacity:0'
+    const showLeft = !['b1','b2','b3'].includes(key)
+    const showRight = !['a1','a2'].includes(key)
     cardEl.innerHTML = [
-      '<span class="endpoint left" data-key="'+key+'"></span>',
+      showLeft ? '<span class="endpoint left" data-key="'+key+'"></span>' : '',
       '<div class="pl-body"><span class="pl-title">'+ref.data.label+'</span><span class="pl-desc">'+ref.data.desc+'</span></div>',
-      '<span class="endpoint right" data-key="'+key+'"></span>'
+      showRight ? '<span class="endpoint right" data-key="'+key+'"></span>' : '',
     ].join('')
     overlay.appendChild(cardEl)
 
