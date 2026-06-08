@@ -226,8 +226,8 @@ html, body {
 
 .tt-window {
   position: relative;
-  width: min(920px, 92vw);
-  max-height: 82vh;
+  width: min(1400px, 95vw);
+  max-height: 88vh;
   background: rgba(16,16,18,0.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -287,8 +287,8 @@ html, body {
 
 /* ── LEFT: browser card ── */
 .tt-left {
-  width: 38%; flex-shrink: 0;
-  padding: 20px 16px 20px 20px;
+  width: 66.67%; flex-shrink: 0;
+  padding: 24px 20px 24px 24px;
   border-right: 1px solid rgba(255,255,255,0.04);
 }
 
@@ -360,7 +360,7 @@ html, body {
 
 /* ── RIGHT: console ── */
 .tt-right {
-  flex: 1; padding: 20px 18px;
+  width: 33.33%; padding: 24px 20px;
   overflow-y: auto;
   background: rgba(0,0,0,0.15);
 }
