@@ -14,6 +14,7 @@ const NODE_PROFILES = {
     path: '~/projects/omnisight',
     tag: 'AI · 数据工程',
     metrics: ['n8n工作流编排', 'GraphRAG', 'LLM数据提取'],
+    video: '/omnisight.mp4',
     content: `● 项目定位
 → 面向企业高层的通用型大模型资产盘点与战略决策导航系统
 
