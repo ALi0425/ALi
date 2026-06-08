@@ -23,23 +23,23 @@ const INFO_DATA = [
 ]
 
 const TAG_DATA = [
-  { text: '国产ERP 信息化项目',   fontSize: 22 },
-  { text: '全程项目管理',        fontSize: 20 },
-  { text: 'n8n低代码平台',       fontSize: 20 },
-  { text: 'vibe coding全栈交付', fontSize: 18 },
-  { text: '4年企业级B端系统',    fontSize: 24 },
-  { text: '华北理工大学',         fontSize: 18 },
-  { text: '工作流自动化',        fontSize: 20 },
-  { text: 'RAG与知识图谱',       fontSize: 22 },
-  { text: '业务逻辑抽象',        fontSize: 18 },
-  { text: '大型项目协同',        fontSize: 24 },
-  { text: '结构化文档编制',       fontSize: 18 },
-  { text: '工作流编排',          fontSize: 20 },
-  { text: '27岁',               fontSize: 28 },
-  { text: '多模态增量清洗',       fontSize: 18 },
-  { text: '复杂业务流程解构',     fontSize: 20 },
-  { text: '权限协同与资源调配',   fontSize: 22 },
-  { text: '大模型落地产品',       fontSize: 24 },
+  { text: '国产ERP 信息化项目',   fontSize: 30, color: '#ffffff' },
+  { text: '全程项目管理',        fontSize: 24, color: '#22c55e' },
+  { text: 'n8n低代码平台',       fontSize: 34, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
+  { text: 'vibe coding全栈交付', fontSize: 26, color: '#ffffff' },
+  { text: '4年企业级B端系统',    fontSize: 28, color: '#ffffff' },
+  { text: '华北理工大学',         fontSize: 20, color: '#ffffff' },
+  { text: '工作流自动化',        fontSize: 28, color: '#22c55e' },
+  { text: 'RAG与知识图谱',       fontSize: 32, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
+  { text: '业务逻辑抽象',        fontSize: 22, color: '#ffffff' },
+  { text: '大型项目协同',        fontSize: 26, color: '#ffffff' },
+  { text: '结构化文档编制',       fontSize: 22, color: '#ffffff' },
+  { text: '工作流编排',          fontSize: 24, color: '#22c55e' },
+  { text: '27岁',               fontSize: 36, color: '#ffffff', glow: '0 0 16px rgba(255,255,255,0.15)' },
+  { text: '多模态增量清洗',       fontSize: 24, color: '#ffffff' },
+  { text: '复杂业务流程解构',     fontSize: 26, color: '#ffffff' },
+  { text: '权限协同与资源调配',   fontSize: 28, color: '#ffffff' },
+  { text: '大模型落地产品',       fontSize: 34, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
 ]
 
 /* ── Project Data ── */
@@ -171,9 +171,9 @@ export function createSphere(scene) {
     el.style.cssText = `
       font-family: 'Space Mono', 'Courier New', monospace;
       font-size: ${data.fontSize}px;
-      font-weight: 400;
-      color: rgba(255,255,255,0.9);
-      text-shadow: 0 0 12px rgba(34,197,94,0.2);
+      font-weight: 500;
+      color: ${data.color};
+      text-shadow: ${data.glow || '0 0 8px rgba(34,197,94,0.15)'};
       pointer-events: none; user-select: none; white-space: nowrap;
       letter-spacing: 0.02em; line-height: 1.2;
     `
