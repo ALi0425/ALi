@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RARE · 智能逆向沙盒</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" crossorigin href="./assets/index-CZ_j9wtc.css">
+    <script>
+    /* ── RARE API Mock ── */
+    const PARAMS = new URLSearchParams(location.search);
+    const BKEY = PARAMS.get('project') || 'b2';
+    const BASE = 'http://localhost:3001/api';
+
+    // ── Project data per B‑node ──
+    const DATA = {
+      b1: { name:'科技管理应用', path:'~/projects/tech-mgmt',
+        modules:[{id:'m1',name:'项目管理',posX:100,posY:60,pages:[
+          {id:'p1',name:'立项申请',posX:120,posY:200,moduleId:'m1',fields:[
+            {id:'f1',name:'项目名称',fieldType:'string',posX:150,posY:280,pageId:'p1'},
+            {id:'f2',name:'预算金额',fieldType:'number',posX:150,posY:320,pageId:'p1'},
+            {id:'f3',name:'负责人',fieldType:'string',posX:150,posY:360,pageId:'p1'},
+          ],actions:[
+            {id:'a1',name:'提交审批',actionType:'submit',posX:280,posY:280,pageId:'p1'},
+          ]},
+          {id:'p2',name:'进度跟踪',posX:400,posY:200,moduleId:'m1',fields:[
+            {id:'f4',name:'完成度',fieldType:'percent',posX:430,posY:280,pageId:'p2'},
+            {id:'f5',name:'里程碑',fieldType:'string',posX:430,posY:320,pageId:'p2'},
+          ],actions:[
+            {id:'a2',name:'更新进度',actionType:'update',posX:560,posY:280,pageId:'p2'},
+          ]},
+        ]}, {id:'m2',name:'成果管理',posX:500,posY:60,pages:[
+          {id:'p3',name:'成果登记',posX:520,posY:200,moduleId:'m2',fields:[
+            {id:'f6',name:'成果名称',fieldType:'string',posX:550,posY:280,pageId:'p3'},
+            {id:'f7',name:'类型',fieldType:'select',posX:550,posY:320,pageId:'p3'},
+          ],actions:[
+            {id:'a3',name:'提交验收',actionType:'submit',posX:680,posY:280,pageId:'p3'},
+          ]},
+        ]}],
+        edges:[{id:'e1',sourceId:'m1',targetId:'p1',flowType:'has',status:'active'},
+               {id:'e2',sourceId:'m1',targetId:'p2',flowType:'has',status:'active'},
+               {id:'e3',sourceId:'m2',targetId:'p3',flowType:'has',status:'active'},
+               {id:'e4',sourceId:'p1',targetId:'f1',flowType:'has',status:'active'},
+               {id:'e5',sourceId:'p1',targetId:'f2',flowType:'has',status:'active'},
+               {id:'e6',sourceId:'p1',targetId:'f3',flowType:'has',status:'active'},
+               {id:'e7',sourceId:'p1',targetId:'a1',flowType:'has',status:'active'},
+               {id:'e8',sourceId:'p2',targetId:'f4',flowType:'has',status:'active'},
+               {id:'e9',sourceId:'p2',targetId:'f5',flowType:'has',status:'active'},
+               {id:'e10',sourceId:'p2',targetId:'a2',flowType:'has',status:'active'},
+               {id:'e11',sourceId:'m2',targetId:'f6',flowType:'has',status:'active'},
+               {id:'e12',sourceId:'m2',targetId:'f7',flowType:'has',status:'active'},
+               {id:'e13',sourceId:'m2',targetId:'a3',flowType:'has',status:'active'}]},
+      b2: { name:'巡查问题在线管理', path:'~/projects/patrol',
+        modules:[{id:'m1',name:'任务管理',posX:80,posY:60,pages:[
+          {id:'p1',name:'创建任务',posX:100,posY:200,moduleId:'m1',fields:[
+            {id:'f1',name:'任务名称',fieldType:'string',posX:130,posY:280,pageId:'p1'},
+            {id:'f2',name:'截止日期',fieldType:'date',posX:130,posY:320,pageId:'p1'},
+            {id:'f3',name:'负责单位',fieldType:'string',posX:130,posY:360,pageId:'p1'},
+          ],actions:[{id:'a1',name:'下发任务',actionType:'submit',posX:260,posY:280,pageId:'p1'}]},
+          {id:'p2',name:'任务列表',posX:380,posY:200,moduleId:'m1',fields:[
+            {id:'f4',name:'状态',fieldType:'select',posX:410,posY:280,pageId:'p2'},
+            {id:'f5',name:'优先级',fieldType:'select',posX:410,posY:320,pageId:'p2'},
+          ]},
+        ]}, {id:'m2',name:'人才管理',posX:500,posY:60,pages:[
+          {id:'p3',name:'人才库',posX:520,posY:200,moduleId:'m2',fields:[
+            {id:'f6',name:'姓名',fieldType:'string',posX:550,posY:280,pageId:'p3'},
+            {id:'f7',name:'专业领域',fieldType:'string',posX:550,posY:320,pageId:'p3'},
+          ],actions:[{id:'a2',name:'自动分配',actionType:'auto',posX:680,posY:280,pageId:'p3'}]},
+        ]}, {id:'m3',name:'双审管理',posX:260,posY:360,pages:[
+          {id:'p4',name:'初审',posX:280,posY:480,moduleId:'m3',fields:[
+            {id:'f8',name:'审核意见',fieldType:'text',posX:310,posY:560,pageId:'p4'},
+            {id:'f9',name:'审核结果',fieldType:'select',posX:310,posY:600,pageId:'p4'},
+          ],actions:[{id:'a3',name:'通过',actionType:'submit',posX:440,posY:560,pageId:'p4'},
+                     {id:'a4',name:'退回',actionType:'reject',posX:440,posY:600,pageId:'p4'}]},
+          {id:'p5',name:'复审',posX:520,posY:480,moduleId:'m3',fields:[
+            {id:'f10',name:'终审意见',fieldType:'text',posX:550,posY:560,pageId:'p5'},
+          ],actions:[{id:'a5',name:'归档',actionType:'submit',posX:680,posY:560,pageId:'p5'}]},
+        ]}],
+        edges:['m1-p1','m1-p2','m2-p3','m3-p4','m3-p5'].flatMap(id => [{id:'e'+id,sourceId:id.split('-')[0],targetId:id.split('-')[1],flowType:'has',status:'active'}]),
+      },
+      b3: { name:'项目管理应用', path:'~/projects/project-mgmt',
+        modules:[{id:'m1',name:'项目立项',posX:80,posY:60,pages:[
+          {id:'p1',name:'立项申请',posX:100,posY:200,moduleId:'m1',fields:[
+            {id:'f1',name:'项目名称',fieldType:'string',posX:130,posY:280,pageId:'p1'},
+            {id:'f2',name:'投资额',fieldType:'number',posX:130,posY:320,pageId:'p1'},
+          ],actions:[{id:'a1',name:'提交审批',actionType:'submit',posX:260,posY:280,pageId:'p1'}]},
+        ]}, {id:'m2',name:'进度管理',posX:380,posY:60,pages:[
+          {id:'p2',name:'报工管理',posX:400,posY:200,moduleId:'m2',fields:[
+            {id:'f3',name:'工时',fieldType:'number',posX:430,posY:280,pageId:'p2'},
+            {id:'f4',name:'负责模块',fieldType:'string',posX:430,posY:320,pageId:'p2'},
+          ],actions:[{id:'a2',name:'提交工时',actionType:'submit',posX:560,posY:280,pageId:'p2'}]},
+          {id:'p3',name:'交付物',posX:400,posY:340,moduleId:'m2',fields:[
+            {id:'f5',name:'文件名称',fieldType:'string',posX:430,posY:420,pageId:'p3'},
+            {id:'f6',name:'状态',fieldType:'select',posX:430,posY:460,pageId:'p3'},
+          ],actions:[{id:'a3',name:'提交验收',actionType:'submit',posX:560,posY:420,pageId:'p3'}]},
+        ]}],
+        edges:'m1-p1,m2-p2,m2-p3,'.split(',').filter(Boolean).map(id => ({id:'e'+id,sourceId:id.split('-')[0],targetId:id.split('-')[1],flowType:'has',status:'active'})),
+      },
+    };
+
+    // ── Build full project response ──
+    function buildProject(data) {
+      const modules = data.modules.map(m => ({...m,projectId:'proj-1',_count:{pages:m.pages.length,fields:0,actions:0}}));
+      const pages = data.modules.flatMap(m => m.pages.map(p => ({...p,projectId:'proj-1'})));
+      const fields = data.modules.flatMap(m => m.pages.flatMap(p => (p.fields||[]).map(f => ({...f,projectId:'proj-1'}))));
+      const actions = data.modules.flatMap(m => m.pages.flatMap(p => (p.actions||[]).map(a => ({...a,projectId:'proj-1'}))));
+      const edges = (data.edges||[]).map(e => ({...e,projectId:'proj-1'}));
+      return {
+        id:'proj-1', name:data.name, description:'', status:'active',
+        modules, pages, fields, actions, edges,
+        createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
+      };
+    }
+
+    // ── Fetch interceptor ──
+    const origFetch = window.fetch;
+    let fullProject = null;
+    window.fetch = async (url, opts) => {
+      const u = typeof url === 'string' ? url : url.url;
+      const method = (opts?.method||'GET');
+      let body = {};
+      try { if (opts?.body) body = JSON.parse(opts.body); } catch {}
+
+      // GET /api/projects → list
+      if (u === BASE+'/projects' && method==='GET') {
+        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
+        return ok([{id:'proj-1',name:fullProject.name,description:'',status:'active',createdAt:fullProject.createdAt,updatedAt:fullProject.updatedAt,_count:{modules:fullProject.modules.length,pages:fullProject.pages.length,fields:fullProject.fields.length,actions:fullProject.actions.length}}]);
+      }
+      // GET /api/projects/{id}
+      if (u.match(/\/projects\/[\w-]+$/) && method==='GET') {
+        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
+        return ok(fullProject);
+      }
+      // GET /api/edges/{pid}
+      if (u.includes('/edges/') && method==='GET') {
+        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
+        return ok(fullProject.edges||[]);
+      }
+      // POST /api/parse/{pid}
+      if (u.includes('/parse/') && method==='POST') {
+        await delay(800);
+        return ok({entities:[{name:'新需求',type:'page',parentName:'项目管理'},{name:'影响字段',type:'field',parentName:'新需求',fieldType:'string'}]});
+      }
+      // POST /api/inference/impact
+      if (u.includes('/inference/impact') && method==='POST') {
+        await delay(1000);
+        return ok({
+          impactDescription:'新增需求将对现有系统结构产生影响',
+          newEntities:[{name:'新需求模块',type:'module',parentName:null,fieldType:null,actionType:null}],
+          affectedEntities:[{name:'立项申请',type:'page',impact:'high'},{name:'项目名称',type:'field',impact:'medium'}],
+          newEdges:[{sourceName:'项目管理',targetName:'新需求模块',label:'扩展',flowType:'extension'}],
+        });
+      }
+      // GET/POST/PATCH/DELETE asset operations
+      if (u.includes('/assets/')) {
+        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
+        return ok({});
+      }
+      // POST /api/inference/apply-impact
+      if (u.includes('/apply-impact')) { await delay(500); return ok({project:fullProject||buildProject(DATA[BKEY]),affectedIds:[],summary:'变更已应用'}); }
+      // POST /api/inference/apply-impact-status
+      if (u.includes('/apply-impact-status')) return ok({status:'processing',message:'正在应用变更…'});
+      // POST /api/edges/{pid}/save-positions
+      if (u.includes('/save-positions')) return ok({});
+      // Other API calls
+      if (u.startsWith(BASE)) return ok({});
+
+      return origFetch(url, opts);
+    };
+
+    function ok(data) {
+      return Promise.resolve(new Response(JSON.stringify(data), {
+        status:200, headers:{'Content-Type':'application/json'}
+      }));
+    }
+    function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+    // Auto‑navigate: find project card by name text and click
+    function tryClickProject(retries) {
+      if (retries <= 0) return;
+      const name = DATA[BKEY].name;
+      // Walk all DOM text nodes looking for the project name
+      const walker = document.createTreeWalker(document.body, 4 /* Text */, null, false);
+      let node;
+      while (node = walker.nextNode()) {
+        if (node.textContent.includes(name)) {
+          const card = node.parentElement?.closest('[style*="cursor"]') || node.parentElement;
+          if (card && typeof card.click === 'function') {
+            card.click();
+            return;
+          }
+        }
+      }
+      setTimeout(() => tryClickProject(retries - 1), 400);
+    }
+    setTimeout(() => tryClickProject(25), 200);
+    </script>
+    <script type="module" crossorigin src="./assets/index-CgvRLgLx.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
