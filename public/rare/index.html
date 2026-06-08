@@ -167,6 +167,32 @@
       if (u.includes('/apply-impact-status')) return ok({status:'processing',message:'正在应用变更…'});
       // POST /api/edges/{pid}/save-positions
       if (u.includes('/save-positions')) return ok({});
+      // POST /confirm/{pid} — SSE progress → 100% → result
+      if (u.includes('/confirm/') && method==='POST') {
+        const pid = u.split('/confirm/')[1].split('/')[0].split('?')[0];
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          start(controller) {
+            const send = (data) => controller.enqueue(encoder.encode('data: '+JSON.stringify(data)+'\n\n'));
+            const steps = [
+              { progress:10, stage:'processing', message:'正在解析数据…' },
+              { progress:30, stage:'processing', message:'正在提取实体关系…' },
+              { progress:55, stage:'processing', message:'正在构建知识图谱…' },
+              { progress:80, stage:'processing', message:'正在评估变更影响…' },
+              { progress:100, stage:'result', message:'梳理完成！', project: fullProject||buildProject(DATA[BKEY]) },
+            ];
+            let i = 0;
+            const intv = setInterval(() => {
+              if (i >= steps.length) { clearInterval(intv); controller.close(); return; }
+              send(steps[i]); i++;
+            }, 300);
+          }
+        });
+        return new Response(stream, {
+          status:200,
+          headers:{'Content-Type':'text/event-stream','Cache-Control':'no-cache'}
+        });
+      }
       // Other API calls
       if (u.startsWith(BASE)) return ok({});
 
@@ -212,9 +238,10 @@
         const span = backSvg.parentElement?.querySelector('span');
         if (span) span.style.marginLeft = '0';
       }
-      // 2. Hide 资产管理
+      // 2. Hide 资产管理 + 保存 + 确认 buttons
       document.querySelectorAll('button,[role="button"],[style*="cursor"]').forEach(el => {
-        if (el.textContent.trim().includes('资产管理')) el.style.display = 'none';
+        const t = el.textContent.trim();
+        if (t.includes('资产管理') || t === '保存' || t === '确认') el.style.display = 'none';
       });
       // 3. Fit canvas once — use React Flow's fitView dispatch
       if (!_canvasScaled) {
