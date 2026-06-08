@@ -49,7 +49,7 @@ export function openSimRare(bKey) {
     </div>
   `
   document.body.appendChild(_overlay)
-  requestAnimationFrame(() => _overlay.classList.add('active'))
+  _overlay.classList.add('active')
 
   // Close handlers
   document.getElementById('sr-close').addEventListener('click', closeSimRare)
