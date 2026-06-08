@@ -91,12 +91,9 @@
       },
     };
 
-    // ── Build full project response + auto‑generate edges ──
+    // ── Build full project response (pages/fields/actions ONLY in nested modules, NOT flat) ──
     function buildProject(data) {
       const modules = data.modules.map(m => ({...m,projectId:'proj-1',_count:{pages:m.pages.length,fields:0,actions:0}}));
-      const pages = data.modules.flatMap(m => m.pages.map(p => ({...p,projectId:'proj-1',moduleId:m.id})));
-      const fields = data.modules.flatMap(m => m.pages.flatMap(p => (p.fields||[]).map(f => ({...f,projectId:'proj-1',pageId:p.id,moduleId:m.id}))));
-      const actions = data.modules.flatMap(m => m.pages.flatMap(p => (p.actions||[]).map(a => ({...a,projectId:'proj-1',pageId:p.id,moduleId:m.id}))));
       let ei = 0;
       const edges = [];
       data.modules.forEach(m => {
@@ -108,7 +105,7 @@
       });
       return {
         id:'proj-1', name:data.name, description:'', status:'active',
-        modules, pages, fields, actions, edges,
+        modules, pages:[], fields:[], actions:[], edges,
         createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
       };
     }
@@ -132,10 +129,9 @@
         if (!fullProject) fullProject = buildProject(DATA[BKEY]);
         return ok(fullProject);
       }
-      // GET /api/edges/{pid}
+      // GET /api/edges/{pid} — return empty, edges come from project data
       if (u.includes('/edges/') && method==='GET') {
-        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
-        return ok(fullProject.edges||[]);
+        return ok([]);
       }
       // GET /api/commits/{pid} — mock versions
       if (u.includes('/commits/') && method==='GET') {
@@ -220,25 +216,16 @@
       document.querySelectorAll('button,[role="button"],[style*="cursor"]').forEach(el => {
         if (el.textContent.trim().includes('资产管理')) el.style.display = 'none';
       });
-      // 3. Fit canvas once
+      // 3. Fit canvas once — use React Flow's fitView dispatch
       if (!_canvasScaled) {
         const rf = document.querySelector('.react-flow');
         if (rf) {
-          const vp = rf.querySelector('.react-flow__viewport');
-          const nodes = rf.querySelectorAll('.react-flow__node');
-          if (vp && nodes.length > 3) {
-            let a=Infinity,b=Infinity,c=-Infinity,d=-Infinity;
-            nodes.forEach(n => {
-              const r=n.getBoundingClientRect(),rr=rf.getBoundingClientRect();
-              const x=r.left-rr.left,y=r.top-rr.top;
-              if(x<a)a=x;if(y<b)b=y;if(x+r.width>c)c=x+r.width;if(y+r.height>d)d=y+r.height;
-            });
-            const pad=80,w=c-a+pad*2,h=d-b+pad*2;
-            const sc=Math.min(rf.clientWidth/w,rf.clientHeight/h,0.9);
-            const tx=rf.clientWidth/2-(a+c)/2*sc,ty=rf.clientHeight/2-(b+d)/2*sc;
-            vp.style.transform='translate('+tx+'px,'+ty+'px) scale('+sc+')';
-            _canvasScaled = true;
-          }
+          // Try to find and click the fit view button if it exists
+          const fitBtn = rf.querySelector('button[title*="fit"],button[aria-label*="fit"]');
+          if (fitBtn) fitBtn.click();
+          // Alternative: trigger viewport update via wheel event to force re-render
+          rf.dispatchEvent(new WheelEvent('wheel', { deltaY: 1, deltaX: 0 }));
+          _canvasScaled = true;
         }
       }
       // 4. Confirm auto-click
