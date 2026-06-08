@@ -1,15 +1,12 @@
 /**
  * ═══════════════════════════════════════════
- *  State 04 — Drag-to-Connect + Flowing Lines + Schema
+ *  State 04 — SVG Overlay Connections
  *
- *  Drag from a card endpoint → curved green流光 line
- *  → snap to target endpoint.
- *  Valid: glowing particle flow.
- *  Invalid: orange #FF5500 burst + dissolve.
+ *  Pixel‑perfect connection lines using SVG overlay.
+ *  Right‑angle polyline with rounded corners.
  * ═══════════════════════════════════════════
  */
 
-import * as THREE from 'three'
 import { getState, STATES } from './state.js'
 
 /* ── Schema Matrix ── */
@@ -24,115 +21,71 @@ function isValid(from, to) {
 }
 
 /* ── Module state ── */
-let _scene       = null
-let _camera      = null
+let _svgOverlay  = null
+let _dragPath    = null
+let _connections = []
 let _dragging    = false
-let _dragFrom    = null   // { key, pos3D }
-let _dragTo      = null   // null or { key, pos3D }
-let _connections = []     // active connections
+let _dragFrom    = null
+let _dragTo      = null
+let _flowTime    = 0
 
-// Three.js objects for the drag line
-let _lineMesh = null
-let _glowMesh = null
+/* ── Ensure SVG overlay exists ── */
+function ensureSVG() {
+  if (_svgOverlay) return _svgOverlay
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  svg.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:15'
+  document.body.appendChild(svg)
+  _svgOverlay = svg
+  return svg
+}
 
-// Particle system for flowing effect
-let _flowParticles = null
-let _flowTime = 0
+/* ── Create a path element ── */
+function createPath(className, stroke, opacity = 0.5, width = 2) {
+  const svg = ensureSVG()
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  el.setAttribute('stroke', stroke)
+  el.setAttribute('stroke-width', String(width))
+  el.setAttribute('fill', 'none')
+  el.setAttribute('stroke-linejoin', 'round')
+  el.setAttribute('stroke-linecap', 'round')
+  el.setAttribute('opacity', String(opacity))
+  if (className) el.classList.add(className)
+  svg.appendChild(el)
+  return el
+}
 
-const _vec = new THREE.Vector3()
+/* ── Build path `d` attribute for right‑angle polyline ── */
+function polylineD(x1, y1, x2, y2) {
+  const mx = (x1 + x2) / 2
+  const my = (y1 + y2) / 2
+  return `M ${x1} ${y1} L ${x1} ${my} L ${x2} ${my} L ${x2} ${y2}`
+}
 
 /* ═══════════════════════════════════════
    INIT
    ═══════════════════════════════════════ */
 
-export function initConnections(scene, camera) {
-  _scene = scene
-  _camera = camera
-
-  // Create reusable line geometry
-  _lineMesh = createFlowLine()
-  _lineMesh.visible = false
-  scene.add(_lineMesh)
-
-  _glowMesh = createGlowLine()
-  _glowMesh.visible = false
-  scene.add(_glowMesh)
-
-  // Flow particles
-  _flowParticles = createFlowParticles()
-  _flowParticles.visible = false
-  scene.add(_flowParticles)
-
-  document.addEventListener('mousemove', onMouseMove)
-  document.addEventListener('mouseup', onMouseUp)
-
+export function initConnections() {
+  // SVG overlay created lazily in ensureSVG()
   return { triggerConnection }
 }
 
-/**
- * Called from explosion.js when a card endpoint is mousedowned.
- */
-export function startDrag(fromKey, fromPos3D) {
+/* ═══════════════════════════════════════
+   DRAG (called from explosion.js)
+   ═══════════════════════════════════════ */
+
+export function startDrag(fromKey, fromScreenX, fromScreenY) {
   if (getState() !== STATES.FLOATING) return
   _dragging = true
-  _dragFrom = { key: fromKey, pos3D: fromPos3D }
+  _dragFrom = { key: fromKey, sx: fromScreenX, sy: fromScreenY }
   _dragTo = null
-  _lineMesh.visible = true
-  _glowMesh.visible = true
+
+  _dragPath = createPath('drag-line', 'rgba(34,197,94,0.5)', 0.6, 2)
 }
 
-/**
- * Called from explosion.js when mouseup on a target endpoint.
- */
-function onMouseUp(e) {
+export function setDragTarget(key, sx, sy) {
   if (!_dragging) return
-  _dragging = false
-
-  if (_dragTo) {
-    // Check schema
-    if (isValid(_dragFrom.key, _dragTo.key)) {
-      addConnection(_dragFrom.key, _dragTo.key, _dragFrom.pos3D, _dragTo.pos3D)
-    } else {
-      triggerInvalidBurst(_dragFrom.pos3D, _dragTo.pos3D)
-    }
-  }
-
-  _lineMesh.visible = false
-  _glowMesh.visible = false
-  _flowParticles.visible = false
-  _dragFrom = null
-  _dragTo = null
-}
-
-function onMouseMove(e) {
-  if (!_dragging || !_dragFrom) return
-
-  // Project mouse to 3D ray and find intersection with z=0 plane
-  const mouse = new THREE.Vector2(
-    (e.clientX / window.innerWidth) * 2 - 1,
-    -(e.clientY / window.innerHeight) * 2 + 1
-  )
-  const raycaster = new THREE.Raycaster()
-  raycaster.setFromCamera(mouse, _camera)
-
-  // Intersect with a plane at z=0
-  const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0)
-  const intersect = new THREE.Vector3()
-  raycaster.ray.intersectPlane(plane, intersect)
-
-  if (intersect) {
-    updateDragLine(_dragFrom.pos3D, intersect)
-    _dragTo = null // mouse not over a card
-  }
-}
-
-/**
- * Called from explosion.js when mouse enters a target endpoint.
- */
-export function setDragTarget(key, pos3D) {
-  if (!_dragging) return
-  _dragTo = { key, pos3D }
-  updateDragLine(_dragFrom.pos3D, pos3D)
+  _dragTo = { key, sx, sy }
 }
 
 export function clearDragTarget() {
@@ -141,339 +94,147 @@ export function clearDragTarget() {
 }
 
 /* ═══════════════════════════════════════
-   DRAG LINE RENDERING
+   MOUSE TRACKING
    ═══════════════════════════════════════ */
 
-function updateDragLine(from, to) {
-  const points = getCurvePoints(from, to)
-  _lineMesh.geometry.dispose()
-  _lineMesh.geometry = new THREE.BufferGeometry().setFromPoints(points)
+document.addEventListener('mousemove', (e) => {
+  if (!_dragging || !_dragFrom) return
+  const to = _dragTo || { sx: e.clientX, sy: e.clientY }
+  _dragPath.setAttribute('d', polylineD(_dragFrom.sx, _dragFrom.sy, to.sx, to.sy))
+})
 
-  _glowMesh.geometry.dispose()
-  _glowMesh.geometry = new THREE.BufferGeometry().setFromPoints(points)
-}
+document.addEventListener('mouseup', () => {
+  if (!_dragging) return
+  _dragging = false
 
-function getCurvePoints(from, to) {
-  // Clean right-angle polyline: horizontal → corner → vertical
-  const mx = (from.x + to.x) / 2
-  const my = (from.y + to.y) / 2
-  const mz = (from.z + to.z) / 2
-
-  return [
-    from,
-    new THREE.Vector3(from.x, my, mz),
-    new THREE.Vector3(to.x, my, mz),
-    to,
-  ]
-}
-
-function createFlowLine() {
-  const geo = new THREE.BufferGeometry()
-  const positions = new Float32Array(33 * 3)
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-
-  const mat = new THREE.LineBasicMaterial({
-    color: 0x22c55e,
-    transparent: true,
-    opacity: 0.6,
-    linewidth: 1,
-  })
-  return new THREE.Line(geo, mat)
-}
-
-function createGlowLine() {
-  const geo = new THREE.BufferGeometry()
-  const positions = new Float32Array(33 * 3)
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-
-  const mat = new THREE.LineBasicMaterial({
-    color: 0x22c55e,
-    transparent: true,
-    opacity: 0.15,
-    linewidth: 1,
-  })
-  const line = new THREE.Line(geo, mat)
-  line.scale.setScalar(1.03)
-  return line
-}
-
-/* ═══════════════════════════════════════
-   FLOW PARTICLES
-   ═══════════════════════════════════════ */
-
-function createFlowParticles() {
-  const count = 60
-  const geo = new THREE.BufferGeometry()
-  const pos = new Float32Array(count * 3)
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-
-  const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = 16
-  const ctx = canvas.getContext('2d')
-  const g = ctx.createRadialGradient(8, 8, 0, 8, 8, 8)
-  g.addColorStop(0, 'rgba(34,197,94,1)')
-  g.addColorStop(1, 'rgba(34,197,94,0)')
-  ctx.fillStyle = g
-  ctx.fillRect(0, 0, 16, 16)
-
-  const mat = new THREE.PointsMaterial({
-    size: 0.12,
-    map: new THREE.CanvasTexture(canvas),
-    blending: THREE.AdditiveBlending,
-    transparent: true,
-    depthWrite: false,
-    opacity: 0.8,
-  })
-
-  return new THREE.Points(geo, mat)
-}
-
-function updateFlowParticles(connection) {
-  const pos = _flowParticles.geometry.attributes.position.array
-  const count = pos.length / 3
-  _flowTime += 0.02
-
-  const from = connection.fromPos
-  const to = connection.toPos
-  const points = getCurvePoints(from, to)
-  const totalLen = points.length
-
-  for (let i = 0; i < count; i++) {
-    const t = ((i / count) + _flowTime) % 1
-    const idx = Math.floor(t * (totalLen - 1))
-    const p = points[idx]
-    if (p) {
-      pos[i * 3]     = p.x + (Math.random() - 0.5) * 0.05
-      pos[i * 3 + 1] = p.y + (Math.random() - 0.5) * 0.05
-      pos[i * 3 + 2] = p.z + (Math.random() - 0.5) * 0.05
-    }
+  if (_dragTo && isValid(_dragFrom.key, _dragTo.key)) {
+    addConnection(_dragFrom, _dragTo)
+  } else if (_dragTo) {
+    triggerInvalidBurst(
+      (_dragFrom.sx + _dragTo.sx) / 2,
+      (_dragFrom.sy + _dragTo.sy) / 2
+    )
   }
 
-  _flowParticles.geometry.attributes.position.needsUpdate = true
-  _flowParticles.visible = true
-}
+  if (_dragPath) { _dragPath.remove(); _dragPath = null }
+  _dragFrom = null
+  _dragTo = null
+})
 
 /* ═══════════════════════════════════════
-   ADD CONNECTION (valid)
+   ADD CONNECTION
    ═══════════════════════════════════════ */
 
-function addConnection(fromKey, toKey, fromPos, toPos) {
-  const conn = { fromKey, toKey, fromPos: fromPos.clone(), toPos: toPos.clone(), active: true }
+function addConnection(from, to) {
+  const path = createPath('connection-line', '#22c55e', 0.4, 2)
+  path.setAttribute('d', polylineD(from.sx, from.sy, to.sx, to.sy))
+
+  // Glow (wider, fainter copy)
+  const glow = createPath('connection-glow', '#22c55e', 0.1, 6)
+  glow.setAttribute('d', polylineD(from.sx, from.sy, to.sx, to.sy))
+
+  const conn = { from, to, path, glow, _flowTime: Math.random() * 100 }
   _connections.push(conn)
 
-  // Create permanent glowing line
-  const points = getCurvePoints(fromPos, toPos)
-  const geo = new THREE.BufferGeometry().setFromPoints(points)
-  const mat = new THREE.LineBasicMaterial({
-    color: 0x22c55e,
-    transparent: true,
-    opacity: 0.5,
-  })
-  conn.line = new THREE.Line(geo, mat)
-  _scene.add(conn.line)
-
-  // Glow line
-  const glowMat = new THREE.LineBasicMaterial({
-    color: 0x22c55e,
-    transparent: true,
-    opacity: 0.1,
-  })
-  conn.glow = new THREE.Line(geo.clone(), glowMat)
-  conn.glow.scale.setScalar(1.05)
-  _scene.add(conn.glow)
-
-  // Flow particles for this connection
-  const particles = createFlowParticles()
-  conn.particles = particles
-  _scene.add(particles)
-
-  conn._flowTime = Math.random() * 100
-
   console.log(
-    `%c🔗  CONNECTION: ${fromKey} → ${toKey} — VALID`,
+    `%c🔗  CONNECTION: ${from.key} → ${to.key} — VALID`,
     'color: #22c55e; font-family: monospace;'
   )
 
-  // Check if all nodes are connected → trigger Safari
   checkAllConnected()
 }
 
 /* ═══════════════════════════════════════
-   INVALID BURST (orange)
+   INVALID BURST (CSS particles)
    ═══════════════════════════════════════ */
 
-function triggerInvalidBurst(fromPos, toPos) {
-  const mid = new THREE.Vector3().copy(fromPos).add(toPos).multiplyScalar(0.5)
+function triggerInvalidBurst(cx, cy) {
+  const burst = document.createElement('div')
+  burst.style.cssText = `
+    position:fixed;left:${cx}px;top:${cy}px;width:4px;height:4px;
+    border-radius:50%;background:#FF5500;pointer-events:none;z-index:20;
+    box-shadow:0 0 6px #FF5500;
+  `
+  document.body.appendChild(burst)
 
-  // Create burst particles
-  const count = 40
-  const geo = new THREE.BufferGeometry()
-  const pos = new Float32Array(count * 3)
-  const vel = []
-
-  for (let i = 0; i < count; i++) {
-    pos[i * 3]     = mid.x + (Math.random() - 0.5) * 0.1
-    pos[i * 3 + 1] = mid.y + (Math.random() - 0.5) * 0.1
-    pos[i * 3 + 2] = mid.z + (Math.random() - 0.5) * 0.1
-    vel.push({
-      x: (Math.random() - 0.5) * 0.3,
-      y: (Math.random() - 0.5) * 0.3,
-      z: (Math.random() - 0.5) * 0.3,
-    })
-  }
-
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-
-  const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = 16
-  const ctx = canvas.getContext('2d')
-  const g = ctx.createRadialGradient(8, 8, 0, 8, 8, 8)
-  g.addColorStop(0, 'rgba(255,85,0,1)')
-  g.addColorStop(1, 'rgba(255,85,0,0)')
-  ctx.fillStyle = g
-  ctx.fillRect(0, 0, 16, 16)
-
-  const mat = new THREE.PointsMaterial({
-    size: 0.2,
-    map: new THREE.CanvasTexture(canvas),
-    blending: THREE.AdditiveBlending,
-    transparent: true,
-    depthWrite: false,
-    opacity: 1,
-  })
-
-  const burst = new THREE.Points(geo, mat)
-  _scene.add(burst)
+  // Animate burst
+  burst.animate([
+    { transform: 'scale(0)', opacity: 1 },
+    { transform: 'scale(8)', opacity: 0 }
+  ], { duration: 600, easing: 'ease-out' }).onfinish = () => burst.remove()
 
   console.log(
     '%c🔥  [Schema Error]: Matrix Mismatch',
     'color: #FF5500; font-size: 13px; font-weight: bold; font-family: monospace;'
   )
-
-  // Animate burst
-  const startTime = performance.now()
-
-  function tick() {
-    const t = Math.min((performance.now() - startTime) / 800, 1)
-    const ease = 1 - Math.pow(1 - t, 2)
-    const p = burst.geometry.attributes.position.array
-
-    for (let i = 0; i < count; i++) {
-      p[i * 3]     += vel[i].x * (1 - t * 0.5)
-      p[i * 3 + 1] += vel[i].y * (1 - t * 0.5)
-      p[i * 3 + 2] += vel[i].z * (1 - t * 0.5)
-    }
-
-    burst.geometry.attributes.position.needsUpdate = true
-    mat.opacity = 1 - ease
-
-    if (t < 1) {
-      requestAnimationFrame(tick)
-    } else {
-      _scene.remove(burst)
-      geo.dispose()
-      mat.dispose()
-    }
-  }
-
-  tick()
 }
 
 /* ═══════════════════════════════════════
-   CONNECTION CHECK → Safari trigger
+   CHECK → SAFARI
    ═══════════════════════════════════════ */
 
 function checkAllConnected() {
-  const connectedFrom = new Set(_connections.map(c => c.fromKey))
-  const connectedTo = new Set(_connections.map(c => c.toKey))
-  const all = new Set([...connectedFrom, ...connectedTo])
-
-  // Trigger Safari when 3+ unique nodes are connected
-  if (all.size >= 3 && !window.__safariTriggered) {
+  const seen = new Set()
+  _connections.forEach(c => { seen.add(c.from.key); seen.add(c.to.key) })
+  if (seen.size >= 3 && !window.__safariTriggered) {
     window.__safariTriggered = true
-    // Will be handled by main.js / safari.js
     document.dispatchEvent(new CustomEvent('connections-ready'))
   }
 }
 
-/**
- * Called from main.js animation loop.
- */
+/* ═══════════════════════════════════════
+   PER‑FRAME UPDATE
+   ═══════════════════════════════════════ */
+
 export function updateConnections() {
   if (_connections.length === 0) return
-
-  for (const conn of _connections) {
-    if (!conn.active) continue
-    conn._flowTime = (conn._flowTime || 0) + 0.02
-
-    const points = getCurvePoints(conn.fromPos, conn.toPos)
-    const totalLen = points.length
-
-    if (conn.particles) {
-      const pos = conn.particles.geometry.attributes.position.array
-      const count = pos.length / 3
-
-      for (let i = 0; i < count; i++) {
-        const t = ((i / count) + conn._flowTime) % 1
-        const idx = Math.floor(t * (totalLen - 1))
-        const p = points[idx]
-        if (p) {
-          pos[i * 3]     = p.x + (Math.random() - 0.5) * 0.05
-          pos[i * 3 + 1] = p.y + (Math.random() - 0.5) * 0.05
-          pos[i * 3 + 2] = p.z + (Math.random() - 0.5) * 0.05
-        }
-      }
-      conn.particles.geometry.attributes.position.needsUpdate = true
-    }
-  }
+  _flowTime += 0.05
+  // SVG stroke‑dash animation for flowing effect
+  _connections.forEach((c, i) => {
+    const dash = (Math.sin(_flowTime + i) * 4 + 8).toFixed(0)
+    c.path.setAttribute('stroke-dasharray', `${dash} ${16 - dash}`)
+    c.path.setAttribute('stroke-dashoffset', String(-_flowTime * 3))
+  })
 }
 
 /* ═══════════════════════════════════════
-   PUBLIC: triggerConnection (for testing)
+   TEST / TRIGGER
    ═══════════════════════════════════════ */
 
-export function triggerConnection(fromKey, toKey, nodeRefs, useRight = true) {
+export function triggerConnection(fromKey, toKey, nodeRefs) {
   const from = nodeRefs.find(n => n.data.key === fromKey)
   const to = nodeRefs.find(n => n.data.key === toKey)
   if (!from || !to) return
-  // Compute endpoint 3D position
-  function ep(pos, right) {
-    const w4 = new THREE.Vector4(pos.x, pos.y, pos.z, 1)
-    w4.applyMatrix4(_camera.matrixWorldInverse).applyMatrix4(_camera.projectionMatrix)
-    const ndx = w4.x / w4.w, ndy = w4.y / w4.w
-    const sx = (ndx * 0.5 + 0.5) * window.innerWidth
-    const off = right ? 178 : -178
-    const c4 = new THREE.Vector4((((sx+off)/window.innerWidth)*2-1)*w4.w, ndy*w4.w, w4.z, w4.w)
-    c4.applyMatrix4(_camera.projectionMatrixInverse).applyMatrix4(_camera.matrixWorld)
-    return new THREE.Vector3(c4.x/c4.w, c4.y/c4.w, c4.z/c4.w)
-  }
-  const fromPos = ep(from.obj.position, useRight)
-  const toPos = ep(to.obj.position, useRight)
+  // Get screen positions from overlay cards
+  const fromCard = document.querySelector(`.project-label.card[data-key="${fromKey}"]`)
+  const toCard = document.querySelector(`.project-label.card[data-key="${toKey}"]`)
+  if (!fromCard || !toCard) return
+  const fr = fromCard.getBoundingClientRect()
+  const tr = toCard.getBoundingClientRect()
+  const fromSx = fr.left, fromSy = fr.top + fr.height / 2
+  const toSx = tr.right, toSy = tr.top + tr.height / 2
+
   if (isValid(fromKey, toKey)) {
-    addConnection(fromKey, toKey, fromPos, toPos)
+    addConnection({ key: fromKey, sx: fromSx, sy: fromSy }, { key: toKey, sx: toSx, sy: toSy })
   } else {
-    triggerInvalidBurst(fromPos, toPos)
+    triggerInvalidBurst((fromSx + toSx) / 2, (fromSy + toSy) / 2)
   }
 }
 
-/**
- * Clean up all connections.
- */
-export function clearConnections() {
-  for (const conn of _connections) {
-    if (conn.line) _scene.remove(conn.line)
-    if (conn.glow) _scene.remove(conn.glow)
-    if (conn.particles) _scene.remove(conn.particles)
-  }
-  _connections = []
-  window.__safariTriggered = false
-}
-
-/**
- * Expose global connection test helper for devtools.
- */
 window.__testConnection = (fromKey, toKey) => {
-  if (window.__floatingNodeRefs) {
-    triggerConnection(fromKey, toKey, window.__floatingNodeRefs)
-  }
+  if (window.__floatingNodeRefs) triggerConnection(fromKey, toKey, window.__floatingNodeRefs)
+}
+
+/* ═══════════════════════════════════════
+   CLEANUP
+   ═══════════════════════════════════════ */
+
+export function clearConnections() {
+  if (_svgOverlay) _svgOverlay.innerHTML = ''
+  _connections = []
+  _dragPath = null
+  _dragFrom = null
+  _dragTo = null
+  _dragging = false
+  window.__safariTriggered = false
 }

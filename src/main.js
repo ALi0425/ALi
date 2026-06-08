@@ -35,7 +35,7 @@ async function main() {
   initMediaPipe()
 
   // 5. State 04: Connections + Safari
-  initConnections(scene, camera)
+  initConnections()
   initSafari()
 
   // 6. State-aware cleanup

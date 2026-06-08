@@ -13,6 +13,7 @@ import * as THREE from 'three'
 import { setState, getState, STATES, reset as resetStateMachine } from './state.js'
 import { openTerminal, closeTerminal } from './terminal.js'
 import { startDrag, setDragTarget, clearDragTarget } from './connections.js'
+import { updateConnections } from './connections.js'
 
 /* ── Constants ── */
 const GRID_SIZE       = 64     // 4rem ≈ 64px
@@ -316,30 +317,7 @@ const CAPABILITIES = {
   doc: ['技术规范书', '可行性研究报告', '需规说明书'],
 }
 
-/* ── Convert screen-space endpoint dot to 3D position ── */
-function endpoint3D(nodePos, isRight, camera) {
-  const w4 = new THREE.Vector4(nodePos.x, nodePos.y, nodePos.z, 1)
-  // World → clip (with w preserved)
-  w4.applyMatrix4(camera.matrixWorldInverse).applyMatrix4(camera.projectionMatrix)
-  const w = window.innerWidth, h = window.innerHeight
-  // NDC from clip
-  const ndx = w4.x / w4.w, ndy = w4.y / w4.w
-  // Screen pixel
-  const sx = (ndx * 0.5 + 0.5) * w, sy = (-ndy * 0.5 + 0.5) * h
-  // Endpoint offset: 170px (half card) + 8px (endpoint margin) = 178px
-  const offsetPx = isRight ? 178 : -178
-  const newSx = sx + offsetPx
-  // Screen → NDC → clip (preserve w)
-  const c4 = new THREE.Vector4(
-    ((newSx / w) * 2 - 1) * w4.w,
-    ndy * w4.w, w4.z, w4.w
-  )
-  // Clip → world
-  c4.applyMatrix4(camera.projectionMatrixInverse).applyMatrix4(camera.matrixWorld)
-  return new THREE.Vector3(c4.x / c4.w, c4.y / c4.w, c4.z / c4.w)
-}
-
-/* ── (Bubbles rendered via fixed overlay, no constants needed) ── */
+/* ── (Bubbles rendered via fixed overlay) ── */
 
 function initNodeFloating(sphere, camera) {
   window.__floatingNodeRefs = sphere.nodeRefs
@@ -371,6 +349,7 @@ function initNodeFloating(sphere, camera) {
     // Create overlay card element
     const cardEl = document.createElement('div')
     cardEl.className = 'project-label card'
+    cardEl.dataset.key = key
     cardEl.style.cssText = 'pointer-events:auto;position:fixed;opacity:0'
     cardEl.innerHTML = [
       '<span class="endpoint left" data-key="'+key+'"></span>',
@@ -457,23 +436,18 @@ function initNodeFloating(sphere, camera) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          // Compute 3D endpoint from overlay card's ACTUAL screen position
           const r = node.el.getBoundingClientRect()
-          const dotX = r.left + (ep.classList.contains('right') ? r.width : 0) + 8
+          const isR = ep.classList.contains('right')
+          const dotX = r.left + (isR ? r.width + 8 : -8)
           const dotY = r.top + r.height / 2
-          const halfW = window.innerWidth/2, halfH = window.innerHeight/2, sc = 68
-          const x3d = (dotX - halfW) / sc
-          const y3d = -(dotY - halfH) / sc
-          startDrag(key, new THREE.Vector3(x3d, y3d, 0))
+          startDrag(key, dotX, dotY)
         })
         ep.addEventListener('mouseenter', () => {
           const r = node.el.getBoundingClientRect()
-          const dotX = r.left + (ep.classList.contains('right') ? r.width : 0) + 8
+          const isR = ep.classList.contains('right')
+          const dotX = r.left + (isR ? r.width + 8 : -8)
           const dotY = r.top + r.height / 2
-          const halfW = window.innerWidth/2, halfH = window.innerHeight/2, sc = 68
-          const x3d = (dotX - halfW) / sc
-          const y3d = -(dotY - halfH) / sc
-          setDragTarget(key, new THREE.Vector3(x3d, y3d, 0))
+          setDragTarget(key, dotX, dotY)
         })
         ep.addEventListener('mouseleave', () => {
           clearDragTarget()
