@@ -73,6 +73,7 @@ const NODE_PROFILES = {
     path: '~/projects/patrol',
     tag: 'B端 · 合规治理',
     metrics: ['合规双审', '人才分配', '全流程留痕'],
+    image: '/project-b2.png',
     content: `● 项目定位
 → 聚焦巡察问题全生命周期的数字化与合规化双审治理，面向集团万级数据量大型系统。
 
@@ -159,17 +160,20 @@ function render(p) {
             <div class="bb-bar">
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
-            <div class="bb-content">
-              <div class="bb-title">${p.title}</div>
-              <div class="bb-divider"></div>
-              <div class="bb-metrics">
-                ${p.metrics.map(m => `<span class="bb-metric">◈ ${m}</span>`).join('')}
-              </div>
-              <div class="bb-footer">
-                <span class="bb-blink">▍</span>
-                <span class="bb-status">module_loaded · ready</span>
-              </div>
-            </div>
+            ${p.image
+              ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
+              : `<div class="bb-content">
+                  <div class="bb-title">${p.title}</div>
+                  <div class="bb-divider"></div>
+                  <div class="bb-metrics">
+                    ${p.metrics.map(m => `<span class="bb-metric">◈ ${m}</span>`).join('')}
+                  </div>
+                  <div class="bb-footer">
+                    <span class="bb-blink">▍</span>
+                    <span class="bb-status">module_loaded · ready</span>
+                  </div>
+                </div>`
+            }
           </div>
         </div>
         <!-- RIGHT: console details -->

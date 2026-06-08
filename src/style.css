@@ -327,6 +327,15 @@ html, body {
 }
 .bb-lock { font-size: 8px; }
 
+.bb-image {
+  flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.2);
+}
+.bb-image img {
+  width: 100%; height: 100%; object-fit: cover;
+  display: block;
+}
+
 .bb-content {
   flex: 1; display: flex; flex-direction: column;
   justify-content: center; align-items: center;
