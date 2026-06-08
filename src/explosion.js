@@ -406,13 +406,12 @@ function initNodeFloating(sphere, camera) {
     setTimeout(() => {
       const el = node.el
       const key = node.ref.data.key
-      // Spring entry: drop from above with bounce
-      el.style.top = '-200px'
+      // Spring entry: fast elastic drop
+      el.style.top = '-180px'
       el.style.opacity = '0'
-      // Force layout then animate
       requestAnimationFrame(() => {
         el.style.transition =
-          'top 1s cubic-bezier(0.25, 0.1, 0.15, 1.3), opacity 0.6s ease'
+          'top 0.6s cubic-bezier(0.22, 0.8, 0.15, 1.5), opacity 0.4s ease'
         el.style.top = node._targetY + 'px'
         el.style.opacity = '1'
       })
@@ -456,22 +455,34 @@ function initNodeFloating(sphere, camera) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          const ep3d = endpoint3D(node.ref.obj.position, ep.classList.contains('right'), _activeCamera)
-          startDrag(key, ep3d)
+          // Compute 3D endpoint from overlay card's ACTUAL screen position
+          const r = node.el.getBoundingClientRect()
+          const dotX = r.left + (ep.classList.contains('right') ? r.width : 0) + 8
+          const dotY = r.top + r.height / 2
+          const halfW = window.innerWidth/2, halfH = window.innerHeight/2, sc = 68
+          const x3d = (dotX - halfW) / sc
+          const y3d = -(dotY - halfH) / sc
+          startDrag(key, new THREE.Vector3(x3d, y3d, 0))
         })
         ep.addEventListener('mouseenter', () => {
-          const ep3d = endpoint3D(node.ref.obj.position, ep.classList.contains('right'), _activeCamera)
-          setDragTarget(key, ep3d)
+          const r = node.el.getBoundingClientRect()
+          const dotX = r.left + (ep.classList.contains('right') ? r.width : 0) + 8
+          const dotY = r.top + r.height / 2
+          const halfW = window.innerWidth/2, halfH = window.innerHeight/2, sc = 68
+          const x3d = (dotX - halfW) / sc
+          const y3d = -(dotY - halfH) / sc
+          setDragTarget(key, new THREE.Vector3(x3d, y3d, 0))
         })
         ep.addEventListener('mouseleave', () => {
           clearDragTarget()
         })
       })
 
-      /* ── Drag card body to reposition ── */
+      /* ── Smooth drag via transform translate ── */
       const body = el.querySelector('.pl-body') || el
       let dragStarted = false
       let startX = 0, startY = 0
+      let offsetX = 0, offsetY = 0
 
       body.addEventListener('mousedown', (e) => {
         if (e.target.closest('.endpoint') || e.target.closest('.bubble')) return
@@ -486,13 +497,17 @@ function initNodeFloating(sphere, camera) {
           if (!dragStarted && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
             dragStarted = true
             node.dragging = true
-            el.style.cursor = 'grabbing'
-          }
-          if (dragStarted) {
-            el.style.left = (parseFloat(el.style.left) + dx) + 'px'
-            el.style.top = (parseFloat(el.style.top) + dy) + 'px'
             startX = ev.clientX
             startY = ev.clientY
+            el.style.cursor = 'grabbing'
+            el.style.transition = 'none'
+          }
+          if (dragStarted) {
+            offsetX += ev.clientX - startX
+            offsetY += ev.clientY - startY
+            startX = ev.clientX
+            startY = ev.clientY
+            el.style.transform = 'translate(calc(-50% + ' + offsetX + 'px), calc(-50% + ' + offsetY + 'px))'
           }
         }
 
@@ -503,6 +518,7 @@ function initNodeFloating(sphere, camera) {
             node.dragging = false
             node._pinned = true
             el.style.cursor = 'grab'
+            el.style.transition = ''
           }
         }
 
