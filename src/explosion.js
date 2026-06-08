@@ -20,7 +20,7 @@ const GRID_SIZE       = 64     // 4rem ≈ 64px
 const BURST_DURATION  = 1000   // ms — phase 1
 const SETTLE_DURATION = 1200   // ms — phase 2
 const TOTAL_DURATION  = BURST_DURATION + SETTLE_DURATION
-const FLOAT_STAGGER   = 120    // ms delay between node re-appearances
+const FLOAT_STAGGER   = 50     // ms delay between node re-appearances
 
 /* ── Module-level state ── */
 let _triggered = false
@@ -392,7 +392,7 @@ function initNodeFloating(sphere, camera) {
       el.style.opacity = '0'
       requestAnimationFrame(() => {
         el.style.transition =
-          'top 0.6s cubic-bezier(0.22, 0.8, 0.15, 1.5), opacity 0.4s ease'
+          'top 0.4s cubic-bezier(0.22, 0.8, 0.15, 1.5), opacity 0.25s ease'
         el.style.top = node._targetY + 'px'
         el.style.opacity = '1'
       })
