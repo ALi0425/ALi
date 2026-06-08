@@ -427,9 +427,9 @@ function initNodeFloating(sphere, camera) {
       /* ── State 03: Click → Terminal ── */
       el.addEventListener('click', (e) => {
         if (e.target.closest('.endpoint')) return
+        if (node._justDragged) { node._justDragged = false; return }
         node.dragging = false
         e.stopPropagation()
-        console.log('%c📋 terminal click: key='+key, 'color:#22c55e')
         openTerminal(key)
       })
 
@@ -488,7 +488,9 @@ function initNodeFloating(sphere, camera) {
           document.removeEventListener('mouseup', onUp)
           if (moved) {
             node.dragging = false; node._pinned = true
+            node._justDragged = true
             el.style.cursor = 'grab'; el.style.transition = ''
+            setTimeout(() => { node._justDragged = false }, 100)
           }
         }
         document.addEventListener('mousemove', onMove)
