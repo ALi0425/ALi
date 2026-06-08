@@ -111,9 +111,9 @@ function startExplosion(scene, sphere, camera) {
 
   // ── Hide UI ──
   const guide = document.getElementById('guide-hint')
-  if (guide) guide.style.opacity = '0'
+  if (guide) guide.style.display = 'none'
   const sysInfo = document.getElementById('system-info')
-  if (sysInfo) sysInfo.style.opacity = '0'
+  if (sysInfo) sysInfo.style.display = 'none'
 
   // ── Hide ALL sphere labels, show fixed name ──
   sphere.infoRefs.forEach((ref) => {
@@ -711,9 +711,9 @@ function finishReset(sphere, nodePositions) {
 
   // 7. Re‑show UI
   const guide = document.getElementById('guide-hint')
-  if (guide) guide.style.opacity = ''
+  if (guide) guide.style.display = ''
   const sysInfo = document.getElementById('system-info')
-  if (sysInfo) sysInfo.style.opacity = ''
+  if (sysInfo) sysInfo.style.display = ''
 
   // 8. Transition state machine
   resetStateMachine()
