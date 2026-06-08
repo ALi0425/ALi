@@ -73,7 +73,7 @@ const NODE_PROFILES = {
     path: '~/projects/patrol',
     tag: 'B端 · 合规治理',
     metrics: ['合规双审', '人才分配', '全流程留痕'],
-    image: '/project-b2.png',
+    video: '/project-b2.mp4',
     content: `● 项目定位
 → 聚焦巡察问题全生命周期的数字化与合规化双审治理，面向集团万级数据量大型系统。
 
@@ -160,7 +160,9 @@ function render(p) {
             <div class="bb-bar">
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
-            ${p.image
+            ${p.video
+              ? `<div class="bb-image"><video src="${p.video}" autoplay loop muted playsinline></video></div>`
+              : p.image
               ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
               : `<div class="bb-content">
                   <div class="bb-title">${p.title}</div>
