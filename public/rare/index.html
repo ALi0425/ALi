@@ -206,75 +206,53 @@
     }
     setTimeout(() => tryClickProject(25), 200);
 
-    // ── UI tweaks after app renders ──
+    // ── Persistent UI tweaks (runs every 1.5s) ──
     let _canvasScaled = false;
-    const uiObserver = new MutationObserver(() => {
-      // 1. Hide back button + shift title left
-      const backBtns = document.querySelectorAll('button, [role="button"], [style*="cursor"]');
-      backBtns.forEach(btn => {
-        if (btn.textContent.includes('返回大厅')) { btn.style.display = 'none'; }
+    setInterval(() => {
+      // 1. Hide back button
+      document.querySelectorAll('button').forEach(btn => {
+        if (btn.textContent.includes('返回大厅')) btn.style.display = 'none';
       });
       const backSvg = document.querySelector('svg[viewBox="0 0 24 24"][width="18"]');
-      if (backSvg) {
-        backSvg.style.display = 'none';
-        const titleSpan = backSvg.parentElement?.querySelector('span');
-        if (titleSpan) titleSpan.style.marginLeft = '0';
+      if (backSvg) { backSvg.style.display = 'none';
+        const span = backSvg.parentElement?.querySelector('span');
+        if (span) span.style.marginLeft = '0';
       }
-
-      // 2. Hide 资产管理 tab
-      document.querySelectorAll('button, [role="button"], [style*="cursor"]').forEach(el => {
-        const t = el.textContent.trim();
-        if (t.includes('资产管理')) el.style.display = 'none';
+      // 2. Hide 资产管理
+      document.querySelectorAll('button,[role="button"],[style*="cursor"]').forEach(el => {
+        if (el.textContent.trim().includes('资产管理')) el.style.display = 'none';
       });
-
-      // 3. Fit canvas to show all nodes (React Flow fitView)
+      // 3. Fit canvas once
       if (!_canvasScaled) {
         const rf = document.querySelector('.react-flow');
         if (rf) {
           const vp = rf.querySelector('.react-flow__viewport');
           const nodes = rf.querySelectorAll('.react-flow__node');
-          if (vp && nodes.length > 1) {
-            // Compute bounding box of all nodes
-            let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+          if (vp && nodes.length > 3) {
+            let a=Infinity,b=Infinity,c=-Infinity,d=-Infinity;
             nodes.forEach(n => {
-              const r = n.getBoundingClientRect();
-              const rfRect = rf.getBoundingClientRect();
-              const x = r.left - rfRect.left, y = r.top - rfRect.top;
-              minX = Math.min(minX, x); minY = Math.min(minY, y);
-              maxX = Math.max(maxX, x + r.width); maxY = Math.max(maxY, y + r.height);
+              const r=n.getBoundingClientRect(),rr=rf.getBoundingClientRect();
+              const x=r.left-rr.left,y=r.top-rr.top;
+              if(x<a)a=x;if(y<b)b=y;if(x+r.width>c)c=x+r.width;if(y+r.height>d)d=y+r.height;
             });
-            const pad = 60;
-            const w = maxX - minX + pad * 2, h = maxY - minY + pad * 2;
-            const vw = rf.clientWidth, vh = rf.clientHeight;
-            const scale = Math.min(vw / w, vh / h, 1.2);
-            const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-            const tx = vw/2 - cx * scale, ty = vh/2 - cy * scale;
-            vp.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+            const pad=80,w=c-a+pad*2,h=d-b+pad*2;
+            const sc=Math.min(rf.clientWidth/w,rf.clientHeight/h,0.9);
+            const tx=rf.clientWidth/2-(a+c)/2*sc,ty=rf.clientHeight/2-(b+d)/2*sc;
+            vp.style.transform='translate('+tx+'px,'+ty+'px) scale('+sc+')';
             _canvasScaled = true;
           }
         }
       }
-
-      // 4. Confirm dialog: auto‑click "是，开始推理"
+      // 4. Confirm auto-click
       document.querySelectorAll('button').forEach(btn => {
-        if (btn.textContent.includes('是，开始推理')) {
-          btn.click();
-        }
+        if (btn.textContent.includes('是，开始推理')) btn.click();
       });
-
-      // 5. Reduce font sizes
+      // 5. Font size
       document.querySelectorAll('*').forEach(el => {
-        const fs = parseFloat(getComputedStyle(el).fontSize);
-        if (fs > 14) {
-          const tag = el.tagName.toLowerCase();
-          if (['h1','h2','h3','h4','span','div','p','button'].includes(tag)) {
-            el.style.fontSize = '13px';
-          }
-        }
+        const fs=parseFloat(getComputedStyle(el).fontSize);
+        if(fs>14){const t=el.tagName.toLowerCase();if(['h1','h2','h3','h4','span','div','p','button'].includes(t))el.style.fontSize='13px';}
       });
-    });
-    uiObserver.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => uiObserver.disconnect(), 15000);
+    }, 1500);
     </script>
     <script type="module" crossorigin src="./assets/index-CgvRLgLx.js"></script>
   </head>

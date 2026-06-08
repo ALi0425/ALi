@@ -34,6 +34,7 @@ const NODE_PROFILES = {
     path: '~/projects/rare',
     tag: 'AI4SE · 逆向工程',
     metrics: ['元数据逆向解析', '嵌套交互画布', 'LLM智能评估'],
+    video: '/rare-video.mp4',
     content: `● 项目定位
 → 针对大型遗留系统"文档缺失、代码断层、需求变更影响面难评估"的 AI4SE 效能工具。
 
