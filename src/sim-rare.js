@@ -75,6 +75,8 @@ export function openSimRare(bKey) {
 
 export function closeSimRare() {
   if (!_overlay) return
+  // Notify connections.js to remove the trigger connection
+  window.dispatchEvent(new CustomEvent('close-sim-rare'))
   _overlay.classList.remove('active')
   setTimeout(() => { _overlay.remove(); _overlay = null }, 400)
 }
