@@ -380,17 +380,17 @@ function initNodeFloating(sphere, camera) {
     overlay.appendChild(cardEl)
 
     // Pre-compute screen position from 3D
-    _vec3.set(bx, by, 0)
-    _vec3.project(camera)
-    const sx = (_vec3.x*0.5+0.5)*window.innerWidth
-    const sy = (-_vec3.y*0.5+0.5)*window.innerHeight
+    // Pre-compute screen target for entry animation
+    const halfW = window.innerWidth / 2, halfH = window.innerHeight / 2
+    const scale = 68
+    const targetY = halfH - by * scale
 
     return {
       ref,
       el: cardEl,
       key,
       bx, by,
-      screenX: sx, screenY: sy,
+      _targetY: targetY,
       floatPhase: (i / sphere.nodeRefs.length) * Math.PI * 2,
       appeared: false,
       bubbles: [],
@@ -406,8 +406,16 @@ function initNodeFloating(sphere, camera) {
     setTimeout(() => {
       const el = node.el
       const key = node.ref.data.key
-      el.style.transition = 'opacity 0.8s cubic-bezier(0.1, 1, 0.1, 1)'
-      el.style.opacity = '1'
+      // Spring entry: drop from above with bounce
+      el.style.top = '-200px'
+      el.style.opacity = '0'
+      // Force layout then animate
+      requestAnimationFrame(() => {
+        el.style.transition =
+          'top 1s cubic-bezier(0.25, 0.1, 0.15, 1.3), opacity 0.6s ease'
+        el.style.top = node._targetY + 'px'
+        el.style.opacity = '1'
+      })
       node.appeared = true
 
       // Event listeners (once per element lifetime)
@@ -448,10 +456,12 @@ function initNodeFloating(sphere, camera) {
       endpoints.forEach(ep => {
         ep.addEventListener('mousedown', (e) => {
           e.stopPropagation()
-          startDrag(key, node.ref.obj.position)
+          const ep3d = endpoint3D(node.ref.obj.position, ep.classList.contains('right'), _activeCamera)
+          startDrag(key, ep3d)
         })
         ep.addEventListener('mouseenter', () => {
-          setDragTarget(key, node.ref.obj.position)
+          const ep3d = endpoint3D(node.ref.obj.position, ep.classList.contains('right'), _activeCamera)
+          setDragTarget(key, ep3d)
         })
         ep.addEventListener('mouseleave', () => {
           clearDragTarget()
@@ -527,7 +537,7 @@ function showBubbles(node, key) {
   if (!caps || node.bubbles.length > 0) return
 
   const overlay = ensureBubbleOverlay()
-  const rect = node.ref.el.getBoundingClientRect()
+  const rect = node.el.getBoundingClientRect()
   // Card center in screen coords
   const cx = rect.left + rect.width / 2
   const cy = rect.top + rect.height / 2
