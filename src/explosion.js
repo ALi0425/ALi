@@ -112,11 +112,17 @@ function startExplosion(scene, sphere, camera) {
   const sysInfo = document.getElementById('system-info')
   if (sysInfo) sysInfo.style.opacity = '0'
 
-  // ── Hide ALL personal info on sphere, show fixed name top‑right ──
+  // ── Hide ALL sphere labels, show fixed name ──
   sphere.infoRefs.forEach((ref) => {
     ref.el.style.transition = 'opacity 0.5s ease'
     ref.el.style.opacity = '0'
   })
+  if (sphere.tagRefs) {
+    sphere.tagRefs.forEach((ref) => {
+      ref.el.style.transition = 'opacity 0.5s ease'
+      ref.el.style.opacity = '0'
+    })
+  }
   if (sphere.nameFixedEl) {
     sphere.nameFixedEl.style.opacity = '1'
   }
@@ -546,23 +552,53 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
   sphere._floatTime += deltaMs * 0.001
   const time = sphere._floatTime
 
-  const BOUNDARY = 4.0, Y_MIN = -1.5, Y_MAX = 2.5
+  const REPULSION_RADIUS = 3.5, REPULSION_STRENGTH = 0.005, DAMPING = 0.97
+  const CENTER_ATTRACTION = 0.0005, BOUNDARY = 4.0, Y_MIN = -1.5, Y_MAX = 2.5
+
+  // O(n²) repulsion
+  for (let i = 0; i < nodes.length; i++) {
+    if (!nodes[i].appeared || nodes[i].dragging) continue
+    for (let j = i + 1; j < nodes.length; j++) {
+      if (!nodes[j].appeared || nodes[j].dragging) continue
+      const a = nodes[i].pos3D, b = nodes[j].pos3D
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+      if (dist < REPULSION_RADIUS && dist > 0.01) {
+        const f = ((REPULSION_RADIUS - dist) / REPULSION_RADIUS) * REPULSION_STRENGTH / dist
+        nodes[i].velocity.x -= dx * f; nodes[i].velocity.y -= dy * f; nodes[i].velocity.z -= dz * f
+        nodes[j].velocity.x += dx * f; nodes[j].velocity.y += dy * f; nodes[j].velocity.z += dz * f
+      }
+    }
+  }
 
   for (const node of nodes) {
-    if (!node.appeared || node.dragging) continue
+    if (!node.appeared) continue
+    if (node.dragging) continue
 
-    // Only ±2px floating oscillation — NO physics drift
-    const baseIdx = nodes.indexOf(node)
-    const floatY = Math.sin(time * 1.2 + node.floatPhase) * 0.0005
-    const baseX = [-3.2, 3.2, 0, -3.2, 3.2][baseIdx] || 0
-    const baseY = [2.2, 2.2, 0.2, -1.8, -1.8][baseIdx] || 0
+    node.velocity.x *= DAMPING
+    node.velocity.y *= DAMPING
+    node.velocity.z *= DAMPING
 
-    // Apply float only — position stays at base + tiny oscillation
-    node.pos3D.x = baseX
-    node.pos3D.y = baseY + floatY
-    node.pos3D.z = 0
+    // Spring toward base position (from initial layout)
+    const idx = nodes.indexOf(node)
+    const baseX = [-3.2, 3.2, 0, -3.2, 3.2][idx] || 0
+    const baseY = [2.2, 2.2, 0.2, -1.8, -1.8][idx] || 0
+    node.velocity.x += (baseX - node.pos3D.x) * 0.003
+    node.velocity.y += (baseY - node.pos3D.y) * 0.003
 
-    // Safety clamp — never outside
+    // Subtle floating oscillation
+    node.pos3D.y += Math.sin(time * 1.2 + node.floatPhase) * 0.002
+
+    // Pre-clamp velocity
+    if (Math.abs(node.pos3D.x + node.velocity.x) > BOUNDARY) node.velocity.x *= -0.5
+    if (Math.abs(node.pos3D.z + node.velocity.z) > BOUNDARY) node.velocity.z *= -0.5
+    if (node.pos3D.y + node.velocity.y > Y_MAX || node.pos3D.y + node.velocity.y < Y_MIN) node.velocity.y *= -0.5
+
+    node.pos3D.x += node.velocity.x
+    node.pos3D.y += node.velocity.y
+    node.pos3D.z += node.velocity.z
+
+    // Hard clamp
     node.pos3D.x = Math.max(-BOUNDARY, Math.min(BOUNDARY, node.pos3D.x))
     node.pos3D.z = Math.max(-BOUNDARY, Math.min(BOUNDARY, node.pos3D.z))
     node.pos3D.y = Math.max(Y_MIN, Math.min(Y_MAX, node.pos3D.y))
@@ -628,10 +664,9 @@ function finishReset(sphere, nodePositions) {
   closeTerminal()
   if (sphere.nameFixedEl) sphere.nameFixedEl.style.opacity = '0'
 
-  // 3. Restore ALL sphere personal info
-  sphere.infoRefs.forEach((ref) => {
-    ref.el.style.opacity = '1'
-  })
+  // 3. Restore ALL sphere labels
+  sphere.infoRefs.forEach((ref) => { ref.el.style.opacity = '1' })
+  if (sphere.tagRefs) sphere.tagRefs.forEach((ref) => { ref.el.style.opacity = '1' })
 
   // 4. Clear bubble overlay
   if (_bubbleOverlay) _bubbleOverlay.innerHTML = ''

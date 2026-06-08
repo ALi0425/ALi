@@ -17,15 +17,18 @@ const ROTATE_SPEED_Y = 0.0018
 const BREATHE_AMPL   = 0.025
 const BREATHE_SPEED  = 0.4
 
-/* ── Personal Info — 2x font, opaque, scattered wide across sphere ── */
+/* ── Personal Info — only name + capability tags ── */
 const INFO_DATA = [
-  { text: '李晶晶',         fontSize: 80, weight: '700', color: '#ffffff', glow: '0 0 80px rgba(34,197,94,0.6)',  x: 0,    y: 2.8,  z: 4.6, isName: true },
-  { text: 'AI 产品经理',     fontSize: 44, weight: '500', color: '#22c55e', glow: '0 0 30px rgba(34,197,94,0.3)',  x: -4.5, y: 1.0,  z: 1.0 },
-  { text: '北京 · 27岁',     fontSize: 32, weight: '400', color: '#ffffff', glow: 'none',                            x: 4.0,  y: 0.5,  z: 2.5 },
-  { text: '4年B端+大模型落地', fontSize: 24, weight: '400', color: '#e0e0e0', glow: 'none',                           x: -3.0, y: -1.5, z: 3.0 },
-  { text: '华北理工 · 前15%', fontSize: 22, weight: '400', color: '#cccccc', glow: 'none',                            x: 3.5,  y: -2.0, z: 2.0 },
-  { text: '论文4篇·商赛全国前列', fontSize: 20, weight: '400', color: '#bbbbbb', glow: 'none',                         x: -5.0, y: -2.5, z: 0.5 },
-  { text: '国家电网·14家单位协同', fontSize: 20, weight: '400', color: '#aaaaaa', glow: 'none',                         x: 2.0,  y: -3.5, z: 3.0 },
+  { text: '李晶晶', fontSize: 80, weight: '700', color: '#ffffff', glow: '0 0 80px rgba(34,197,94,0.6)', x: 0, y: 0, z: 4.8, isName: true },
+]
+
+const TAG_DATA = [
+  '国产ERP 信息化项目', '全程项目管理', 'n8n低代码平台',
+  'vibe coding全栈交付', '4年企业级B端系统', '华北理工大学',
+  '工作流自动化', 'RAG与知识图谱', '业务逻辑抽象',
+  '大型项目协同', '结构化文档编制', '工作流编排',
+  '27岁', '多模态增量清洗', '复杂业务流程解构',
+  '权限协同与资源调配', '大模型落地产品',
 ]
 
 /* ── Project Data ── */
@@ -147,6 +150,20 @@ export function createSphere(scene) {
     if (data.isName) nameRef = { obj, el, data }
   })
 
+  /* ── CAPABILITY TAGS — scattered on sphere surface ── */
+  const tagPositions = fibonacciPoints(TAG_DATA.length, SPHERE_RADIUS * 1.04)
+  const tagRefs = []
+
+  TAG_DATA.forEach((text, i) => {
+    const span = document.createElement('span')
+    span.textContent = text
+    span.className = 'sphere-tag'
+    const obj = new CSS2DObject(span)
+    obj.position.set(tagPositions[i * 3], tagPositions[i * 3 + 1], tagPositions[i * 3 + 2])
+    group.add(obj)
+    tagRefs.push({ obj, el: span, text })
+  })
+
   /* ── Fixed name for State 02 (top‑right, hidden initially) ── */
   const nameFixedEl = document.createElement('span')
   nameFixedEl.textContent = '李晶晶'
@@ -180,7 +197,7 @@ export function createSphere(scene) {
   return {
     group, particles, particleMat: mat, particleGeo: geo,
     origPos, particlePos,
-    nodeRefs, infoRefs, nameRef, nameFixedEl,
+    nodeRefs, infoRefs, nameRef, nameFixedEl, tagRefs,
     velocities: null, targets: null,
     exploding: false, explosionProgress: 0,
   }
