@@ -143,6 +143,14 @@
         if (!fullProject) fullProject = buildProject(DATA[BKEY]);
         return ok(fullProject.edges||[]);
       }
+      // GET /api/commits/{pid} — mock versions
+      if (u.includes('/commits/') && method==='GET') {
+        return ok([
+          {id:'c1',version:1,message:'初始数据注入',createdAt:new Date(Date.now()-86400000).toISOString()},
+          {id:'c2',version:2,message:'模块结构梳理',createdAt:new Date(Date.now()-43200000).toISOString()},
+          {id:'c3',version:3,message:'字段类型优化',createdAt:new Date(Date.now()-3600000).toISOString()},
+        ]);
+      }
       // POST /api/parse/{pid}
       if (u.includes('/parse/') && method==='POST') {
         await delay(800);
@@ -203,30 +211,43 @@
     setTimeout(() => tryClickProject(25), 200);
 
     // ── UI tweaks after app renders ──
+    let _canvasScaled = false;
     const uiObserver = new MutationObserver(() => {
       // 1. Hide back button + shift title left
       const backBtns = document.querySelectorAll('button, [role="button"], [style*="cursor"]');
       backBtns.forEach(btn => {
         if (btn.textContent.includes('返回大厅')) { btn.style.display = 'none'; }
       });
-      // Find the title area next to back button
       const backSvg = document.querySelector('svg[viewBox="0 0 24 24"][width="18"]');
       if (backSvg) {
-        const header = backSvg.closest('[style*="display:flex"]') || backSvg.parentElement;
-        if (header) { backSvg.style.display = 'none'; }
-        // Find project name span next to the back button
+        backSvg.style.display = 'none';
         const titleSpan = backSvg.parentElement?.querySelector('span');
-        if (titleSpan) { titleSpan.style.marginLeft = '0'; }
+        if (titleSpan) titleSpan.style.marginLeft = '0';
       }
 
       // 2. Hide 资产管理 tab
       document.querySelectorAll('button, [role="button"], [style*="cursor"]').forEach(el => {
-        if (el.textContent.trim().includes('资产管理')) {
-          el.style.display = 'none';
+        const t = el.textContent.trim();
+        if (t.includes('资产管理')) el.style.display = 'none';
+      });
+
+      // 3. Scale down canvas viewport (React Flow)
+      if (!_canvasScaled) {
+        const vp = document.querySelector('[style*="transform"]');
+        if (vp && vp.parentElement && vp.style.transform.includes('scale')) {
+          vp.style.transform = 'scale(0.65) translate(0px, 0px)';
+          _canvasScaled = true;
+        }
+      }
+
+      // 4. Confirm dialog: auto‑click "是，开始推理"
+      document.querySelectorAll('button').forEach(btn => {
+        if (btn.textContent.includes('是，开始推理')) {
+          btn.click();
         }
       });
 
-      // 3. Reduce font sizes
+      // 5. Reduce font sizes
       document.querySelectorAll('*').forEach(el => {
         const fs = parseFloat(getComputedStyle(el).fontSize);
         if (fs > 14) {
@@ -237,8 +258,8 @@
         }
       });
     });
-    uiObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, attributes: false });
-    setTimeout(() => uiObserver.disconnect(), 12000);
+    uiObserver.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => uiObserver.disconnect(), 15000);
     </script>
     <script type="module" crossorigin src="./assets/index-CgvRLgLx.js"></script>
   </head>

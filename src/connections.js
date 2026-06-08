@@ -260,9 +260,20 @@ window.__testConnection = (fromKey, toKey) => triggerConnection(fromKey, toKey)
    CLEANUP
    ═══════════════════════════════════════ */
 
-// Listen for iframe close message
+// Listen for iframe close message — also remove the trigger connection
 window.addEventListener('message', (e) => {
-  if (e.data === 'close-sim-rare') closeSimRare()
+  if (e.data === 'close-sim-rare') {
+    // Remove the b→a2 connection that opened the sim
+    const idx = _connections.findIndex(c => c.toKey === 'a2' && ['b1','b2','b3'].includes(c.fromKey))
+    if (idx !== -1) {
+      const conn = _connections[idx]
+      if (conn.path) conn.path.remove()
+      if (conn.glow) conn.glow.remove()
+      _connections.splice(idx, 1)
+    }
+    window.__safariTriggered = false
+    closeSimRare()
+  }
 })
 
 export function clearConnections() {
