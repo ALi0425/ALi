@@ -426,14 +426,27 @@ export function updateConnections() {
    PUBLIC: triggerConnection (for testing)
    ═══════════════════════════════════════ */
 
-export function triggerConnection(fromKey, toKey, nodeRefs) {
+export function triggerConnection(fromKey, toKey, nodeRefs, useRight = true) {
   const from = nodeRefs.find(n => n.data.key === fromKey)
   const to = nodeRefs.find(n => n.data.key === toKey)
   if (!from || !to) return
+  // Compute endpoint 3D position
+  function ep(pos, right) {
+    const w4 = new THREE.Vector4(pos.x, pos.y, pos.z, 1)
+    w4.applyMatrix4(_camera.matrixWorldInverse).applyMatrix4(_camera.projectionMatrix)
+    const ndx = w4.x / w4.w, ndy = w4.y / w4.w
+    const sx = (ndx * 0.5 + 0.5) * window.innerWidth
+    const off = right ? 178 : -178
+    const c4 = new THREE.Vector4((((sx+off)/window.innerWidth)*2-1)*w4.w, ndy*w4.w, w4.z, w4.w)
+    c4.applyMatrix4(_camera.projectionMatrixInverse).applyMatrix4(_camera.matrixWorld)
+    return new THREE.Vector3(c4.x/c4.w, c4.y/c4.w, c4.z/c4.w)
+  }
+  const fromPos = ep(from.obj.position, useRight)
+  const toPos = ep(to.obj.position, useRight)
   if (isValid(fromKey, toKey)) {
-    addConnection(fromKey, toKey, from.obj.position, to.obj.position)
+    addConnection(fromKey, toKey, fromPos, toPos)
   } else {
-    triggerInvalidBurst(from.obj.position, to.obj.position)
+    triggerInvalidBurst(fromPos, toPos)
   }
 }
 
