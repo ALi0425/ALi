@@ -498,7 +498,7 @@ html, body {
 
 .sr-window {
   position: relative;
-  width: min(1300px, 94vw);
+  width: min(1400px, 94vw);
   height: min(86vh, 750px);
   background: rgba(10,10,12,0.97);
   backdrop-filter: blur(20px);
@@ -508,6 +508,45 @@ html, body {
   box-shadow: 0 40px 100px rgba(0,0,0,0.8), 0 0 60px rgba(34,197,94,0.04);
   overflow: hidden;
   display: flex; flex-direction: column;
+}
+
+/* ── Safari‑style title bar ── */
+.sr-titlebar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 16px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.sr-dots { display: flex; gap: 7px; }
+.sr-dot { width: 11px; height: 11px; border-radius: 50%; }
+.sr-dot.red    { background: rgba(255,69,58,0.85); }
+.sr-dot.yellow { background: rgba(255,185,0,0.85); }
+.sr-dot.green  { background: rgba(52,199,89,0.85); }
+.sr-dot.red:hover { background: rgba(255,69,58,1); cursor: pointer; }
+
+.sr-path {
+  flex: 1; display: flex; align-items: center; gap: 6px;
+  padding: 4px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 5px;
+  font-family: "Space Mono",monospace; font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  max-width: 400px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.sr-path svg { flex-shrink: 0; opacity: 0.4; }
+
+.sr-tag {
+  font-family: "Space Mono",monospace; font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.15);
+  color: rgba(34,197,94,0.7);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .sr-loader {
