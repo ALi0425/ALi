@@ -8,6 +8,7 @@
  */
 
 import { getState, STATES } from './state.js'
+import { openSimRare, closeSimRare } from './sim-rare.js'
 
 const SCHEMA = {
   'b1→a1': true,  'b1→a2': true,
@@ -148,6 +149,11 @@ function addConnection(from, to) {
   // Stop pulse when b→a connection established
   pulseATargets(false)
 
+  // Open RARE simulation when b‑node → a2 (RARE)
+  if (to.key === 'a2' && ['b1','b2','b3'].includes(from.key)) {
+    setTimeout(() => openSimRare(from.key), 300)
+  }
+
   console.log(`%c🔗  ${from.key} → ${to.key} — VALID`, 'color:#22c55e;font-family:monospace')
   checkAllConnected()
 }
@@ -253,6 +259,11 @@ window.__testConnection = (fromKey, toKey) => triggerConnection(fromKey, toKey)
 /* ═══════════════════════════════════════
    CLEANUP
    ═══════════════════════════════════════ */
+
+// Listen for iframe close message
+window.addEventListener('message', (e) => {
+  if (e.data === 'close-sim-rare') closeSimRare()
+})
 
 export function clearConnections() {
   if (_svgOverlay) _svgOverlay.innerHTML = ''

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RARE · 智能逆向沙盒</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0c; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #e0e0e0; }
+
+/* ── Title bar ── */
+.sr-titlebar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.sr-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.sr-dot.r { background: #ff453a; }
+.sr-dot.y { background: #ffb800; }
+.sr-dot.g { background: #34c759; }
+.sr-path { flex: 1; font-size: 11px; color: rgba(255,255,255,0.3); font-family: 'SF Mono','Space Mono',monospace; padding: 4px 10px; background: rgba(255,255,255,0.04); border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); max-width: 340px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sr-tag { font-size: 10px; font-family: 'SF Mono','Space Mono',monospace; padding: 3px 10px; border-radius: 3px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.15); color: rgba(34,197,94,0.7); }
+
+/* ── Layout ── */
+.sr-layout { display: flex; height: calc(100% - 41px); }
+
+/* ── Canvas area ── */
+.sr-canvas-area { flex: 1; position: relative; overflow: hidden; background: #0d0d10; background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); background-size: 24px 24px; }
+
+/* ── Nodes ── */
+.sr-nodes { position: absolute; inset: 0; }
+.sr-node { position: absolute; cursor: grab; user-select: none; transition: box-shadow 0.2s; }
+.sr-node:hover { z-index: 10; }
+.sr-node-header { padding: 6px 12px; font-size: 11px; font-weight: 600; border-radius: 6px 6px 0 0; display: flex; align-items: center; gap: 6px; }
+.sr-node-body { padding: 6px 12px; font-size: 10px; border-radius: 0 0 6px 6px; border-top: none; }
+.sr-node.module { border: 1px solid rgba(34,197,94,0.3); border-radius: 8px; background: rgba(34,197,94,0.06); min-width: 140px; }
+.sr-node.module .sr-node-header { background: rgba(34,197,94,0.1); color: #22c55e; }
+.sr-node.page { border: 1px solid rgba(96,165,250,0.25); border-radius: 6px; background: rgba(96,165,250,0.05); min-width: 110px; }
+.sr-node.page .sr-node-header { background: rgba(96,165,250,0.08); color: #60a5fa; font-size: 10px; }
+.sr-node.field { border: 1px solid rgba(234,179,8,0.2); border-radius: 4px; background: rgba(234,179,8,0.04); min-width: 90px; padding: 3px 8px; font-size: 9px; color: rgba(234,179,8,0.7); display: flex; align-items: center; gap: 4px; }
+.sr-node.action { border: 1px solid rgba(239,68,68,0.2); border-radius: 4px; background: rgba(239,68,68,0.04); min-width: 80px; padding: 3px 8px; font-size: 9px; color: rgba(239,68,68,0.7); display: flex; align-items: center; gap: 4px; }
+
+/* ── SVG edges ── */
+.sr-edges { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+
+/* ── Sidebar ── */
+.sr-sidebar { width: 240px; background: rgba(0,0,0,0.3); border-left: 1px solid rgba(255,255,255,0.04); display: flex; flex-direction: column; overflow: hidden; }
+.sr-sidebar-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.sr-sidebar-tab { flex: 1; padding: 8px; text-align: center; font-size: 10px; font-family: 'SF Mono','Space Mono',monospace; color: rgba(255,255,255,0.3); cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; }
+.sr-sidebar-tab.active { color: #22c55e; border-bottom-color: #22c55e; }
+.sr-sidebar-content { flex: 1; overflow-y: auto; padding: 12px; }
+.sr-entity { padding: 6px 8px; margin-bottom: 4px; border-radius: 4px; background: rgba(255,255,255,0.03); border-left: 2px solid transparent; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+.sr-entity:hover { background: rgba(255,255,255,0.06); }
+.sr-entity.module-t { border-left-color: #22c55e; }
+.sr-entity.page-t { border-left-color: #60a5fa; }
+.sr-entity.field-t { border-left-color: #eab308; }
+.sr-entity.action-t { border-left-color: #ef4444; }
+.sr-entity-label { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+/* ── Version timeline ── */
+.sr-version { display: flex; gap: 8px; padding: 8px; border-radius: 4px; background: rgba(255,255,255,0.02); margin-bottom: 6px; cursor: pointer; transition: all 0.2s; }
+.sr-version:hover { background: rgba(255,255,255,0.05); }
+.sr-version-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; margin-top: 4px; flex-shrink: 0; }
+.sr-version-info { flex: 1; }
+.sr-version-id { font-size: 10px; color: rgba(255,255,255,0.7); font-family: 'SF Mono','Space Mono',monospace; }
+.sr-version-date { font-size: 9px; color: rgba(255,255,255,0.25); }
+
+/* ── Impact diff ── */
+.sr-impact { display: none; position: absolute; top: 12px; right: 12px; width: 360px; max-height: 60%; background: rgba(16,16,20,0.95); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; z-index: 20; backdrop-filter: blur(12px); }
+.sr-impact.active { display: block; }
+.sr-impact-header { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 11px; font-weight: 600; color: #22c55e; display: flex; justify-content: space-between; align-items: center; }
+.sr-impact-close { cursor: pointer; color: rgba(255,255,255,0.3); font-size: 14px; padding: 2px 6px; border-radius: 3px; }
+.sr-impact-close:hover { background: rgba(255,255,255,0.05); }
+.sr-impact-list { padding: 8px 14px; max-height: 300px; overflow-y: auto; }
+.sr-impact-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.sr-impact-tag { font-size: 8px; padding: 1px 5px; border-radius: 3px; font-weight: 600; }
+.sr-impact-tag.red { background: rgba(239,68,68,0.15); color: #ef4444; }
+.sr-impact-tag.green { background: rgba(34,197,94,0.15); color: #22c55e; }
+.sr-impact-tag.yellow { background: rgba(234,179,8,0.15); color: #eab308; }
+
+/* ── Smart Input Bar ── */
+.sr-inputbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.04); position: absolute; bottom: 0; left: 0; right: 0; }
+.sr-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 8px 16px; font-size: 12px; color: #e0e0e0; outline: none; font-family: inherit; transition: border-color 0.2s; }
+.sr-input:focus { border-color: rgba(34,197,94,0.3); }
+.sr-input::placeholder { color: rgba(255,255,255,0.2); }
+.sr-btn { padding: 7px 16px; border-radius: 6px; border: none; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s; background: rgba(34,197,94,0.15); color: #22c55e; font-family: inherit; white-space: nowrap; }
+.sr-btn:hover { background: rgba(34,197,94,0.25); }
+.sr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.sr-btn.subtle { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
+.sr-btn.subtle:hover { border-color: rgba(255,255,255,0.15); }
+
+/* ── Loading state ── */
+.sr-processing { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); z-index: 30; backdrop-filter: blur(4px); }
+.sr-processing-bar { width: 240px; height: 3px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.sr-processing-fill { height: 100%; width: 0; background: #22c55e; border-radius: 3px; transition: width 0.3s; }
+.sr-processing-text { font-size: 12px; color: rgba(255,255,255,0.5); font-family: 'SF Mono','Space Mono',monospace; }
+
+/* ── Entity editing ── */
+.sr-entity-edit { display: none; position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); width: 420px; background: rgba(16,16,20,0.96); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; z-index: 25; backdrop-filter: blur(12px); padding: 16px; }
+.sr-entity-edit.active { display: block; }
+.sr-edit-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 10px; }
+.sr-edit-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+.sr-edit-label { font-size: 10px; color: rgba(255,255,255,0.4); width: 60px; flex-shrink: 0; }
+.sr-edit-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 5px 8px; font-size: 11px; color: #e0e0e0; outline: none; font-family: inherit; }
+.sr-edit-input:focus { border-color: rgba(34,197,94,0.2); }
+</style>
+</head>
+<body>
+
+<div class="sr-titlebar">
+  <span class="sr-dot r" id="btn-close"></span>
+  <span class="sr-dot y"></span>
+  <span class="sr-dot g"></span>
+  <span class="sr-path" id="sr-path">~/projects/rare/canvas</span>
+  <span class="sr-tag" id="sr-tag">逆向分析</span>
+</div>
+
+<div class="sr-layout">
+  <div class="sr-canvas-area" id="sr-canvas">
+    <svg class="sr-edges" id="sr-edges"></svg>
+    <div class="sr-nodes" id="sr-nodes"></div>
+    <div class="sr-impact" id="sr-impact">
+      <div class="sr-impact-header">
+        <span>◈ Impact Analysis</span>
+        <span class="sr-impact-close" id="sr-impact-close">✕</span>
+      </div>
+      <div class="sr-impact-list" id="sr-impact-list"></div>
+    </div>
+    <div class="sr-processing" id="sr-processing" style="display:none">
+      <div class="sr-processing-bar"><div class="sr-processing-fill" id="sr-processing-fill"></div></div>
+      <div class="sr-processing-text" id="sr-processing-text">正在分析需求影响…</div>
+    </div>
+    <div class="sr-inputbar">
+      <input class="sr-input" id="sr-input" placeholder="输入新需求描述，分析对现有系统的影响…" />
+      <button class="sr-btn" id="sr-btn-eval">评估</button>
+      <button class="sr-btn subtle" id="sr-btn-snap">快照</button>
+    </div>
+    <div class="sr-entity-edit" id="sr-entity-edit">
+      <div class="sr-edit-title">◈ 编辑实体</div>
+      <div class="sr-edit-row"><span class="sr-edit-label">名称</span><input class="sr-edit-input" id="sr-edit-name" /></div>
+      <div class="sr-edit-row"><span class="sr-edit-label">类型</span><input class="sr-edit-input" id="sr-edit-type" disabled /></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="sr-btn subtle" id="sr-edit-cancel">取消</button>
+        <button class="sr-btn" id="sr-edit-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sr-sidebar">
+    <div class="sr-sidebar-tabs">
+      <div class="sr-sidebar-tab active" data-tab="entities">实体</div>
+      <div class="sr-sidebar-tab" data-tab="versions">版本</div>
+    </div>
+    <div class="sr-sidebar-content" id="sr-sidebar-content"></div>
+  </div>
+</div>
+
+<script>
+// ── Project data (filled per B‑node) ──
+const DATA = {
+  b1: { name: '科技管理应用', path: '~/projects/tech-mgmt', tag: 'B端·科技管理',
+    modules: [
+      { id: 'm1', name: '项目管理', x: 60, y: 40, pages: [
+        { id: 'p1', name: '立项申请', x: 100, y: 130, fields: [
+          { id: 'f1', name: '项目名称', type: 'string' },
+          { id: 'f2', name: '预算金额', type: 'number' },
+          { id: 'f3', name: '负责人', type: 'string' },
+        ], actions: [
+          { id: 'a1', name: '提交审批', type: 'submit' },
+        ]},
+        { id: 'p2', name: '进度跟踪', x: 340, y: 130, fields: [
+          { id: 'f4', name: '完成度', type: 'percent' },
+          { id: 'f5', name: '里程碑', type: 'string' },
+        ], actions: [
+          { id: 'a2', name: '更新进度', type: 'update' },
+        ]},
+      ]},
+      { id: 'm2', name: '成果管理', x: 460, y: 40, pages: [
+        { id: 'p3', name: '成果登记', x: 500, y: 130, fields: [
+          { id: 'f6', name: '成果名称', type: 'string' },
+          { id: 'f7', name: '类型', type: 'select' },
+        ], actions: [
+          { id: 'a3', name: '提交验收', type: 'submit' },
+        ]},
+      ]},
+    ]
+  },
+  b2: { name: '巡查问题在线管理', path: '~/projects/patrol', tag: 'B端·合规治理',
+    modules: [
+      { id: 'm1', name: '任务管理', x: 60, y: 40, pages: [
+        { id: 'p1', name: '创建任务', x: 100, y: 130, fields: [
+          { id: 'f1', name: '任务名称', type: 'string' },
+          { id: 'f2', name: '截止日期', type: 'date' },
+          { id: 'f3', name: '负责单位', type: 'string' },
+        ], actions: [
+          { id: 'a1', name: '下发任务', type: 'submit' },
+        ]},
+        { id: 'p2', name: '任务列表', x: 340, y: 130, fields: [
+          { id: 'f4', name: '状态', type: 'select' },
+          { id: 'f5', name: '优先级', type: 'select' },
+        ]},
+      ]},
+      { id: 'm2', name: '人才管理', x: 460, y: 40, pages: [
+        { id: 'p3', name: '人才库', x: 500, y: 130, fields: [
+          { id: 'f6', name: '姓名', type: 'string' },
+          { id: 'f7', name: '专业领域', type: 'string' },
+        ], actions: [
+          { id: 'a2', name: '自动分配', type: 'auto' },
+        ]},
+      ]},
+      { id: 'm3', name: '双审管理', x: 260, y: 280, pages: [
+        { id: 'p4', name: '初审', x: 300, y: 370, fields: [
+          { id: 'f8', name: '审核意见', type: 'text' },
+          { id: 'f9', name: '审核结果', type: 'select' },
+        ], actions: [
+          { id: 'a3', name: '通过', type: 'submit' },
+          { id: 'a4', name: '退回', type: 'reject' },
+        ]},
+        { id: 'p5', name: '复审', x: 520, y: 370, fields: [
+          { id: 'f10', name: '终审意见', type: 'text' },
+        ], actions: [
+          { id: 'a5', name: '归档', type: 'submit' },
+        ]},
+      ]},
+    ]
+  },
+  b3: { name: '项目管理应用', path: '~/projects/project-mgmt', tag: 'B端·全生命周期',
+    modules: [
+      { id: 'm1', name: '项目立项', x: 60, y: 40, pages: [
+        { id: 'p1', name: '立项申请', x: 100, y: 130, fields: [
+          { id: 'f1', name: '项目名称', type: 'string' },
+          { id: 'f2', name: '投资额', type: 'number' },
+        ], actions: [
+          { id: 'a1', name: '提交审批', type: 'submit' },
+        ]},
+      ]},
+      { id: 'm2', name: '进度管理', x: 360, y: 40, pages: [
+        { id: 'p2', name: '报工管理', x: 400, y: 130, fields: [
+          { id: 'f3', name: '工时', type: 'number' },
+          { id: 'f4', name: '负责模块', type: 'string' },
+        ], actions: [
+          { id: 'a2', name: '提交工时', type: 'submit' },
+        ]},
+        { id: 'p3', name: '交付物', x: 400, y: 240, fields: [
+          { id: 'f5', name: '文件名称', type: 'string' },
+          { id: 'f6', name: '状态', type: 'select' },
+        ], actions: [
+          { id: 'a3', name: '提交验收', type: 'submit' },
+        ]},
+      ]},
+    ]
+  },
+}
+
+// ── Mock evaluation responses ──
+const MOCK_EVALS = [
+  { entity: '项目管理', impact: 'high', action: '新增字段「关联项目类型」', tag: '冲击' },
+  { entity: '立项申请', impact: 'medium', action: '扩展字段：「投资额」类型校验规则变更', tag: '修改' },
+  { entity: '提交审批', impact: 'low', action: '增加会签节点', tag: '扩增' },
+  { entity: '进度跟踪', impact: 'none', action: '新增「风险预警」模块', tag: '新增' },
+  { entity: '预算管理', impact: 'high', action: '新增「预算审批流」', tag: '新增' },
+  { entity: '权限校验', impact: 'medium', action: '增加单位级数据权限', tag: '重构' },
+]
+
+const TAG_COLORS = { '冲击': 'red', '修改': 'yellow', '扩增': 'green', '新增': 'green', '重构': 'yellow' }
+
+// ── Init ──
+let projectData = null
+let versions = []
+let versionCount = 0
+
+function init() {
+  const params = new URLSearchParams(location.search)
+  const bKey = params.get('project') || 'b2'
+  projectData = DATA[bKey]
+
+  document.getElementById('sr-path').textContent = projectData.path
+  document.getElementById('sr-tag').textContent = projectData.tag
+  document.title = `RARE · ${projectData.name}`
+
+  renderCanvas()
+  renderEntities()
+  renderVersions()
+
+  // Initial snapshot
+  addSnapshot('初始数据注入')
+}
+
+function renderCanvas() {
+  const nodesEl = document.getElementById('sr-nodes')
+  const edgesEl = document.getElementById('sr-edges')
+  nodesEl.innerHTML = ''
+  edgesEl.innerHTML = ''
+
+  projectData.modules.forEach(mod => {
+    // Module node
+    const modEl = document.createElement('div')
+    modEl.className = 'sr-node module'
+    modEl.style.cssText = `left:${mod.x}px;top:${mod.y}px`
+    modEl.innerHTML = `<div class="sr-node-header"><span>◈</span>${mod.name}</div>`
+    modEl.addEventListener('dblclick', () => openEdit(mod.id, 'module', mod.name))
+    nodesEl.appendChild(modEl)
+
+    mod.pages.forEach(page => {
+      const px = mod.x + page.x
+      const py = mod.y + page.y
+
+      // Edge: module → page
+      addEdge(mod.x + 70, mod.y + 18, px + 5, py)
+
+      // Page node
+      const pEl = document.createElement('div')
+      pEl.className = 'sr-node page'
+      pEl.style.cssText = `left:${px}px;top:${py}px`
+      let bodyHtml = ''
+      page.fields.forEach(f => { bodyHtml += `<div class="sr-node field" style="left:${px+10}px;top:${py+30+page.fields.indexOf(f)*22}px">⬡ ${f.name}</div>`; addEdge(px + 5, py + 18, px + 15, py + 30 + page.fields.indexOf(f)*22 + 10) })
+      page.actions.forEach(a => { bodyHtml += `<div class="sr-node action" style="left:${px+120}px;top:${py+30+page.actions.indexOf(a)*22}px">⚡ ${a.name}</div>`; addEdge(px + 55, py + 18, px + 125, py + 30 + page.actions.indexOf(a)*22 + 10) })
+      pEl.innerHTML = `<div class="sr-node-header">▸ ${page.name}</div><div class="sr-node-body">${page.fields.length} 字段 · ${page.actions.length} 操作</div>`
+      nodesEl.appendChild(pEl)
+
+      // Field/action nodes rendered globally
+      page.fields.forEach(f => {
+        const fEl = document.createElement('div')
+        fEl.className = 'sr-node field'
+        fEl.style.cssText = `left:${px + 10}px;top:${py + 35 + page.fields.indexOf(f) * 24}px`
+        fEl.textContent = `⬡ ${f.name}`
+        fEl.addEventListener('dblclick', () => openEdit(f.id, 'field', f.name))
+        nodesEl.appendChild(fEl)
+      })
+      page.actions.forEach(a => {
+        const aEl = document.createElement('div')
+        aEl.className = 'sr-node action'
+        aEl.style.cssText = `left:${px + 120}px;top:${py + 35 + page.actions.indexOf(a) * 24}px`
+        aEl.textContent = `⚡ ${a.name}`
+        aEl.addEventListener('dblclick', () => openEdit(a.id, 'action', a.name))
+        nodesEl.appendChild(aEl)
+      })
+    })
+  })
+}
+
+function addEdge(x1, y1, x2, y2) {
+  const svg = document.getElementById('sr-edges')
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  const mx = (x1 + x2) / 2
+  const d = `M ${x1} ${y1} L ${x1} ${y1 + (y2-y1)*0.4} L ${x2} ${y1 + (y2-y1)*0.6} L ${x2} ${y2}`
+  path.setAttribute('d', d)
+  path.setAttribute('stroke', 'rgba(255,255,255,0.06)')
+  path.setAttribute('stroke-width', '1')
+  path.setAttribute('fill', 'none')
+  svg.appendChild(path)
+}
+
+function renderEntities() {
+  const el = document.getElementById('sr-sidebar-content')
+  let html = '<div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:8px">模块 · 页面 · 字段 · 操作</div>'
+  projectData.modules.forEach(mod => {
+    html += `<div class="sr-entity module-t"><div>◈ ${mod.name}</div><div class="sr-entity-label">module</div></div>`
+    mod.pages.forEach(page => {
+      html += `<div class="sr-entity page-t" style="margin-left:16px"><div>▸ ${page.name}</div><div class="sr-entity-label">page · ${page.fields.length}f ${page.actions.length}a</div></div>`
+      page.fields.forEach(f => { html += `<div class="sr-entity field-t" style="margin-left:32px"><div>⬡ ${f.name}</div><div class="sr-entity-label">field · ${f.type}</div></div>` })
+      page.actions.forEach(a => { html += `<div class="sr-entity action-t" style="margin-left:32px"><div>⚡ ${a.name}</div><div class="sr-entity-label">action · ${a.type}</div></div>` })
+    })
+  })
+  el.innerHTML = html
+}
+
+function renderVersions() {
+  const el = document.getElementById('sr-sidebar-content')
+  if (!el) return
+  let html = '<div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:8px">版本时间线</div>'
+  versions.slice().reverse().forEach(v => {
+    html += `<div class="sr-version"><div class="sr-version-dot"></div><div class="sr-version-info"><div class="sr-version-id">${v.id}</div><div class="sr-version-date">${v.date} · ${v.desc}</div></div></div>`
+  })
+  el.innerHTML = html
+}
+
+function addSnapshot(desc) {
+  versionCount++
+  const now = new Date()
+  const ts = now.toLocaleString('zh-CN', { hour12: false })
+  versions.push({ id: `v${String(versionCount).padStart(3,'0')}`, date: ts, desc })
+  renderVersions()
+}
+
+function openEdit(id, type, name) {
+  const panel = document.getElementById('sr-entity-edit')
+  panel.classList.add('active')
+  document.getElementById('sr-edit-name').value = name
+  document.getElementById('sr-edit-type').value = type
+  document.getElementById('sr-edit-name').focus()
+}
+
+// ── Events ──
+
+// Close button
+document.getElementById('btn-close').addEventListener('click', () => {
+  window.parent.postMessage('close-sim-rare', '*')
+})
+
+// Tab switch
+document.querySelectorAll('.sr-sidebar-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sr-sidebar-tab').forEach(t => t.classList.remove('active'))
+    tab.classList.add('active')
+    if (tab.dataset.tab === 'entities') renderEntities()
+    else renderVersions()
+  })
+})
+
+// Evaluate
+document.getElementById('sr-btn-eval').addEventListener('click', () => {
+  const input = document.getElementById('sr-input')
+  const text = input.value.trim()
+  if (!text) { input.focus(); return }
+
+  // Show processing
+  const proc = document.getElementById('sr-processing')
+  proc.style.display = 'flex'
+  const fill = document.getElementById('sr-processing-fill')
+  const textEl = document.getElementById('sr-processing-text')
+  textEl.textContent = '正在分析需求影响…'
+  fill.style.width = '0%'
+
+  let pct = 0
+  const intv = setInterval(() => {
+    pct += Math.random() * 20 + 5
+    if (pct > 100) pct = 100
+    fill.style.width = pct + '%'
+    if (pct >= 100) {
+      clearInterval(intv)
+      setTimeout(() => {
+        proc.style.display = 'none'
+        showImpact(text)
+        addSnapshot(`需求评估: "${text.slice(0, 20)}${text.length > 20 ? '…' : ''}"`)
+      }, 300)
+    }
+  }, 150)
+})
+
+// Impact close
+document.getElementById('sr-impact-close').addEventListener('click', () => {
+  document.getElementById('sr-impact').classList.remove('active')
+})
+
+// Snapshot
+document.getElementById('sr-btn-snap').addEventListener('click', () => {
+  addSnapshot('手动创建快照')
+})
+
+// Edit
+document.getElementById('sr-edit-save').addEventListener('click', () => {
+  document.getElementById('sr-entity-edit').classList.remove('active')
+  addSnapshot('实体编辑: ' + document.getElementById('sr-edit-name').value)
+})
+document.getElementById('sr-edit-cancel').addEventListener('click', () => {
+  document.getElementById('sr-entity-edit').classList.remove('active')
+})
+
+// Enter key
+document.getElementById('sr-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('sr-btn-eval').click()
+})
+
+function showImpact(text) {
+  const panel = document.getElementById('sr-impact')
+  const list = document.getElementById('sr-impact-list')
+  // Pick random impacts based on input length
+  const count = Math.min(3 + Math.floor(text.length / 5), 6)
+  const items = MOCK_EVALS.slice(0, count)
+  list.innerHTML = items.map(item => {
+    const color = TAG_COLORS[item.tag] || 'yellow'
+    return `<div class="sr-impact-item"><span class="sr-impact-tag ${color}">${item.tag}</span><span style="flex:1">${item.entity}: ${item.action}</span><span style="font-size:9px;color:rgba(255,255,255,0.3)">${item.impact}</span></div>`
+  }).join('')
+  panel.classList.add('active')
+}
+
+// Listen for parent messages
+window.addEventListener('message', (e) => {
+  if (e.data === 'close-sim-rare') {
+    window.parent.postMessage('close-sim-rare', '*')
+  }
+})
+
+init()
+</script>
+</body>
+</html>
