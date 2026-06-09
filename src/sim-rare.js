@@ -111,25 +111,36 @@ export function openSimRare(bKey) {
             }, { once: true })
           }
         })
-        // Add "回退" button to version items with milestone changes
-        const versionEls = doc.querySelectorAll('[style*="cursor"][style*="border"] > div')
-        versionEls.forEach(el => {
-          if (el.textContent.includes('里程碑状态') && !el.querySelector('.sr-rollback')) {
-            const rb = doc.createElement('button')
-            rb.className = 'sr-rollback'; rb.textContent = '↩ 回退'
-            rb.style.cssText = 'padding:2px 10px;border-radius:4px;font-size:10px;cursor:pointer;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:rgba(239,68,68,0.7);margin-top:4px;font-family:inherit'
-            rb.addEventListener('click', (e) => { e.stopPropagation()
-              // Clean cached project + reload iframe
+        // Add rollback button on version page right side
+        const versionSidebar = doc.querySelector('[class*="version"]') || Array.from(doc.querySelectorAll('div')).find(d => d.textContent.includes('版本管理') && d.children.length > 3)
+        if (versionSidebar && !doc.querySelector('.sr-rollback-btn')) {
+          const rb = doc.createElement('button')
+          rb.className = 'sr-rollback-btn'
+          rb.textContent = '↩ 回退'
+          rb.style.cssText = 'padding:8px 20px;border:none;border-radius:10px;background:rgba(239,68,68,0.15);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;margin:8px 12px;align-self:flex-end'
+          rb.addEventListener('click', () => {
+            // Show confirm dialog
+            const existing = doc.querySelector('.sr-confirm-dialog')
+            if (existing) existing.remove()
+            const dialog = doc.createElement('div')
+            dialog.className = 'sr-confirm-dialog'
+            dialog.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5)'
+            dialog.innerHTML = '<div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:360px;text-align:center"><div style="font-size:14px;color:#e0e0e0;margin-bottom:16px">是否要进行回退操作，回退后不可撤销</div><div style="display:flex;gap:10px;justify-content:center"><button id="sr-confirm-yes" style="padding:8px 24px;border:none;border-radius:8px;background:rgba(239,68,68,0.2);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">是，回退</button><button id="sr-confirm-no" style="padding:8px 24px;border:none;border-radius:8px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);cursor:pointer;font-size:13px;font-family:inherit">取消</button></div></div>'
+            doc.body.appendChild(dialog)
+            doc.getElementById('sr-confirm-yes').onclick = () => {
+              dialog.remove()
+              // Rollback: remove milestone field + edges, reload
               if (window._fullProject) {
                 window._fullProject.fields = window._fullProject.fields.filter(f => f.name !== '里程碑状态')
-                window._fullProject.edges = window._fullProject.edges.filter(e => e.sourceId === 'f-new-ms' || e.targetId === 'f-new-ms' ? false : true)
+                window._fullProject.edges = window._fullProject.edges.filter(e => !(e.targetId === 'f-new-ms' || e.sourceId === 'f-new-ms'))
               }
               window._srCommits = (window._srCommits||[]).filter(c => !c.message.includes('里程碑'))
               doc.location.href = doc.location.href.split('?')[0] + '?project=' + BKEY + '&_t=' + Date.now()
-            })
-            el.appendChild(rb)
-          }
-        })
+            }
+            doc.getElementById('sr-confirm-no').onclick = () => dialog.remove()
+          })
+          versionSidebar.parentNode?.insertBefore(rb, versionSidebar.nextSibling)
+        }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
           if (!el.children?.length && (el.textContent||'').includes('Space') && (el.textContent||'').includes('拖拽')) {
