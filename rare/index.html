@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RARE · 智能逆向沙盒</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" crossorigin href="./assets/index-CZ_j9wtc.css">
+    <style id="sr-override">
+    /* Font scale down */
+    body, .sr-scaled { font-size: 12px !important; }
+    </style>
+    <script>
+    /* ── RARE API Mock ── */
+    // If redirect mode, show loading overlay before React renders (prevent hall flash)
+    if (new URLSearchParams(location.search).get('redirect') === '1') {
+      document.write('<div id="sr-redirect-overlay" style="position:fixed;inset:0;z-index:99999;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:rgba(255,255,255,0.3);font-size:13px;font-family:Inter,sans-serif"><div style="width:200px;height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="width:30%;height:100%;background:linear-gradient(90deg,rgba(34,197,94,0.3),rgba(34,197,94,0.7));border-radius:4px;animation:srBar 1.4s ease-in-out infinite"></div></div><span>正在加载智能评估…</span><style>@keyframes srBar{0%{transform:translateX(-100%)}50%{transform:translateX(200%)}100%{transform:translateX(200%)}}</style></div>');
+    }
+    const PARAMS = new URLSearchParams(location.search);
+    const BKEY = PARAMS.get('project') || 'b2';
+    const BASE = 'http://localhost:3001/api';
+
+    // ── Project data per B‑node ──
+    const DATA = {
+      b1: { name:'科技管理应用', path:'~/projects/tech-mgmt',
+        modules:[{id:"m1",name:"科技项目管理",posX:50,posY:40,pages:[
+          {id:"p1",name:"项目立项",posX:70,posY:90,fields:[{id:"f1",name:"项目类型",fieldType:"string",posX:85,posY:118},{id:"f2",name:"项目编号",fieldType:"string",posX:85,posY:174},{id:"f3",name:"项目名称",fieldType:"string",posX:85,posY:230},{id:"f4",name:"项目金额",fieldType:"string",posX:85,posY:286},{id:"f5",name:"承建单位",fieldType:"string",posX:85,posY:342},{id:"f6",name:"项目经理",fieldType:"string",posX:85,posY:398},{id:"f7",name:"开始时间",fieldType:"string",posX:85,posY:454},{id:"f8",name:"结束时间",fieldType:"string",posX:85,posY:510},{id:"f9",name:"项目内容",fieldType:"string",posX:85,posY:566},{id:"f10",name:"预期成果",fieldType:"string",posX:85,posY:622}],actions:[{id:"a1",name:"新增",actionType:"新增",posX:305,posY:118},{id:"a2",name:"删除",actionType:"删除",posX:305,posY:174},{id:"a3",name:"保存",actionType:"保存",posX:305,posY:230},{id:"a4",name:"提交",actionType:"提交",posX:305,posY:286}]},{id:"p2",name:"进度管理",posX:470,posY:90,fields:[{id:"f11",name:"里程碑",fieldType:"string",posX:485,posY:118},{id:"f12",name:"计划开始时间",fieldType:"string",posX:485,posY:174},{id:"f13",name:"计划结束时间",fieldType:"string",posX:485,posY:230},{id:"f14",name:"预期成果",fieldType:"string",posX:485,posY:286}],actions:[{id:"a5",name:"上传交付物",actionType:"上传交付物",posX:705,posY:118},{id:"a6",name:"删除交付物",actionType:"删除交付物",posX:705,posY:174},{id:"a7",name:"提交",actionType:"提交",posX:705,posY:230}]},{id:"p3",name:"成员管理",posX:870,posY:90,fields:[{id:"f15",name:"姓名",fieldType:"string",posX:885,posY:118},{id:"f16",name:"角色",fieldType:"string",posX:885,posY:174},{id:"f17",name:"开始时间",fieldType:"string",posX:885,posY:230},{id:"f18",name:"结束时间",fieldType:"string",posX:885,posY:286}],actions:[{id:"a8",name:"新增",actionType:"新增",posX:1105,posY:118},{id:"a9",name:"删除",actionType:"删除",posX:1105,posY:174},{id:"a10",name:"入场",actionType:"入场",posX:1105,posY:230},{id:"a11",name:"退场",actionType:"退场",posX:1105,posY:286}]},{id:"p4",name:"变更管理",posX:70,posY:750,fields:[{id:"f19",name:"变更类型",fieldType:"string",posX:85,posY:778},{id:"f20",name:"变更原因",fieldType:"string",posX:85,posY:834}],actions:[{id:"a12",name:"保存",actionType:"保存",posX:305,posY:778},{id:"a13",name:"提交",actionType:"提交",posX:305,posY:834}]},{id:"p5",name:"验收管理",posX:470,posY:750,fields:[{id:"f21",name:"执行进度",fieldType:"string",posX:485,posY:778},{id:"f22",name:"验收评分",fieldType:"string",posX:485,posY:834},{id:"f23",name:"验收材料",fieldType:"string",posX:485,posY:890}],actions:[{id:"a14",name:"编辑",actionType:"编辑",posX:705,posY:778},{id:"a15",name:"提交",actionType:"提交",posX:705,posY:834}]}
+        ]},{id:"m2",name:"科技成果管理",posX:50,posY:1050,pages:[
+          {id:"p6",name:"科技成果",posX:70,posY:1100,fields:[{id:"f24",name:"成果登记",fieldType:"string",posX:85,posY:1128},{id:"f25",name:"成果名称",fieldType:"string",posX:85,posY:1184},{id:"f26",name:"成果编号",fieldType:"string",posX:85,posY:1240},{id:"f27",name:"上报单位",fieldType:"string",posX:85,posY:1296},{id:"f28",name:"成果转化",fieldType:"string",posX:85,posY:1352},{id:"f29",name:"转出单位",fieldType:"string",posX:85,posY:1408}],actions:[{id:"a16",name:"新增",actionType:"新增",posX:305,posY:1128},{id:"a17",name:"编辑",actionType:"编辑",posX:305,posY:1184},{id:"a18",name:"删除",actionType:"删除",posX:305,posY:1240},{id:"a19",name:"提交",actionType:"提交",posX:305,posY:1296}]}
+        ]},{id:"m3",name:"科技奖励评定",posX:1400,posY:40,pages:[
+          {id:"p7",name:"奖励申报",posX:1420,posY:90,fields:[{id:"f30",name:"成果名称",fieldType:"string",posX:1435,posY:118},{id:"f31",name:"申报单位",fieldType:"string",posX:1435,posY:174},{id:"f32",name:"奖励类型",fieldType:"string",posX:1435,posY:230},{id:"f33",name:"申报内容",fieldType:"string",posX:1435,posY:286},{id:"f34",name:"作证材料",fieldType:"string",posX:1435,posY:342}],actions:[{id:"a20",name:"新增",actionType:"新增",posX:1655,posY:118},{id:"a21",name:"编辑",actionType:"编辑",posX:1655,posY:174},{id:"a22",name:"删除",actionType:"删除",posX:1655,posY:230},{id:"a23",name:"提交",actionType:"提交",posX:1655,posY:286}]},{id:"p8",name:"奖励推荐",posX:1420,posY:500,fields:[{id:"f35",name:"推荐单位",fieldType:"string",posX:1435,posY:528},{id:"f36",name:"推荐等级",fieldType:"string",posX:1435,posY:584}],actions:[{id:"a24",name:"推荐",actionType:"推荐",posX:1655,posY:528},{id:"a25",name:"退回",actionType:"退回",posX:1655,posY:584}]},{id:"p9",name:"形式审查",posX:1820,posY:90,fields:[],actions:[{id:"a26",name:"推荐",actionType:"推荐",posX:2055,posY:118},{id:"a27",name:"退回",actionType:"退回",posX:2055,posY:174}]},{id:"p10",name:"网络评分",posX:1820,posY:500,fields:[{id:"f37",name:"评分",fieldType:"string",posX:1835,posY:528}],actions:[{id:"a28",name:"保存",actionType:"保存",posX:2055,posY:528},{id:"a29",name:"提交",actionType:"提交",posX:2055,posY:584}]}
+        ]},{id:"m4",name:"科技查询统计",posX:1400,posY:1050,pages:[
+          {id:"p11",name:"科技项目",posX:1420,posY:1100,fields:[{id:"f38",name:"项目名称",fieldType:"string",posX:1435,posY:1128},{id:"f39",name:"项目编号",fieldType:"string",posX:1435,posY:1184},{id:"f40",name:"计划进度",fieldType:"string",posX:1435,posY:1240},{id:"f41",name:"执行进度",fieldType:"string",posX:1435,posY:1296},{id:"f42",name:"承建单位",fieldType:"string",posX:1435,posY:1352},{id:"f43",name:"项目类型",fieldType:"string",posX:1435,posY:1408}],actions:[{id:"a30",name:"查询",actionType:"查询",posX:1655,posY:1128},{id:"a31",name:"导出",actionType:"导出",posX:1655,posY:1184}]},{id:"p12",name:"科技成果",posX:1420,posY:1300,fields:[{id:"f44",name:"专利",fieldType:"string",posX:1435,posY:1578},{id:"f45",name:"论文",fieldType:"string",posX:1435,posY:1634},{id:"f46",name:"软著",fieldType:"string",posX:1435,posY:1690},{id:"f47",name:"专著",fieldType:"string",posX:1435,posY:1746}],actions:[{id:"a32",name:"完成",actionType:"完成",posX:1655,posY:1578}]}
+        ]}],
+        edges:[]},
+      b2: { name:"巡查问题在线管理", path:"~/projects/patrol", modules:[{"id": "m1", "name": "人才信息管理", "posX": 60, "posY": 60, "pages": [{"id": "p1", "name": "人才基本信息", "posX": 80, "posY": 220, "fields": [{"id": "f1", "name": "人员姓名", "fieldType": "string", "posX": 95, "posY": 260, "pageId": "p1"}, {"id": "f2", "name": "人员编码", "fieldType": "string", "posX": 95, "posY": 316, "pageId": "p1"}, {"id": "f3", "name": "工作单位", "fieldType": "string", "posX": 95, "posY": 372, "pageId": "p1"}, {"id": "f4", "name": "出生年月", "fieldType": "string", "posX": 95, "posY": 428, "pageId": "p1"}, {"id": "f5", "name": "性别", "fieldType": "string", "posX": 95, "posY": 484, "pageId": "p1"}, {"id": "f6", "name": "籍贯", "fieldType": "string", "posX": 95, "posY": 540, "pageId": "p1"}, {"id": "f7", "name": "工作经历", "fieldType": "string", "posX": 95, "posY": 596, "pageId": "p1"}], "actions": [{"id": "a1", "name": "新增", "actionType": "新增", "posX": 380, "posY": 260, "pageId": "p1"}, {"id": "a2", "name": "编辑", "actionType": "编辑", "posX": 380, "posY": 316, "pageId": "p1"}, {"id": "a3", "name": "删除", "actionType": "删除", "posX": 380, "posY": 372, "pageId": "p1"}, {"id": "a4", "name": "保存", "actionType": "保存", "posX": 380, "posY": 428, "pageId": "p1"}], "moduleId": "m1"}, {"id": "p2", "name": "专业培训信息", "posX": 80, "posY": 752, "fields": [{"id": "f8", "name": "培训名称", "fieldType": "string", "posX": 95, "posY": 792, "pageId": "p2"}, {"id": "f9", "name": "主办单位", "fieldType": "string", "posX": 95, "posY": 848, "pageId": "p2"}, {"id": "f10", "name": "课程名称", "fieldType": "string", "posX": 95, "posY": 904, "pageId": "p2"}, {"id": "f11", "name": "考试层级", "fieldType": "string", "posX": 95, "posY": 960, "pageId": "p2"}], "actions": [{"id": "a5", "name": "新增", "actionType": "新增", "posX": 380, "posY": 792, "pageId": "p2"}, {"id": "a6", "name": "编辑", "actionType": "编辑", "posX": 380, "posY": 848, "pageId": "p2"}, {"id": "a7", "name": "删除", "actionType": "删除", "posX": 380, "posY": 904, "pageId": "p2"}, {"id": "a8", "name": "保存", "actionType": "保存", "posX": 380, "posY": 960, "pageId": "p2"}], "moduleId": "m1"}, {"id": "p3", "name": "工作经历信息", "posX": 80, "posY": 1116, "fields": [{"id": "f12", "name": "任务级别", "fieldType": "string", "posX": 95, "posY": 1156, "pageId": "p3"}, {"id": "f13", "name": "任务大类", "fieldType": "string", "posX": 95, "posY": 1212, "pageId": "p3"}, {"id": "f14", "name": "任务名称", "fieldType": "string", "posX": 95, "posY": 1268, "pageId": "p3"}, {"id": "f15", "name": "任务对象", "fieldType": "string", "posX": 95, "posY": 1324, "pageId": "p3"}], "actions": [{"id": "a9", "name": "新增", "actionType": "新增", "posX": 380, "posY": 1156, "pageId": "p3"}, {"id": "a10", "name": "编辑", "actionType": "编辑", "posX": 380, "posY": 1212, "pageId": "p3"}, {"id": "a11", "name": "删除", "actionType": "删除", "posX": 380, "posY": 1268, "pageId": "p3"}, {"id": "a12", "name": "保存", "actionType": "保存", "posX": 380, "posY": 1324, "pageId": "p3"}], "moduleId": "m1"}]}, {"id": "m2", "name": "人才库管理", "posX": 580, "posY": 60, "pages": [{"id": "p4", "name": "入库信息填报", "posX": 600, "posY": 220, "fields": [{"id": "f16", "name": "姓名", "fieldType": "string", "posX": 615, "posY": 260, "pageId": "p4"}, {"id": "f17", "name": "人才库编码", "fieldType": "string", "posX": 615, "posY": 316, "pageId": "p4"}, {"id": "f18", "name": "工作单位", "fieldType": "string", "posX": 615, "posY": 372, "pageId": "p4"}, {"id": "f19", "name": "入库时间", "fieldType": "string", "posX": 615, "posY": 428, "pageId": "p4"}, {"id": "f20", "name": "人才大类", "fieldType": "string", "posX": 615, "posY": 484, "pageId": "p4"}], "actions": [{"id": "a13", "name": "新增", "actionType": "新增", "posX": 900, "posY": 260, "pageId": "p4"}, {"id": "a14", "name": "编辑", "actionType": "编辑", "posX": 900, "posY": 316, "pageId": "p4"}, {"id": "a15", "name": "删除", "actionType": "删除", "posX": 900, "posY": 372, "pageId": "p4"}, {"id": "a16", "name": "保存", "actionType": "保存", "posX": 900, "posY": 428, "pageId": "p4"}, {"id": "a17", "name": "提交", "actionType": "提交", "posX": 900, "posY": 484, "pageId": "p4"}], "moduleId": "m2"}, {"id": "p5", "name": "入库详情", "posX": 600, "posY": 640, "fields": [{"id": "f21", "name": "姓名", "fieldType": "string", "posX": 615, "posY": 680, "pageId": "p5"}, {"id": "f22", "name": "人才库编码", "fieldType": "string", "posX": 615, "posY": 736, "pageId": "p5"}, {"id": "f23", "name": "工作单位", "fieldType": "string", "posX": 615, "posY": 792, "pageId": "p5"}, {"id": "f24", "name": "入库时间", "fieldType": "string", "posX": 615, "posY": 848, "pageId": "p5"}, {"id": "f25", "name": "人才大类", "fieldType": "string", "posX": 615, "posY": 904, "pageId": "p5"}], "actions": [{"id": "a18", "name": "查看", "actionType": "查看", "posX": 900, "posY": 680, "pageId": "p5"}], "moduleId": "m2"}]}, {"id": "m3", "name": "任务管理", "posX": 1100, "posY": 60, "pages": [{"id": "p6", "name": "任务管理", "posX": 1120, "posY": 220, "fields": [{"id": "f26", "name": "任务名称", "fieldType": "string", "posX": 1135, "posY": 260, "pageId": "p6"}, {"id": "f27", "name": "任务编码", "fieldType": "string", "posX": 1135, "posY": 316, "pageId": "p6"}, {"id": "f28", "name": "任务类型", "fieldType": "string", "posX": 1135, "posY": 372, "pageId": "p6"}, {"id": "f29", "name": "任务小类", "fieldType": "string", "posX": 1135, "posY": 428, "pageId": "p6"}, {"id": "f30", "name": "任务内容", "fieldType": "string", "posX": 1135, "posY": 484, "pageId": "p6"}], "actions": [{"id": "a19", "name": "新建", "actionType": "新建", "posX": 1420, "posY": 260, "pageId": "p6"}, {"id": "a20", "name": "编辑", "actionType": "编辑", "posX": 1420, "posY": 316, "pageId": "p6"}, {"id": "a21", "name": "删除", "actionType": "删除", "posX": 1420, "posY": 372, "pageId": "p6"}, {"id": "a22", "name": "保存", "actionType": "保存", "posX": 1420, "posY": 428, "pageId": "p6"}], "moduleId": "m3"}, {"id": "p7", "name": "组队选才", "posX": 1120, "posY": 640, "fields": [{"id": "f31", "name": "工作组名称", "fieldType": "string", "posX": 1135, "posY": 680, "pageId": "p7"}, {"id": "f32", "name": "工作组编号", "fieldType": "string", "posX": 1135, "posY": 736, "pageId": "p7"}, {"id": "f33", "name": "关联任务", "fieldType": "string", "posX": 1135, "posY": 792, "pageId": "p7"}, {"id": "f34", "name": "任务类型", "fieldType": "string", "posX": 1135, "posY": 848, "pageId": "p7"}], "actions": [{"id": "a23", "name": "新建", "actionType": "新建", "posX": 1420, "posY": 680, "pageId": "p7"}, {"id": "a24", "name": "生成初选名单", "actionType": "生成初选名单", "posX": 1420, "posY": 736, "pageId": "p7"}, {"id": "a25", "name": "保存", "actionType": "保存", "posX": 1420, "posY": 792, "pageId": "p7"}], "moduleId": "m3"}]}, {"id": "m4", "name": "问题管理", "posX": 1620, "posY": 60, "pages": [{"id": "p8", "name": "问题下发", "posX": 1640, "posY": 220, "fields": [{"id": "f35", "name": "问题名称", "fieldType": "string", "posX": 1655, "posY": 260, "pageId": "p8"}, {"id": "f36", "name": "问题类型", "fieldType": "string", "posX": 1655, "posY": 316, "pageId": "p8"}, {"id": "f37", "name": "涉及单位", "fieldType": "string", "posX": 1655, "posY": 372, "pageId": "p8"}, {"id": "f38", "name": "预计完成时间", "fieldType": "string", "posX": 1655, "posY": 428, "pageId": "p8"}], "actions": [{"id": "a26", "name": "新建", "actionType": "新建", "posX": 1940, "posY": 260, "pageId": "p8"}, {"id": "a27", "name": "编辑", "actionType": "编辑", "posX": 1940, "posY": 316, "pageId": "p8"}, {"id": "a28", "name": "删除", "actionType": "删除", "posX": 1940, "posY": 372, "pageId": "p8"}, {"id": "a29", "name": "保存", "actionType": "保存", "posX": 1940, "posY": 428, "pageId": "p8"}], "moduleId": "m4"}, {"id": "p9", "name": "问题整改", "posX": 1640, "posY": 584, "fields": [{"id": "f39", "name": "整改措施", "fieldType": "string", "posX": 1655, "posY": 624, "pageId": "p9"}, {"id": "f40", "name": "整改成效", "fieldType": "string", "posX": 1655, "posY": 680, "pageId": "p9"}], "actions": [{"id": "a30", "name": "新建", "actionType": "新建", "posX": 1940, "posY": 624, "pageId": "p9"}, {"id": "a31", "name": "编辑", "actionType": "编辑", "posX": 1940, "posY": 680, "pageId": "p9"}, {"id": "a32", "name": "删除", "actionType": "删除", "posX": 1940, "posY": 736, "pageId": "p9"}, {"id": "a33", "name": "保存", "actionType": "保存", "posX": 1940, "posY": 792, "pageId": "p9"}, {"id": "a34", "name": "提交", "actionType": "提交", "posX": 1940, "posY": 848, "pageId": "p9"}], "moduleId": "m4"}]}], edges:[{"id": "e1", "sourceId": "m1", "targetId": "p1", "flowType": "has", "status": "active"}, {"id": "e2", "sourceId": "p1", "targetId": "f1", "flowType": "has", "status": "active"}, {"id": "e3", "sourceId": "p1", "targetId": "f2", "flowType": "has", "status": "active"}, {"id": "e4", "sourceId": "p1", "targetId": "f3", "flowType": "has", "status": "active"}, {"id": "e5", "sourceId": "p1", "targetId": "f4", "flowType": "has", "status": "active"}, {"id": "e6", "sourceId": "p1", "targetId": "f5", "flowType": "has", "status": "active"}, {"id": "e7", "sourceId": "p1", "targetId": "f6", "flowType": "has", "status": "active"}, {"id": "e8", "sourceId": "p1", "targetId": "f7", "flowType": "has", "status": "active"}, {"id": "e9", "sourceId": "p1", "targetId": "a1", "flowType": "has", "status": "active"}, {"id": "e10", "sourceId": "p1", "targetId": "a2", "flowType": "has", "status": "active"}, {"id": "e11", "sourceId": "p1", "targetId": "a3", "flowType": "has", "status": "active"}, {"id": "e12", "sourceId": "p1", "targetId": "a4", "flowType": "has", "status": "active"}, {"id": "e13", "sourceId": "m1", "targetId": "p2", "flowType": "has", "status": "active"}, {"id": "e14", "sourceId": "p2", "targetId": "f8", "flowType": "has", "status": "active"}, {"id": "e15", "sourceId": "p2", "targetId": "f9", "flowType": "has", "status": "active"}, {"id": "e16", "sourceId": "p2", "targetId": "f10", "flowType": "has", "status": "active"}, {"id": "e17", "sourceId": "p2", "targetId": "f11", "flowType": "has", "status": "active"}, {"id": "e18", "sourceId": "p2", "targetId": "a5", "flowType": "has", "status": "active"}, {"id": "e19", "sourceId": "p2", "targetId": "a6", "flowType": "has", "status": "active"}, {"id": "e20", "sourceId": "p2", "targetId": "a7", "flowType": "has", "status": "active"}, {"id": "e21", "sourceId": "p2", "targetId": "a8", "flowType": "has", "status": "active"}, {"id": "e22", "sourceId": "m1", "targetId": "p3", "flowType": "has", "status": "active"}, {"id": "e23", "sourceId": "p3", "targetId": "f12", "flowType": "has", "status": "active"}, {"id": "e24", "sourceId": "p3", "targetId": "f13", "flowType": "has", "status": "active"}, {"id": "e25", "sourceId": "p3", "targetId": "f14", "flowType": "has", "status": "active"}, {"id": "e26", "sourceId": "p3", "targetId": "f15", "flowType": "has", "status": "active"}, {"id": "e27", "sourceId": "p3", "targetId": "a9", "flowType": "has", "status": "active"}, {"id": "e28", "sourceId": "p3", "targetId": "a10", "flowType": "has", "status": "active"}, {"id": "e29", "sourceId": "p3", "targetId": "a11", "flowType": "has", "status": "active"}, {"id": "e30", "sourceId": "p3", "targetId": "a12", "flowType": "has", "status": "active"}, {"id": "e31", "sourceId": "m2", "targetId": "p4", "flowType": "has", "status": "active"}, {"id": "e32", "sourceId": "p4", "targetId": "f16", "flowType": "has", "status": "active"}, {"id": "e33", "sourceId": "p4", "targetId": "f17", "flowType": "has", "status": "active"}, {"id": "e34", "sourceId": "p4", "targetId": "f18", "flowType": "has", "status": "active"}, {"id": "e35", "sourceId": "p4", "targetId": "f19", "flowType": "has", "status": "active"}, {"id": "e36", "sourceId": "p4", "targetId": "f20", "flowType": "has", "status": "active"}, {"id": "e37", "sourceId": "p4", "targetId": "a13", "flowType": "has", "status": "active"}, {"id": "e38", "sourceId": "p4", "targetId": "a14", "flowType": "has", "status": "active"}, {"id": "e39", "sourceId": "p4", "targetId": "a15", "flowType": "has", "status": "active"}, {"id": "e40", "sourceId": "p4", "targetId": "a16", "flowType": "has", "status": "active"}, {"id": "e41", "sourceId": "p4", "targetId": "a17", "flowType": "has", "status": "active"}, {"id": "e42", "sourceId": "m2", "targetId": "p5", "flowType": "has", "status": "active"}, {"id": "e43", "sourceId": "p5", "targetId": "f21", "flowType": "has", "status": "active"}, {"id": "e44", "sourceId": "p5", "targetId": "f22", "flowType": "has", "status": "active"}, {"id": "e45", "sourceId": "p5", "targetId": "f23", "flowType": "has", "status": "active"}, {"id": "e46", "sourceId": "p5", "targetId": "f24", "flowType": "has", "status": "active"}, {"id": "e47", "sourceId": "p5", "targetId": "f25", "flowType": "has", "status": "active"}, {"id": "e48", "sourceId": "p5", "targetId": "a18", "flowType": "has", "status": "active"}, {"id": "e49", "sourceId": "m3", "targetId": "p6", "flowType": "has", "status": "active"}, {"id": "e50", "sourceId": "p6", "targetId": "f26", "flowType": "has", "status": "active"}, {"id": "e51", "sourceId": "p6", "targetId": "f27", "flowType": "has", "status": "active"}, {"id": "e52", "sourceId": "p6", "targetId": "f28", "flowType": "has", "status": "active"}, {"id": "e53", "sourceId": "p6", "targetId": "f29", "flowType": "has", "status": "active"}, {"id": "e54", "sourceId": "p6", "targetId": "f30", "flowType": "has", "status": "active"}, {"id": "e55", "sourceId": "p6", "targetId": "a19", "flowType": "has", "status": "active"}, {"id": "e56", "sourceId": "p6", "targetId": "a20", "flowType": "has", "status": "active"}, {"id": "e57", "sourceId": "p6", "targetId": "a21", "flowType": "has", "status": "active"}, {"id": "e58", "sourceId": "p6", "targetId": "a22", "flowType": "has", "status": "active"}, {"id": "e59", "sourceId": "m3", "targetId": "p7", "flowType": "has", "status": "active"}, {"id": "e60", "sourceId": "p7", "targetId": "f31", "flowType": "has", "status": "active"}, {"id": "e61", "sourceId": "p7", "targetId": "f32", "flowType": "has", "status": "active"}, {"id": "e62", "sourceId": "p7", "targetId": "f33", "flowType": "has", "status": "active"}, {"id": "e63", "sourceId": "p7", "targetId": "f34", "flowType": "has", "status": "active"}, {"id": "e64", "sourceId": "p7", "targetId": "a23", "flowType": "has", "status": "active"}, {"id": "e65", "sourceId": "p7", "targetId": "a24", "flowType": "has", "status": "active"}, {"id": "e66", "sourceId": "p7", "targetId": "a25", "flowType": "has", "status": "active"}, {"id": "e67", "sourceId": "m4", "targetId": "p8", "flowType": "has", "status": "active"}, {"id": "e68", "sourceId": "p8", "targetId": "f35", "flowType": "has", "status": "active"}, {"id": "e69", "sourceId": "p8", "targetId": "f36", "flowType": "has", "status": "active"}, {"id": "e70", "sourceId": "p8", "targetId": "f37", "flowType": "has", "status": "active"}, {"id": "e71", "sourceId": "p8", "targetId": "f38", "flowType": "has", "status": "active"}, {"id": "e72", "sourceId": "p8", "targetId": "a26", "flowType": "has", "status": "active"}, {"id": "e73", "sourceId": "p8", "targetId": "a27", "flowType": "has", "status": "active"}, {"id": "e74", "sourceId": "p8", "targetId": "a28", "flowType": "has", "status": "active"}, {"id": "e75", "sourceId": "p8", "targetId": "a29", "flowType": "has", "status": "active"}, {"id": "e76", "sourceId": "m4", "targetId": "p9", "flowType": "has", "status": "active"}, {"id": "e77", "sourceId": "p9", "targetId": "f39", "flowType": "has", "status": "active"}, {"id": "e78", "sourceId": "p9", "targetId": "f40", "flowType": "has", "status": "active"}, {"id": "e79", "sourceId": "p9", "targetId": "a30", "flowType": "has", "status": "active"}, {"id": "e80", "sourceId": "p9", "targetId": "a31", "flowType": "has", "status": "active"}, {"id": "e81", "sourceId": "p9", "targetId": "a32", "flowType": "has", "status": "active"}, {"id": "e82", "sourceId": "p9", "targetId": "a33", "flowType": "has", "status": "active"}, {"id": "e83", "sourceId": "p9", "targetId": "a34", "flowType": "has", "status": "active"}] },
+      b3: { name:"项目管理应用", path:"~/projects/project-mgmt", modules:[{"id": "m1", "name": "项目立项", "posX": 60, "posY": 60, "pages": [{"id": "p1", "name": "立项管理", "posX": 80, "posY": 220, "fields": [{"id": "f1", "name": "项目名称", "fieldType": "string", "posX": 95, "posY": 260, "pageId": "p1"}, {"id": "f2", "name": "项目编号", "fieldType": "string", "posX": 95, "posY": 316, "pageId": "p1"}, {"id": "f3", "name": "项目类型", "fieldType": "string", "posX": 95, "posY": 372, "pageId": "p1"}, {"id": "f4", "name": "项目金额", "fieldType": "string", "posX": 95, "posY": 428, "pageId": "p1"}, {"id": "f5", "name": "开始时间", "fieldType": "string", "posX": 95, "posY": 484, "pageId": "p1"}, {"id": "f6", "name": "结束时间", "fieldType": "string", "posX": 95, "posY": 540, "pageId": "p1"}, {"id": "f7", "name": "内容", "fieldType": "string", "posX": 95, "posY": 596, "pageId": "p1"}], "actions": [{"id": "a1", "name": "新建", "actionType": "新建", "posX": 380, "posY": 260, "pageId": "p1"}, {"id": "a2", "name": "编辑", "actionType": "编辑", "posX": 380, "posY": 316, "pageId": "p1"}, {"id": "a3", "name": "删除", "actionType": "删除", "posX": 380, "posY": 372, "pageId": "p1"}, {"id": "a4", "name": "保存", "actionType": "保存", "posX": 380, "posY": 428, "pageId": "p1"}, {"id": "a5", "name": "提交", "actionType": "提交", "posX": 380, "posY": 484, "pageId": "p1"}], "moduleId": "m1"}]}, {"id": "m2", "name": "项目变更", "posX": 580, "posY": 60, "pages": [{"id": "p2", "name": "变更管理", "posX": 600, "posY": 220, "fields": [{"id": "f8", "name": "变更类型", "fieldType": "string", "posX": 615, "posY": 260, "pageId": "p2"}, {"id": "f9", "name": "变更原因", "fieldType": "string", "posX": 615, "posY": 316, "pageId": "p2"}, {"id": "f10", "name": "变更内容", "fieldType": "string", "posX": 615, "posY": 372, "pageId": "p2"}], "actions": [{"id": "a6", "name": "新建", "actionType": "新建", "posX": 900, "posY": 260, "pageId": "p2"}, {"id": "a7", "name": "编辑", "actionType": "编辑", "posX": 900, "posY": 316, "pageId": "p2"}, {"id": "a8", "name": "删除", "actionType": "删除", "posX": 900, "posY": 372, "pageId": "p2"}, {"id": "a9", "name": "保存", "actionType": "保存", "posX": 900, "posY": 428, "pageId": "p2"}, {"id": "a10", "name": "提交", "actionType": "提交", "posX": 900, "posY": 484, "pageId": "p2"}], "moduleId": "m2"}]}, {"id": "m3", "name": "成员管理", "posX": 1100, "posY": 60, "pages": [{"id": "p3", "name": "成员管理", "posX": 1120, "posY": 220, "fields": [{"id": "f11", "name": "人员姓名", "fieldType": "string", "posX": 1135, "posY": 260, "pageId": "p3"}, {"id": "f12", "name": "人员编码", "fieldType": "string", "posX": 1135, "posY": 316, "pageId": "p3"}, {"id": "f13", "name": "计划开始时间", "fieldType": "string", "posX": 1135, "posY": 372, "pageId": "p3"}, {"id": "f14", "name": "计划结束时间", "fieldType": "string", "posX": 1135, "posY": 428, "pageId": "p3"}], "actions": [{"id": "a11", "name": "新增", "actionType": "新增", "posX": 1420, "posY": 260, "pageId": "p3"}, {"id": "a12", "name": "删除", "actionType": "删除", "posX": 1420, "posY": 316, "pageId": "p3"}, {"id": "a13", "name": "入场", "actionType": "入场", "posX": 1420, "posY": 372, "pageId": "p3"}, {"id": "a14", "name": "退场", "actionType": "退场", "posX": 1420, "posY": 428, "pageId": "p3"}], "moduleId": "m3"}]}, {"id": "m4", "name": "交付物管理", "posX": 1620, "posY": 60, "pages": [{"id": "p4", "name": "交付物管理", "posX": 1640, "posY": 220, "fields": [{"id": "f15", "name": "交付物名称", "fieldType": "string", "posX": 1655, "posY": 260, "pageId": "p4"}, {"id": "f16", "name": "里程碑计划", "fieldType": "string", "posX": 1655, "posY": 316, "pageId": "p4"}, {"id": "f17", "name": "计划完成时间", "fieldType": "string", "posX": 1655, "posY": 372, "pageId": "p4"}, {"id": "f18", "name": "上传时间", "fieldType": "string", "posX": 1655, "posY": 428, "pageId": "p4"}], "actions": [{"id": "a15", "name": "上传", "actionType": "上传", "posX": 1940, "posY": 260, "pageId": "p4"}, {"id": "a16", "name": "编辑", "actionType": "编辑", "posX": 1940, "posY": 316, "pageId": "p4"}, {"id": "a17", "name": "删除", "actionType": "删除", "posX": 1940, "posY": 372, "pageId": "p4"}, {"id": "a18", "name": "保存", "actionType": "保存", "posX": 1940, "posY": 428, "pageId": "p4"}, {"id": "a19", "name": "提交", "actionType": "提交", "posX": 1940, "posY": 484, "pageId": "p4"}], "moduleId": "m4"}]}, {"id": "m5", "name": "验收管理", "posX": 2140, "posY": 60, "pages": [{"id": "p5", "name": "验收管理", "posX": 2160, "posY": 220, "fields": [{"id": "f19", "name": "项目名称", "fieldType": "string", "posX": 2175, "posY": 260, "pageId": "p5"}, {"id": "f20", "name": "验收时间", "fieldType": "string", "posX": 2175, "posY": 316, "pageId": "p5"}, {"id": "f21", "name": "验收材料", "fieldType": "string", "posX": 2175, "posY": 372, "pageId": "p5"}, {"id": "f22", "name": "项目进度", "fieldType": "string", "posX": 2175, "posY": 428, "pageId": "p5"}], "actions": [{"id": "a20", "name": "填报", "actionType": "填报", "posX": 2460, "posY": 260, "pageId": "p5"}, {"id": "a21", "name": "保存", "actionType": "保存", "posX": 2460, "posY": 316, "pageId": "p5"}, {"id": "a22", "name": "删除", "actionType": "删除", "posX": 2460, "posY": 372, "pageId": "p5"}, {"id": "a23", "name": "提交", "actionType": "提交", "posX": 2460, "posY": 428, "pageId": "p5"}], "moduleId": "m5"}]}], edges:[{"id": "e1", "sourceId": "m1", "targetId": "p1", "flowType": "has", "status": "active"}, {"id": "e2", "sourceId": "p1", "targetId": "f1", "flowType": "has", "status": "active"}, {"id": "e3", "sourceId": "p1", "targetId": "f2", "flowType": "has", "status": "active"}, {"id": "e4", "sourceId": "p1", "targetId": "f3", "flowType": "has", "status": "active"}, {"id": "e5", "sourceId": "p1", "targetId": "f4", "flowType": "has", "status": "active"}, {"id": "e6", "sourceId": "p1", "targetId": "f5", "flowType": "has", "status": "active"}, {"id": "e7", "sourceId": "p1", "targetId": "f6", "flowType": "has", "status": "active"}, {"id": "e8", "sourceId": "p1", "targetId": "f7", "flowType": "has", "status": "active"}, {"id": "e9", "sourceId": "p1", "targetId": "a1", "flowType": "has", "status": "active"}, {"id": "e10", "sourceId": "p1", "targetId": "a2", "flowType": "has", "status": "active"}, {"id": "e11", "sourceId": "p1", "targetId": "a3", "flowType": "has", "status": "active"}, {"id": "e12", "sourceId": "p1", "targetId": "a4", "flowType": "has", "status": "active"}, {"id": "e13", "sourceId": "p1", "targetId": "a5", "flowType": "has", "status": "active"}, {"id": "e14", "sourceId": "m2", "targetId": "p2", "flowType": "has", "status": "active"}, {"id": "e15", "sourceId": "p2", "targetId": "f8", "flowType": "has", "status": "active"}, {"id": "e16", "sourceId": "p2", "targetId": "f9", "flowType": "has", "status": "active"}, {"id": "e17", "sourceId": "p2", "targetId": "f10", "flowType": "has", "status": "active"}, {"id": "e18", "sourceId": "p2", "targetId": "a6", "flowType": "has", "status": "active"}, {"id": "e19", "sourceId": "p2", "targetId": "a7", "flowType": "has", "status": "active"}, {"id": "e20", "sourceId": "p2", "targetId": "a8", "flowType": "has", "status": "active"}, {"id": "e21", "sourceId": "p2", "targetId": "a9", "flowType": "has", "status": "active"}, {"id": "e22", "sourceId": "p2", "targetId": "a10", "flowType": "has", "status": "active"}, {"id": "e23", "sourceId": "m3", "targetId": "p3", "flowType": "has", "status": "active"}, {"id": "e24", "sourceId": "p3", "targetId": "f11", "flowType": "has", "status": "active"}, {"id": "e25", "sourceId": "p3", "targetId": "f12", "flowType": "has", "status": "active"}, {"id": "e26", "sourceId": "p3", "targetId": "f13", "flowType": "has", "status": "active"}, {"id": "e27", "sourceId": "p3", "targetId": "f14", "flowType": "has", "status": "active"}, {"id": "e28", "sourceId": "p3", "targetId": "a11", "flowType": "has", "status": "active"}, {"id": "e29", "sourceId": "p3", "targetId": "a12", "flowType": "has", "status": "active"}, {"id": "e30", "sourceId": "p3", "targetId": "a13", "flowType": "has", "status": "active"}, {"id": "e31", "sourceId": "p3", "targetId": "a14", "flowType": "has", "status": "active"}, {"id": "e32", "sourceId": "m4", "targetId": "p4", "flowType": "has", "status": "active"}, {"id": "e33", "sourceId": "p4", "targetId": "f15", "flowType": "has", "status": "active"}, {"id": "e34", "sourceId": "p4", "targetId": "f16", "flowType": "has", "status": "active"}, {"id": "e35", "sourceId": "p4", "targetId": "f17", "flowType": "has", "status": "active"}, {"id": "e36", "sourceId": "p4", "targetId": "f18", "flowType": "has", "status": "active"}, {"id": "e37", "sourceId": "p4", "targetId": "a15", "flowType": "has", "status": "active"}, {"id": "e38", "sourceId": "p4", "targetId": "a16", "flowType": "has", "status": "active"}, {"id": "e39", "sourceId": "p4", "targetId": "a17", "flowType": "has", "status": "active"}, {"id": "e40", "sourceId": "p4", "targetId": "a18", "flowType": "has", "status": "active"}, {"id": "e41", "sourceId": "p4", "targetId": "a19", "flowType": "has", "status": "active"}, {"id": "e42", "sourceId": "m5", "targetId": "p5", "flowType": "has", "status": "active"}, {"id": "e43", "sourceId": "p5", "targetId": "f19", "flowType": "has", "status": "active"}, {"id": "e44", "sourceId": "p5", "targetId": "f20", "flowType": "has", "status": "active"}, {"id": "e45", "sourceId": "p5", "targetId": "f21", "flowType": "has", "status": "active"}, {"id": "e46", "sourceId": "p5", "targetId": "f22", "flowType": "has", "status": "active"}, {"id": "e47", "sourceId": "p5", "targetId": "a20", "flowType": "has", "status": "active"}, {"id": "e48", "sourceId": "p5", "targetId": "a21", "flowType": "has", "status": "active"}, {"id": "e49", "sourceId": "p5", "targetId": "a22", "flowType": "has", "status": "active"}, {"id": "e50", "sourceId": "p5", "targetId": "a23", "flowType": "has", "status": "active"}] },
+        };
+
+    // ── Evaluation data map (powered by 智能评估.xlsx) ──
+    const EVAL = {
+      '进度管理页面新增一个里程碑状态': {
+        refineText: '在【科技项目管理:module】模块【进度管理:page】页面新增一个{里程碑状态:field}字段，值为未提交、审核中、审核通过、审核退回，当用户编辑保存后，状态为未提交；用户提交后，状态为审核中；当审核节点退回后，状态为审核退回；当所有审核节点都审核通过后，状态为审核通过。',
+        refineEntities: [
+          {name:'里程碑状态',type:'field',isNew:true,parentName:'进度管理',fieldType:'select'},
+          {name:'进度管理',type:'page',isNew:false,parentName:'科技项目管理',impact:'high',description:'增加里程碑状态字段，可对每个里程碑完成情况进行查看'},
+          {name:'执行进度',type:'field',isNew:false,parentName:'进度管理',impact:'medium',description:'考虑是否根据里程碑状态字段进行执行进度统计'},
+        ],
+        refineEdges: [
+          {sourceName:'进度管理',targetName:'里程碑状态',label:'新增字段',flowType:'extension'},
+          {sourceName:'里程碑状态',targetName:'执行进度',label:'状态关联',flowType:'association'},
+        ],
+        impactDesc: '进度管理页面，每个里程碑都会新增一个里程碑状态，用户可以以此来查看每个里程碑的完成情况，便于对项目进度进行把控',
+        newEntities: [{name:'里程碑状态',type:'field',parentName:'进度管理',fieldType:'select'}],
+        affectedEntities: [
+          {name:'进度管理',type:'page',impact:'增加里程碑状态字段，可对每个里程碑完成情况进行查看'},
+          {name:'执行进度',type:'field',impact:'考虑是否根据里程碑状态字段进行执行进度统计'},
+        ],
+        newEdges: [
+          {sourceName:'进度管理',targetName:'里程碑状态',label:'新增字段',flowType:'extension'},
+          {sourceName:'里程碑状态',targetName:'执行进度',label:'状态关联',flowType:'association'},
+        ],
+        // apply-impact: entities to create + edges to add
+        applyFields: [{id:'f-new-ms',name:'里程碑状态',fieldType:'select',posX:485,posY:342,pageId:'p2',projectId:'proj-1',moduleId:'m1'}],
+        applyEdges: [
+          {id:'e-new-1',sourceId:'p2',targetId:'f-new-ms',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e-new-2',sourceId:'f-new-ms',targetId:null,targetField:'执行进度',flowType:'association',status:'active',projectId:'proj-1',label:'关联'},
+        ],
+      },
+      '科技成果模块新增一个成果库页面': {
+        refineText: '在【科技成果管理:module】模块新增一个{成果库:page}页面，页面包含一些查询条件和一个列表，列表是已经审核通过的成果信息，用户选择查询条件，点击{查询:action}按钮，进行成果查询。',
+        refineEntities: [
+          {name:'成果库',type:'page',isNew:true,parentName:'科技成果管理',impact:'high',description:'成果库查询页面'},
+          {name:'查询',type:'action',isNew:true,parentName:'成果库',impact:'medium',description:'成果查询操作'},
+        ],
+        refineEdges: [
+          {sourceName:'科技成果管理',targetName:'成果库',label:'新增页面',flowType:'extension'},
+        ],
+        impactDesc: '进入科技管理模块，点击成果库页签，会查看已经审核通过的所有成果，用户可以进行筛选，查看成果详情',
+        newEntities: [
+          {name:'成果库',type:'page',parentName:'科技成果管理'},
+          {name:'查询',type:'action',parentName:'成果库'},
+        ],
+        affectedEntities: [
+          {name:'科技成果管理',type:'module',impact:'科技成果管理新增一个页面，审核通过的成果会展示在这个页面里'},
+        ],
+        newEdges: [],
+        applyFields: [
+          {id:'f-new-k1',name:'成果库',fieldType:'page',posX:300,posY:1100,pageId:'p-new-k',projectId:'proj-1',moduleId:'m2'},
+          {id:'f-new-k2',name:'查询',fieldType:'action',posX:325,posY:1150,pageId:'p-new-k',projectId:'proj-1',moduleId:'m2'},
+        ],
+        applyEdges: [
+          {id:'e-new-k1',sourceId:'m2',targetId:'f-new-k1',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e-new-k2',sourceId:'f-new-k1',targetId:'f-new-k2',flowType:'has',status:'active',projectId:'proj-1',label:''},
+        ],
+      },
+      // ── B2 巡查问题在线管理 ──
+      '人才基本信息页面新增一个上传简历功能': {
+        refineText: '在【人才信息管理:module】模块【人才基本信息:page】页面新增一个{上传:action}按钮，用户点击按钮，上传自己的简历后点击【保存:action】按钮后，后续可下载查看详情，仅允许上传PDF格式。',
+        refineEntities: [
+          {name:'上传',type:'action',isNew:true,parentName:'人才基本信息',impact:'high',description:'上传简历操作'},
+          {name:'人才基本信息',type:'page',isNew:false,parentName:'人才信息管理',impact:'medium',description:'增加一个上传按钮'},
+          {name:'保存',type:'action',isNew:false,parentName:'人才基本信息',impact:'low',description:'需对上传的文件进行保存'},
+        ],
+        refineEdges: [
+          {sourceName:'人才基本信息',targetName:'上传',label:'新增操作',flowType:'extension'},
+          {sourceName:'上传',targetName:'保存',label:'后续操作',flowType:'association'},
+        ],
+        impactDesc: '进入人才信息管理模块，用户可上传简历，便于简历信息的在线管理',
+        newEntities: [
+          {name:'上传',type:'action',parentName:'人才基本信息'},
+        ],
+        affectedEntities: [
+          {name:'人才基本信息',type:'page',impact:'增加一个上传按钮'},
+          {name:'保存',type:'action',impact:'需对上传的文件进行保存，后续可从详情中查看'},
+        ],
+        newEdges: [
+          {sourceName:'上传',targetName:'保存',label:'后续操作',flowType:'association'},
+        ],
+        applyFields: [
+          {id:'a35',name:'上传',fieldType:'action',posX:375,posY:316,pageId:'p1',projectId:'proj-1',moduleId:'m1'},
+        ],
+        applyEdges: [
+          {id:'e84',sourceId:'p1',targetId:'a35',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e85',sourceId:'a35',targetId:'a4',flowType:'association',status:'active',projectId:'proj-1',label:'后续操作'},
+        ],
+      },
+      '组队选才页面新增角色要求功能': {
+        refineText: '在【任务管理:module】模块【组队选才:page】页面新增一个{角色要求:field}字段，用户选择相关角色要求，点击【生成初选名单:action】按钮，根据用户选择的要求，生成这个任务的相关角色。',
+        refineEntities: [
+          {name:'角色要求',type:'field',isNew:true,parentName:'组队选才',fieldType:'select',impact:'high',description:'选择角色要求'},
+          {name:'组队选才',type:'page',isNew:false,parentName:'任务管理',impact:'medium',description:'增加一个角色要求字段'},
+          {name:'生成初选名单',type:'action',isNew:false,parentName:'组队选才',impact:'medium',description:'生成初选名单后需遵循所选的角色要求'},
+        ],
+        refineEdges: [
+          {sourceName:'组队选才',targetName:'角色要求',label:'新增字段',flowType:'extension'},
+          {sourceName:'角色要求',targetName:'生成初选名单',label:'影响筛选',flowType:'association'},
+        ],
+        impactDesc: '进入组队选才页面，可根据选择的要求生成任务的角色，提升了效率',
+        newEntities: [
+          {name:'角色要求',type:'field',parentName:'组队选才',fieldType:'select'},
+        ],
+        affectedEntities: [
+          {name:'组队选才',type:'page',impact:'增加一个角色要求字段'},
+          {name:'生成初选名单',type:'action',impact:'生成初选名单后需遵循所选的角色要求，考虑后台逻辑的调整'},
+        ],
+        newEdges: [
+          {sourceName:'角色要求',targetName:'生成初选名单',label:'影响筛选',flowType:'association'},
+        ],
+        applyFields: [
+          {id:'f41',name:'角色要求',fieldType:'select',posX:1135,posY:596,pageId:'p7',projectId:'proj-1',moduleId:'m3'},
+        ],
+        applyEdges: [
+          {id:'e86',sourceId:'p7',targetId:'f41',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e87',sourceId:'f41',targetId:'a24',flowType:'association',status:'active',projectId:'proj-1',label:'影响筛选'},
+        ],
+      },
+      // ── B3 项目管理应用 ──
+      '成员管理里新增一个人员报工功能': {
+        refineText: '在【成员管理:module】模块里的【成员管理:page】页面新增一个{人员报工:action}按钮，点击这个按钮出现一个弹窗，用户需要维护{报工日期:field} {报工内容:field}等字段，然后点击{提交:action}按钮进行审核。',
+        refineEntities: [
+          {name:'人员报工',type:'action',isNew:true,parentName:'成员管理',impact:'high',description:'报工操作按钮'},
+          {name:'报工日期',type:'field',isNew:true,parentName:'成员管理',fieldType:'date',impact:'medium',description:'报工日期选择'},
+          {name:'报工内容',type:'field',isNew:true,parentName:'成员管理',fieldType:'text',impact:'medium',description:'报工内容填写'},
+          {name:'提交',type:'action',isNew:true,parentName:'成员管理',impact:'high',description:'提交报工审核'},
+          {name:'成员管理',type:'page',isNew:false,parentName:null,impact:'medium',description:'增加一个报工按钮'},
+        ],
+        refineEdges: [
+          {sourceName:'成员管理',targetName:'人员报工',label:'新增操作',flowType:'extension'},
+          {sourceName:'人员报工',targetName:'报工日期',label:'弹窗字段',flowType:'association'},
+          {sourceName:'人员报工',targetName:'报工内容',label:'弹窗字段',flowType:'association'},
+          {sourceName:'人员报工',targetName:'提交',label:'提交审核',flowType:'association'},
+        ],
+        impactDesc: '进入成员管理页面，用户点击报工，维护完信息后进行审核，有效的提升了项目工作开展的效率',
+        newEntities: [
+          {name:'人员报工',type:'action',parentName:'成员管理'},
+          {name:'报工日期',type:'field',parentName:'成员管理',fieldType:'date'},
+          {name:'报工内容',type:'field',parentName:'成员管理',fieldType:'text'},
+          {name:'提交',type:'action',parentName:'成员管理'},
+        ],
+        affectedEntities: [
+          {name:'成员管理',type:'page',impact:'增加一个报工按钮，需考虑是否进行报工内容展示'},
+        ],
+        newEdges: [
+          {sourceName:'成员管理',targetName:'人员报工',label:'新增操作',flowType:'extension'},
+          {sourceName:'人员报工',targetName:'提交',label:'提交审核',flowType:'association'},
+        ],
+        applyFields: [
+          {id:'f23',name:'报工日期',fieldType:'date',posX:1135,posY:484,pageId:'p3',projectId:'proj-1',moduleId:'m3'},
+          {id:'f24',name:'报工内容',fieldType:'text',posX:1135,posY:540,pageId:'p3',projectId:'proj-1',moduleId:'m3'},
+          {id:'a24',name:'人员报工',fieldType:'action',posX:1420,posY:484,pageId:'p3',projectId:'proj-1',moduleId:'m3'},
+          {id:'a25',name:'提交',fieldType:'action',posX:1420,posY:540,pageId:'p3',projectId:'proj-1',moduleId:'m3'},
+        ],
+        applyEdges: [
+          {id:'e51',sourceId:'p3',targetId:'f23',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e52',sourceId:'p3',targetId:'f24',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e53',sourceId:'p3',targetId:'a24',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e54',sourceId:'p3',targetId:'a25',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e55',sourceId:'a24',targetId:'a25',flowType:'association',status:'active',projectId:'proj-1',label:'提交审核'},
+        ],
+      },
+    };
+    function getEval(requirement) {
+      return EVAL[requirement] || EVAL['进度管理页面新增一个里程碑状态'];
+    }
+    function getReqFromBodyOrDom(body) {
+      // Check request body first
+      if (body && body.rawText && body.rawText.trim()) return body.rawText.trim();
+      // Try textarea (may be reset by React re-render after refine)
+      const ta = document.querySelector('textarea');
+      if (ta && ta.value && ta.value.trim()) return ta.value.trim();
+      // Fallback: our chip read‑only input retains the selected value
+      const inp = document.querySelector('.sr-chip-container input');
+      if (inp && inp.value && inp.value.trim()) return inp.value.trim();
+      return '进度管理页面新增一个里程碑状态';
+    }
+
+    // ── Build full project response (pages/fields/actions ONLY in nested modules, NOT flat) ──
+    function buildProject(data) {
+      const modules = data.modules.map(m => ({...m,projectId:'proj-1',_count:{pages:m.pages.length,fields:0,actions:0}}));
+      let ei = 0;
+      const edges = [];
+      data.modules.forEach(m => {
+        (m.pages||[]).forEach(p => {
+          edges.push({id:'e'+(ei++),sourceId:m.id,targetId:p.id,flowType:'has',status:'active',projectId:'proj-1',label:''});
+          (p.fields||[]).forEach(f => edges.push({id:'e'+(ei++),sourceId:p.id,targetId:f.id,flowType:'has',status:'active',projectId:'proj-1',label:''}));
+          (p.actions||[]).forEach(a => edges.push({id:'e'+(ei++),sourceId:p.id,targetId:a.id,flowType:'has',status:'active',projectId:'proj-1',label:''}));
+        });
+      });
+      return {
+        id:'proj-1', name:data.name, description:'', status:'active',
+        modules, pages:[], fields:[], actions:[], edges,
+        confirmedAt:new Date().toISOString(), /* skip confirm dialog */
+        createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
+      };
+    }
+
+    // ── Fetch interceptor ──
+    const origFetch = window.fetch;
+    var fullProject = null;
+    window.fetch = async (url, opts) => {
+      const u = typeof url === 'string' ? url : url.url;
+      const method = (opts?.method||'GET');
+      let body = {};
+      try { if (opts?.body) body = JSON.parse(opts.body); } catch {}
+
+      // GET /api/projects → list
+      if (u === BASE+'/projects' && method==='GET') {
+        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
+        return ok([{id:'proj-1',name:fullProject.name,description:'',status:'active',createdAt:fullProject.createdAt,updatedAt:fullProject.updatedAt,_count:{modules:fullProject.modules.length,pages:fullProject.pages.length,fields:fullProject.fields.length,actions:fullProject.actions.length}}]);
+      }
+      // GET /api/projects/{id}
+      if (u.match(/\/projects\/[\w-]+$/) && method==='GET') {
+        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
+        return ok(fullProject);
+      }
+      // GET /api/edges/{pid} — return empty, edges come from project data
+      if (u.includes('/edges/') && method==='GET') {
+        return ok([]);
+      }
+      // GET /api/commits/{pid} — mock versions
+      if (u.includes('/commits/') && method==='GET') {
+        return ok(window._srCommits||[]);
+      }
+      // POST /api/commits/{pid} — create commit
+      if (u.includes('/commits/') && method==='POST') {
+        const body = JSON.parse(opts?.body||'{}');
+        if (!window._srCommits) window._srCommits = []
+        const v = window._srCommits.length + 1
+        const commit = {id:'c'+v,version:v,message:body.message||'里程碑状态字段新增',createdAt:new Date().toISOString()}
+        window._srCommits.push(commit)
+        return ok(commit);
+      }
+      // POST /api/parse/{pid}
+      if (u.includes('/parse/') && method==='POST') {
+        await delay(800);
+        return ok({entities:[{name:'新需求',type:'page',parentName:'项目管理'},{name:'影响字段',type:'field',parentName:'新需求',fieldType:'string'}]});
+      }
+      // POST /api/inference/impact
+      if (u.includes('/inference/impact') && method==='POST') {
+        await delay(1000);
+        const reqText = getReqFromBodyOrDom(body);
+        const ev = getEval(reqText);
+        return ok({
+          impactDescription: ev.impactDesc,
+          newEntities: ev.newEntities,
+          affectedEntities: ev.affectedEntities,
+          newEdges: ev.newEdges,
+        });
+      }
+      // POST /api/inference/refine — submit refine
+      if (u.includes('/inference/refine') && method==='POST') {
+        await delay(300);
+        const body = JSON.parse(opts?.body||'{}');
+        const reqText = getReqFromBodyOrDom(body);
+        const ev = getEval(reqText);
+        return ok({
+          refinedText: ev.refineText,
+          entities: ev.refineEntities,
+          newEdges: ev.refineEdges,
+        });
+      }
+      // GET/POST/PATCH/DELETE asset operations
+      if (u.includes('/assets/')) {
+        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
+        return ok({});
+      }
+      // POST /api/inference/apply-impact — apply changes
+      if (u.includes('/apply-impact') && !u.includes('/apply-impact-status')) {
+        await delay(500);
+        if (!fullProject) fullProject = buildProject(DATA[BKEY]);
+        const requirement = getReqFromBodyOrDom(body);
+        const ev = getEval(requirement);
+        // Apply fields & edges from eval data (flat + nested module structure)
+        const createdIds = [], createdEdgeIds = [];
+        ev.applyFields.forEach(f => {
+          fullProject.fields.push(f);
+          createdIds.push(f.id);
+          // Also add page/action/field to the nested module structure
+          if (f.fieldType === 'page' && f.moduleId) {
+            const mod = fullProject.modules.find(m => m.id === f.moduleId);
+            if (mod) {
+              const existing = mod.pages.find(p => p.id === f.id);
+              if (!existing) mod.pages.push({id:f.id,name:f.name,moduleId:f.moduleId,posX:f.posX,posY:f.posY,fields:[],actions:[],pageId:f.pageId||f.id});
+            }
+          } else if (f.fieldType === 'action' && f.pageId) {
+            // Find page in module structure and add action
+            for (const mod of fullProject.modules) {
+              const page = mod.pages.find(p => p.id === f.pageId || p.id === f.id || p.pageId === f.pageId);
+              if (page) {
+                const existing = page.actions.find(a => a.id === f.id);
+                if (!existing) page.actions.push({id:f.id,name:f.name,actionType:f.name,posX:f.posX,posY:f.posY,pageId:f.pageId});
+                break;
+              }
+            }
+          }
+        });
+        ev.applyEdges.forEach(e => {
+          // Resolve targetField to actual field ID if needed
+          if (e.targetField) {
+            // Search flat fields first, then nested
+            let tf = fullProject.fields.find(f => f.name === e.targetField);
+            if (!tf) {
+              for (const m of fullProject.modules)
+                for (const p of m.pages)
+                  { tf = p.fields.find(f => f.name === e.targetField); if (tf) break; }
+            }
+            if (tf) { e.targetId = tf.id; delete e.targetField; }
+          }
+          fullProject.edges.push(e);
+          createdEdgeIds.push(e.id);
+        });
+        // Create version commit
+        if (!window._srCommits) window._srCommits = []
+        const cv = window._srCommits.length + 1
+        window._srCommits.push({
+          id:'c'+cv, version:cv, message:requirement,
+          createdAt:new Date().toISOString(),
+          _entities:createdIds,
+          _edges:createdEdgeIds,
+        });
+        const summary = '变更已应用到项目画布';
+        return ok({project:fullProject, affectedIds:createdIds, summary});
+      }
+      // POST /api/inference/apply-impact-status
+      if (u.includes('/apply-impact-status')) return ok({status:'processing',message:'正在应用变更…'});
+      // POST /api/edges/{pid}/save-positions
+      if (u.includes('/save-positions')) return ok({});
+      // POST /confirm/{pid} — SSE progress → 100% → result
+      if (u.includes('/confirm/') && method==='POST') {
+        const pid = u.split('/confirm/')[1].split('/')[0].split('?')[0];
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          start(controller) {
+            const send = (data) => controller.enqueue(encoder.encode('data: '+JSON.stringify(data)+'\n\n'));
+            const steps = [
+              { progress:10, stage:'processing', message:'正在解析数据…' },
+              { progress:30, stage:'processing', message:'正在提取实体关系…' },
+              { progress:55, stage:'processing', message:'正在构建知识图谱…' },
+              { progress:80, stage:'processing', message:'正在评估变更影响…' },
+              { progress:100, stage:'result', message:'梳理完成！', project: fullProject||buildProject(DATA[BKEY]) },
+            ];
+            let i = 0;
+            const intv = setInterval(() => {
+              if (i >= steps.length) { clearInterval(intv); controller.close(); return; }
+              send(steps[i]); i++;
+            }, 300);
+          }
+        });
+        return new Response(stream, {
+          status:200,
+          headers:{'Content-Type':'text/event-stream','Cache-Control':'no-cache'}
+        });
+      }
+      // Other API calls
+      if (u.startsWith(BASE)) return ok({});
+
+      return origFetch(url, opts);
+    };
+
+    function ok(data) {
+      return Promise.resolve(new Response(JSON.stringify(data), {
+        status:200, headers:{'Content-Type':'application/json'}
+      }));
+    }
+    function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+    // Auto‑navigate: find project card by name text and click
+    const autoMode = PARAMS.get('redirect') === '1' ? 'fast' : null;
+    function tryClickProject(retries) {
+      if (retries <= 0) return;
+      const name = DATA[BKEY].name;
+      // Walk all DOM text nodes looking for the project name
+      const walker = document.createTreeWalker(document.body, 4 /* Text */, null, false);
+      let node;
+      while (node = walker.nextNode()) {
+        if (node.textContent.includes(name)) {
+          const card = node.parentElement?.closest('[style*="cursor"]') || node.parentElement;
+          if (card && typeof card.click === 'function') {
+            card.click();
+            // Hide save/confirm buttons immediately
+            setTimeout(() => {
+              document.querySelectorAll('button').forEach(b => {
+                const t = b.textContent.trim();
+                if (t === '保存' || t === '确认' || t.includes('资产管理')) b.style.display = 'none';
+              });
+            }, 100);
+            return;
+          }
+        }
+      }
+      setTimeout(() => tryClickProject(retries - 1), autoMode ? 150 : 400);
+    }
+    setTimeout(() => tryClickProject(autoMode ? 8 : 25), autoMode ? 50 : 200);
+
+    // ── Persistent UI tweaks (runs every 1.5s) ──
+    let _canvasScaled = false;
+    setInterval(() => {
+      // 1. Hide back button
+      document.querySelectorAll('button').forEach(btn => {
+        if (btn.textContent.includes('返回大厅')) btn.style.display = 'none';
+      });
+      const backSvg = document.querySelector('svg[viewBox="0 0 24 24"][width="18"]');
+      if (backSvg) { backSvg.style.display = 'none';
+        const span = backSvg.parentElement?.querySelector('span');
+        if (span) span.style.marginLeft = '0';
+      }
+      // 2. Hide 资产管理 + 保存 + 确认 (only exact button text match)
+      document.querySelectorAll('button').forEach(el => {
+        const t = el.textContent.trim();
+        if (t === '保存' || t === '确认' || t.includes('资产管理')) el.style.display = 'none';
+      });
+      // 3. Fit canvas once — use React Flow's fitView dispatch
+      if (!_canvasScaled) {
+        const rf = document.querySelector('.react-flow');
+        if (rf) {
+          // Try to find and click the fit view button if it exists
+          const fitBtn = rf.querySelector('button[title*="fit"],button[aria-label*="fit"]');
+          if (fitBtn) fitBtn.click();
+          // Alternative: trigger viewport update via wheel event to force re-render
+          rf.dispatchEvent(new WheelEvent('wheel', { deltaY: 1, deltaX: 0 }));
+          _canvasScaled = true;
+        }
+      }
+      // 4. Confirm auto-click
+      document.querySelectorAll('button').forEach(btn => {
+        if (btn.textContent.includes('是，开始推理')) btn.click();
+      });
+      // 5. Font size
+      document.querySelectorAll('*').forEach(el => {
+        const fs=parseFloat(getComputedStyle(el).fontSize);
+        if(fs>14){const t=el.tagName.toLowerCase();if(['h1','h2','h3','h4','span','div','p','button'].includes(t))el.style.fontSize='13px';}
+      });
+    }, 800);
+    </script>
+    <script type="module" crossorigin src="./assets/index-CgvRLgLx.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
