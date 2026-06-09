@@ -238,12 +238,10 @@
         const span = backSvg.parentElement?.querySelector('span');
         if (span) span.style.marginLeft = '0';
       }
-      // 2. Hide 资产管理 + 保存 + 确认 buttons (check every interval)
-      document.querySelectorAll('button,[role="button"],[style*="cursor"],span,div').forEach(el => {
+      // 2. Hide 资产管理 + 保存 + 确认 (only exact button text match)
+      document.querySelectorAll('button').forEach(el => {
         const t = el.textContent.trim();
-        if (t.includes('资产管理') || t === '保存' || t === '确认') el.style.display = 'none';
-        // Also hide any element containing only "保存" as a button child
-        if (el.tagName === 'BUTTON' && (t === '保存' || t === '确认')) el.style.display = 'none';
+        if (t === '保存' || t === '确认' || t.includes('资产管理')) el.style.display = 'none';
       });
       // 3. Fit canvas once — use React Flow's fitView dispatch
       if (!_canvasScaled) {
