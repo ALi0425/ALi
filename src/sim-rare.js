@@ -80,29 +80,43 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Zoom-aware font: inject CSS !important rule to survive React re-renders
-        const vp = doc.querySelector('.react-flow__viewport')
-        if (vp) {
-          const zm = vp.style.transform.match(/scale\(([\d.]+)\)/)
-          const zoom = zm ? parseFloat(zm[1]) : 1
-          const lastZoom = parseFloat(doc.body.dataset._lastZoom) || 0
-          if (!lastZoom || Math.abs(zoom - lastZoom) / Math.max(lastZoom, 0.01) > 0.03) {
-            doc.body.dataset._lastZoom = String(zoom)
-            // Read original sizes from all nodes, store once
-            doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
-              if (!el.dataset._zo) el.dataset._zo = parseFloat(el.style.fontSize) || 13
-            })
-            // Compute target font size
+        // Zoom-aware font: smooth wheel-driven updates, !important to survive React
+        if (!doc.querySelector('.rf_zoom_ready')) {
+          const m = doc.createElement('span'); m.className = 'rf_zoom_ready'; m.style.display = 'none'
+          doc.body.appendChild(m)
+          // Create style tag once
+          const styleTag = doc.createElement('style')
+          styleTag.id = 'rf-zoom-style'
+          doc.head.appendChild(styleTag)
+          // Store original font sizes
+          doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
+            if (!el.dataset._zo) el.dataset._zo = parseFloat(el.style.fontSize) || 13
+          })
+          // Apply font size based on current zoom
+          function applySmooth() {
+            const vp = doc.querySelector('.react-flow__viewport')
+            if (!vp) return
+            const zm = vp.style.transform.match(/scale\(([\d.]+)\)/)
+            const zoom = zm ? parseFloat(zm[1]) : 1
             const targetPx = Math.round(13 / Math.max(zoom, 0.1))
-            // Update or create a style rule with !important (survives React render)
-            let styleTag = doc.getElementById('rf-zoom-style')
-            if (!styleTag) {
-              styleTag = doc.createElement('style')
-              styleTag.id = 'rf-zoom-style'
-              doc.head.appendChild(styleTag)
-            }
-            styleTag.textContent = `.react-flow__node *[style*="font-size"] { font-size: ${Math.max(targetPx, 10)}px !important }`
+            styleTag.textContent = `.react-flow__node *[style*="font-size"] { font-size: ${Math.max(targetPx, 10)}px !important; transition: font-size 0.05s linear }`
           }
+          // Attach wheel listener for smooth real-time updates
+          const tryAttach = () => {
+            const pane = doc.querySelector('.react-flow__pane') || doc.querySelector('.react-flow__renderer')
+            if (pane) {
+              pane.addEventListener('wheel', applySmooth, { passive: true })
+              return true
+            }
+            return false
+          }
+          if (!tryAttach()) {
+            // Retry in interval until pane found
+            const iv = setInterval(() => {
+              if (tryAttach() || !doc.body) clearInterval(iv)
+            }, 300)
+          }
+          applySmooth() // initial
         }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
