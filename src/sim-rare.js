@@ -136,11 +136,11 @@ export function openSimRare(bKey) {
             chip.style.cssText = 'padding:5px 14px;border-radius:6px;font-size:11px;cursor:pointer;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);color:rgba(34,197,94,0.7);transition:all 0.2s;font-family:inherit'
             chip.addEventListener('mouseenter', () => { chip.style.background = 'rgba(34,197,94,0.15)'; chip.style.borderColor = 'rgba(34,197,94,0.3)'; chip.style.color = '#22c55e' })
             chip.addEventListener('mouseleave', () => { chip.style.background = 'rgba(34,197,94,0.06)'; chip.style.borderColor = 'rgba(34,197,94,0.15)'; chip.style.color = 'rgba(34,197,94,0.7)' })
-            chip.addEventListener('click', () => { inp.value = text })
+            chip.addEventListener('click', () => { inp.value = text; ta.value = text; ta.dispatchEvent(new Event('input', { bubbles: true })) })
             chips.appendChild(chip)
           })
           container.appendChild(chips)
-          ta.parentNode.replaceChild(container, ta)
+          ta.style.display = 'none'; ta.parentNode.insertBefore(container, ta.nextSibling)
         })
       }, 500)
     } catch(e) { /* iframe cross-origin */ }
