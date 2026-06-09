@@ -78,7 +78,7 @@ export function openSimRare(bKey) {
         // Hide buttons
         doc.querySelectorAll('button').forEach(b => {
           const t = (b.textContent || '').trim()
-          if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
+          if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload') || t === '编辑') b.style.display = 'none'
         })
         // Zoom-aware font: update every 500ms via CSS !important rule
         const vp = doc.querySelector('.react-flow__viewport')
