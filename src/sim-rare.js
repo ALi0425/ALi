@@ -76,7 +76,8 @@ export function openSimRare(bKey) {
         if (!doc.body) { clearInterval(iv); return }
         doc.querySelectorAll('button').forEach(b => {
           const t = (b.textContent || '').trim()
-          if (t === '保存' || t === '确认' || t.includes('资产管理')) b.style.display = 'none'
+          // Use includes() because buttons may have emoji prefixes like "✅ 确认"
+          if (t.includes('保存') || t.includes('确认') || t.includes('资产管理')) b.style.display = 'none'
         })
       }, 500)
     } catch(e) { /* iframe cross-origin */ }
