@@ -258,7 +258,13 @@ export function triggerConnection(fromKey, toKey) {
   }
 }
 
-window.__testConnection = (fromKey, toKey) => triggerConnection(fromKey, toKey)
+window.__testConnection = (fromKey, toKey) => {
+  if (toKey === 'a2' && ['b1','b2','b3'].includes(fromKey)) {
+    openSimRare(fromKey);
+    return 'sim-rare triggered directly';
+  }
+  return triggerConnection(fromKey, toKey);
+}
 
 /* ═══════════════════════════════════════
    CLEANUP
