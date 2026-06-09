@@ -80,14 +80,20 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Increase node font sizes once for zoom readability
-        if (!doc.querySelector('.rf_font_boosted')) {
-          doc.querySelectorAll('.react-flow__node *').forEach(el => {
-            const fs = parseFloat(el.style.fontSize)
-            if (fs && fs > 0 && fs < 16) el.style.fontSize = Math.round(fs * 1.5) + 'px'
+        // Zoom-aware font sizing: when zoom level changes, adjust node text inversely
+        const vp = doc.querySelector('.react-flow__viewport')
+        if (vp) {
+          const m = vp.style.transform.match(/scale\(([\d.]+)\)/)
+          const zoom = m ? parseFloat(m[1]) : 1
+          doc.querySelectorAll('.react-flow__node').forEach(node => {
+            const base = parseFloat(node.dataset._baseFont) || 14
+            if (!node.dataset._baseFont) node.dataset._baseFont = 14
+            // Inverse: when zoom is 0.5 (zoomed out), text becomes 14/0.5 = 28px
+            const newSize = Math.round(base / Math.max(zoom, 0.2))
+            node.querySelectorAll('[style*="font-size"]').forEach(el => {
+              el.style.fontSize = newSize + 'px'
+            })
           })
-          const mark = doc.createElement('span'); mark.className = 'rf_font_boosted'; mark.style.display = 'none'
-          doc.body.appendChild(mark)
         }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
