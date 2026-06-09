@@ -4,3 +4,4 @@ dist
 *.local
 .vite
 screenshot-*.png
+.github/workflows/

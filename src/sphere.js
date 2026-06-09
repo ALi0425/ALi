@@ -171,7 +171,7 @@ export function createSphere(scene) {
     el.style.cssText = `
       font-family: 'Space Mono', 'Courier New', monospace;
       font-size: ${data.fontSize}px;
-      font-weight: 500;
+      font-weight: 300;
       color: ${data.color};
       text-shadow: ${data.glow || '0 0 8px rgba(34,197,94,0.15)'};
       pointer-events: none; user-select: none; white-space: nowrap;

@@ -48,7 +48,7 @@ export function openSimRare(bKey) {
       </div>
       <!-- Iframe body -->
       <div class="sr-body" id="sr-body" style="display:none">
-        <iframe class="sr-iframe" id="sr-iframe" src="./rare/index.html?project=${bKey}&_t=${Date.now()}" loading="eager"></iframe>
+        <iframe class="sr-iframe" id="sr-iframe" src="${import.meta.env.BASE_URL}rare/index.html?project=${bKey}&_t=${Date.now()}" loading="eager"></iframe>
       </div>
     </div>
   `
