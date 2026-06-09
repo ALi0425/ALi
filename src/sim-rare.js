@@ -80,6 +80,15 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
+        // Increase node font sizes once for zoom readability
+        if (!doc.querySelector('.rf_font_boosted')) {
+          doc.querySelectorAll('.react-flow__node *').forEach(el => {
+            const fs = parseFloat(el.style.fontSize)
+            if (fs && fs > 0 && fs < 16) el.style.fontSize = Math.round(fs * 1.5) + 'px'
+          })
+          const mark = doc.createElement('span'); mark.className = 'rf_font_boosted'; mark.style.display = 'none'
+          doc.body.appendChild(mark)
+        }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
           if (!el.children?.length && (el.textContent||'').includes('Space') && (el.textContent||'').includes('拖拽')) {
@@ -104,7 +113,7 @@ export function openSimRare(bKey) {
           const inp = doc.createElement('input')
           inp.readOnly = true
           inp.placeholder = '选择需求类型'
-          inp.style.cssText = 'width:100%;padding:12px 16px;font-size:13px;color:#e0e0e0;background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.2);border-radius:8px;outline:none;font-family:inherit;box-sizing:border-box;cursor:pointer;transition:border-color 0.2s'
+          inp.style.cssText = 'width:100%;padding:12px 16px;font-size:13px;color:#e0e0e0;background:rgba(34,197,94,0.04);border:none;border-radius:8px;outline:none;font-family:inherit;box-sizing:border-box;cursor:pointer'
           inp.addEventListener('focus', () => { inp.style.borderColor = 'rgba(34,197,94,0.5)' })
           inp.addEventListener('blur', () => { inp.style.borderColor = 'rgba(34,197,94,0.2)' })
           container.appendChild(inp)
