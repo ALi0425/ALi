@@ -200,6 +200,13 @@ function render(p) {
     </div>
   `
 
+  // Force video autoplay (browser policy workaround)
+  setTimeout(() => {
+    _overlay.querySelectorAll('video').forEach(v => {
+      if (v.paused) v.play().catch(() => {})
+    })
+  }, 300)
+
   // Close
   _overlay.querySelector('#tt-close').addEventListener('click', closeTerminal)
   _overlay.querySelector('.tt-backdrop').addEventListener('click', closeTerminal)
