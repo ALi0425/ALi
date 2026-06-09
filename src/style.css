@@ -349,9 +349,6 @@ html, body {
   text-align: center;
   gap: 12px;
 }
-.bb-content-compact {
-  flex: none; padding: 10px 14px; gap: 6px;
-}
 
 .bb-title {
   font-family: "Space Mono",monospace;

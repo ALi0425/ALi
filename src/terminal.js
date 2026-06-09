@@ -166,18 +166,7 @@ function render(p) {
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
             ${p.video
-              ? `<div class="bb-image"><video src="${p.video}" autoplay loop muted playsinline></video></div>
-                  <div class="bb-content bb-content-compact">
-                    <div class="bb-title">${p.title}</div>
-                    <div class="bb-divider"></div>
-                    <div class="bb-metrics">
-                      ${p.metrics.map(m => `<span class="bb-metric">◈ ${m}</span>`).join('')}
-                    </div>
-                    <div class="bb-footer">
-                      <span class="bb-blink">▍</span>
-                      <span class="bb-status">module_loaded · ready</span>
-                    </div>
-                  </div>`
+              ? `<div class="bb-image"><video src="${p.video}" autoplay loop muted playsinline></video></div>`
               : p.image
               ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
               : `<div class="bb-content">
