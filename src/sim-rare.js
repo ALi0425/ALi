@@ -66,11 +66,24 @@ export function openSimRare(bKey) {
       if (!doc) return
       // Inject CSS and button hiding into iframe
       const style = doc.createElement('style')
+      const isRedirect = new URL(doc.location.href).searchParams.get('redirect') === '1'
       style.textContent = `
         /* Hide save/confirm/asset management buttons */
         button:has(span) { } /* placeholder */
       `
       doc.head.appendChild(style)
+      // Loading overlay to hide project hall flash during redirect auto‑nav
+      if (isRedirect) {
+        let overlay = doc.getElementById('sr-redirect-overlay')
+        if (!overlay) { overlay = doc.createElement('div'); overlay.id = 'sr-redirect-overlay'; doc.body.appendChild(overlay) }
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:rgba(255,255,255,0.3);font-size:13px;font-family:inherit'
+        overlay.innerHTML = '<div style="width:200px;height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="width:30%;height:100%;background:linear-gradient(90deg,rgba(34,197,94,0.3),rgba(34,197,94,0.7));border-radius:4px;animation:srBar 1.4s ease-in-out infinite"></div></div><span>正在加载智能评估…</span>'
+        if (!doc.getElementById('sr-bar-style')) {
+          const ks = doc.createElement('style'); ks.id = 'sr-bar-style'
+          ks.textContent = '@keyframes srBar{0%{transform:translateX(-100%)}50%{transform:translateX(200%)}100%{transform:translateX(200%)}}'
+          doc.head.appendChild(ks)
+        }
+      }
       // Persistent UI fixes inside iframe
       let _evalClicked = false
       const iv = setInterval(() => {
@@ -111,35 +124,65 @@ export function openSimRare(bKey) {
             }, { once: true })
           }
         })
-        // Add rollback button on version page right side
-        const versionSidebar = doc.querySelector('[class*="version"]') || Array.from(doc.querySelectorAll('div')).find(d => d.textContent.includes('版本管理') && d.children.length > 3)
-        if (versionSidebar && !doc.querySelector('.sr-rollback-btn')) {
-          const rb = doc.createElement('button')
-          rb.className = 'sr-rollback-btn'
-          rb.textContent = '↩ 回退'
-          rb.style.cssText = 'padding:8px 20px;border:none;border-radius:10px;background:rgba(239,68,68,0.15);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;margin:8px 12px;align-self:flex-end'
-          rb.addEventListener('click', () => {
-            // Show confirm dialog
-            const existing = doc.querySelector('.sr-confirm-dialog')
-            if (existing) existing.remove()
-            const dialog = doc.createElement('div')
-            dialog.className = 'sr-confirm-dialog'
-            dialog.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5)'
-            dialog.innerHTML = '<div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:360px;text-align:center"><div style="font-size:14px;color:#e0e0e0;margin-bottom:16px">是否要进行回退操作，回退后不可撤销</div><div style="display:flex;gap:10px;justify-content:center"><button id="sr-confirm-yes" style="padding:8px 24px;border:none;border-radius:8px;background:rgba(239,68,68,0.2);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">是，回退</button><button id="sr-confirm-no" style="padding:8px 24px;border:none;border-radius:8px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);cursor:pointer;font-size:13px;font-family:inherit">取消</button></div></div>'
-            doc.body.appendChild(dialog)
-            doc.getElementById('sr-confirm-yes').onclick = () => {
-              dialog.remove()
-              // Rollback: remove milestone field + edges, reload
-              if (window._fullProject) {
-                window._fullProject.fields = window._fullProject.fields.filter(f => f.name !== '里程碑状态')
-                window._fullProject.edges = window._fullProject.edges.filter(e => !(e.targetId === 'f-new-ms' || e.sourceId === 'f-new-ms'))
+        // Track which version row the user clicks (capture‑phase interceptor)
+        const iWin = doc.defaultView
+        const vc = doc.querySelector('[class*="version" i]') || Array.from(doc.querySelectorAll('div')).find(d => d.textContent.includes('版本管理') && d.children.length > 3)
+        if (vc && iWin) {
+          if (!vc.dataset._srCapture) {
+            vc.dataset._srCapture = '1'
+            vc.addEventListener('click', (e) => {
+              // Walk up from target to find the row that's a direct child of vc
+              let t = e.target
+              while (t && t.parentElement !== vc) t = t.parentElement
+              if (!t) return
+              const vm = (t.textContent||'').match(/[vV](\d+)/)
+              if (vm) iWin._srSelectedVersion = parseInt(vm[1])
+            }, true) // capture phase — fires BEFORE React
+          }
+        }
+        // Replace "退出预览" button with "↩ 回退" in version preview footer
+        const srCommits = iWin && iWin._srCommits
+        const exitPreviewBtn = Array.from(doc.querySelectorAll('button')).find(b => (b.textContent||'').trim() === '退出预览')
+        if (exitPreviewBtn && srCommits && srCommits.length > 0) {
+          const selectedVer = iWin._srSelectedVersion || (srCommits.length > 0 ? srCommits[srCommits.length - 1].version : null)
+          const preCommit = selectedVer ? srCommits.find(c => c.version === selectedVer) : null
+          // Force text/style every tick (React may re-render and reset)
+          exitPreviewBtn.textContent = '↩ 回退'
+          exitPreviewBtn.style.cssText = 'padding:4px 10px;border:none;border-radius:6px;background:rgba(239,68,68,0.15);color:#ef4444;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit'
+          // Attach our click handler once
+          if (!exitPreviewBtn.dataset._srRbfixed) {
+            exitPreviewBtn.dataset._srRbfixed = '1'
+            exitPreviewBtn.addEventListener('click', (e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              const commit = preCommit || srCommits[srCommits.length - 1]  // fallback to latest
+              if (!commit) return
+              const ver = commit.version || 0
+              // Confirm dialog
+              const existing = doc.querySelector('.sr-confirm-dialog')
+              if (existing) existing.remove()
+              const dlg = doc.createElement('div')
+              dlg.className = 'sr-confirm-dialog'
+              dlg.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5)'
+              dlg.innerHTML = '<div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:360px;text-align:center"><div style="font-size:14px;color:#e0e0e0;margin-bottom:16px">是否进行回退操作？<br><span style="font-size:12px;color:rgba(255,255,255,0.4)">回退后将删除画布上该次评估生成的新增实体</span></div><div style="display:flex;gap:10px;justify-content:center"><button id="sr-confirm-yes" style="padding:8px 24px;border:none;border-radius:8px;background:rgba(239,68,68,0.2);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">是，回退</button><button id="sr-confirm-no" style="padding:8px 24px;border:none;border-radius:8px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);cursor:pointer;font-size:13px;font-family:inherit">取消</button></div></div>'
+              doc.body.appendChild(dlg)
+              doc.getElementById('sr-confirm-yes').onclick = () => {
+                dlg.remove()
+                // Rollback: remove entities + edges created by this commit
+                if (iWin && iWin.fullProject) {
+                  if (commit._entities) iWin.fullProject.fields = iWin.fullProject.fields.filter(f => !commit._entities.includes(f.id))
+                  if (commit._edges) iWin.fullProject.edges = iWin.fullProject.edges.filter(e => !commit._edges.includes(e.id))
+                }
+                // Remove commit record
+                const ci = srCommits.findIndex(c => c.version === ver)
+                if (ci >= 0) srCommits.splice(ci, 1)
+                // Reload iframe with redirect mode
+                const curProj = new URL(doc.location.href).searchParams.get('project') || 'b2'
+                doc.location.href = doc.location.href.split('?')[0] + '?project=' + curProj + '&_t=' + Date.now() + '&redirect=1'
               }
-              window._srCommits = (window._srCommits||[]).filter(c => !c.message.includes('里程碑'))
-              doc.location.href = doc.location.href.split('?')[0] + '?project=' + BKEY + '&_t=' + Date.now()
-            }
-            doc.getElementById('sr-confirm-no').onclick = () => dialog.remove()
-          })
-          versionSidebar.parentNode?.insertBefore(rb, versionSidebar.nextSibling)
+              doc.getElementById('sr-confirm-no').onclick = () => dlg.remove()
+            })
+          }
         }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
@@ -152,8 +195,16 @@ export function openSimRare(bKey) {
           doc.querySelectorAll('button, [role="button"], [style*="cursor"]').forEach(el => {
             if ((el.textContent || '').trim().includes('智能评估')) {
               el.click(); _evalClicked = true
+              // Remove redirect overlay once evaluation page is reached
+              const ro = doc.getElementById('sr-redirect-overlay')
+              if (ro) ro.remove()
             }
           })
+        }
+        // Remove redirect opacity filter once auto‑nav likely completed
+        if (isRedirect && _evalClicked) {
+          const ro = doc.getElementById('sr-redirect-overlay')
+          if (ro) ro.remove()
         }
         // Replace textarea with read-only input + preset chips
         doc.querySelectorAll('textarea').forEach(ta => {
@@ -173,10 +224,13 @@ export function openSimRare(bKey) {
           inp.addEventListener('focus', () => { inp.style.borderColor = 'rgba(34,197,94,0.5)' })
           inp.addEventListener('blur', () => { inp.style.borderColor = 'rgba(34,197,94,0.2)' })
           container.appendChild(inp)
-          // Preset chips
+          // Preset chips — per‑project requirement tags
           const chips = doc.createElement('div')
           chips.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap'
-          const options = ['新增模块', '进度管理页面新增一个里程碑状态', '变更流程']
+          const pkey = new URL(doc.location.href).searchParams.get('project') || ''
+          const options = pkey === 'b1'
+            ? ['进度管理页面新增一个里程碑状态', '科技成果模块新增一个成果库页面']
+            : ['新增模块', '进度管理页面新增一个里程碑状态', '变更流程']
           options.forEach(text => {
             const chip = doc.createElement('span')
             chip.textContent = text
