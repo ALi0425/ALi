@@ -94,13 +94,11 @@ export function openSimRare(bKey) {
           }
           styleTag.textContent = `.react-flow__node *[style*="font-size"] { font-size: ${Math.max(targetPx, 10)}px !important }`
         }
-        // Force "优化" button enabled — override disabled permanently
+        // Force "优化" button enabled — keep original styling
         doc.querySelectorAll('button').forEach(btn => {
           if (btn.textContent.includes('优化') && !btn.dataset._optFixed) {
             btn.dataset._optFixed = '1'
             Object.defineProperty(btn, 'disabled', { get: () => false, set: () => {} })
-            btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.style.color = '#fff'
-            btn.style.background = 'rgba(34,197,94,0.2)'
           }
         })
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
@@ -127,7 +125,7 @@ export function openSimRare(bKey) {
           const inp = doc.createElement('input')
           inp.readOnly = true
           inp.placeholder = '选择需求类型'
-          inp.style.cssText = 'width:100%;padding:12px 16px;font-size:13px;color:#e0e0e0;background:rgba(34,197,94,0.04);border:none;border-radius:8px;outline:none;font-family:inherit;box-sizing:border-box;cursor:pointer'
+          inp.style.cssText = 'width:100%;padding:12px 16px;font-size:13px;color:#e0e0e0;background:transparent;border:none;border-radius:8px;outline:none;font-family:inherit;box-sizing:border-box;cursor:pointer'
           inp.addEventListener('focus', () => { inp.style.borderColor = 'rgba(34,197,94,0.5)' })
           inp.addEventListener('blur', () => { inp.style.borderColor = 'rgba(34,197,94,0.2)' })
           container.appendChild(inp)
