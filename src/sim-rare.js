@@ -94,9 +94,14 @@ export function openSimRare(bKey) {
           }
           styleTag.textContent = `.react-flow__node *[style*="font-size"] { font-size: ${Math.max(targetPx, 10)}px !important }`
         }
-        // Enable "优化" button when a chip is selected
-        doc.querySelectorAll('button[disabled]').forEach(btn => {
-          if (btn.textContent.includes('优化')) btn.disabled = false
+        // Force "优化" button enabled — override disabled permanently
+        doc.querySelectorAll('button').forEach(btn => {
+          if (btn.textContent.includes('优化') && !btn.dataset._optFixed) {
+            btn.dataset._optFixed = '1'
+            Object.defineProperty(btn, 'disabled', { get: () => false, set: () => {} })
+            btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.style.color = '#fff'
+            btn.style.background = 'rgba(34,197,94,0.2)'
+          }
         })
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
