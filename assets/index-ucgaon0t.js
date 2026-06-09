@@ -3961,6 +3961,10 @@ void main() {
             <div class="console-body">
               <div class="cl-project-name">${n.title}</div>
               ${am(n.content)}
+              <div class="cl-divider-line"></div>
+              <div class="cl-section"><span class="cl-dot">●</span> 联系方式</div>
+              <div class="cl-bullet"><span class="cl-arrow">📞</span>同微信：15720164041</div>
+              <div class="cl-bullet"><span class="cl-arrow">📧</span>邮箱：15720164041@163.com</div>
             </div>
           </div>
         </div>
