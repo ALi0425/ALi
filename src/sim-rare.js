@@ -94,14 +94,33 @@ export function openSimRare(bKey) {
             }
           })
         }
-        // Replace textarea with dropdown (smart input bar uses textarea, not input)
+        // Replace textarea with read-only input + preset chips
         doc.querySelectorAll('textarea').forEach(ta => {
           if (!ta.parentNode || ta.dataset._replaced) return
           ta.dataset._replaced = '1'
-          const sel = doc.createElement('select')
-          sel.style.cssText = 'flex:1;min-height:60px;padding:8px 16px;font-size:13px;color:#e0e0e0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;outline:none;font-family:inherit;appearance:auto;width:100%;box-sizing:border-box'
-          sel.innerHTML = '<option value="">选择需求类型…</option><option>1】新增模块</option><option>2】修改字段</option><option>3】变更流程</option>'
-          ta.parentNode.replaceChild(sel, ta)
+          const container = doc.createElement('div')
+          container.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:6px'
+          // Read-only input showing selected value
+          const inp = doc.createElement('input')
+          inp.readOnly = true
+          inp.placeholder = '点击下方选择需求类型'
+          inp.style.cssText = 'width:100%;min-height:48px;padding:8px 16px;font-size:13px;color:#e0e0e0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;outline:none;font-family:inherit;box-sizing:border-box;cursor:pointer'
+          container.appendChild(inp)
+          // Preset chips
+          const chips = doc.createElement('div')
+          chips.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap'
+          const options = ['1】新增模块', '2】修改字段', '3】变更流程']
+          options.forEach(text => {
+            const chip = doc.createElement('span')
+            chip.textContent = text
+            chip.style.cssText = 'padding:4px 12px;border-radius:14px;font-size:11px;cursor:pointer;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);transition:all 0.2s'
+            chip.addEventListener('mouseenter', () => { chip.style.background = 'rgba(34,197,94,0.15)'; chip.style.borderColor = 'rgba(34,197,94,0.3)'; chip.style.color = '#22c55e' })
+            chip.addEventListener('mouseleave', () => { chip.style.background = 'rgba(255,255,255,0.05)'; chip.style.borderColor = 'rgba(255,255,255,0.08)'; chip.style.color = 'rgba(255,255,255,0.6)' })
+            chip.addEventListener('click', () => { inp.value = text })
+            chips.appendChild(chip)
+          })
+          container.appendChild(chips)
+          ta.parentNode.replaceChild(container, ta)
         })
       }, 500)
     } catch(e) { /* iframe cross-origin */ }
