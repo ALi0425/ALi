@@ -129,7 +129,11 @@ export function openSimRare(bKey) {
         doc.querySelectorAll('textarea').forEach(ta => {
           if (!ta.parentNode || ta.dataset._replaced) return
           ta.dataset._replaced = '1'
+          // Remove any stale previous container (from React re-render)
+          const oldContainer = ta.parentNode.querySelector('.sr-chip-container')
+          if (oldContainer) oldContainer.remove()
           const container = doc.createElement('div')
+          container.className = 'sr-chip-container'
           container.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:6px'
           // Read-only input showing selected value
           const inp = doc.createElement('input')
