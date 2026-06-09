@@ -71,13 +71,22 @@ export function openSimRare(bKey) {
         button:has(span) { } /* placeholder */
       `
       doc.head.appendChild(style)
-      // Start persistent button hiding inside iframe
+      // Persistent UI fixes inside iframe
       const iv = setInterval(() => {
         if (!doc.body) { clearInterval(iv); return }
+        // Hide buttons: 保存/确认/资产管理/上传文件/Upload
         doc.querySelectorAll('button').forEach(b => {
           const t = (b.textContent || '').trim()
-          // Use includes() because buttons may have emoji prefixes like "✅ 确认"
-          if (t.includes('保存') || t.includes('确认') || t.includes('资产管理')) b.style.display = 'none'
+          if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
+        })
+        // Replace text inputs with dropdowns (fieldType inputs)
+        doc.querySelectorAll('input[type="text"],input:not([type])').forEach(inp => {
+          if (inp.placeholder && inp.placeholder.includes('输入')) {
+            const sel = doc.createElement('select')
+            sel.style.cssText = inp.style.cssText + ';appearance:auto'
+            sel.innerHTML = '<option>1】</option><option>2】</option><option>3】</option>'
+            inp.parentNode?.replaceChild(sel, inp)
+          }
         })
       }, 500)
     } catch(e) { /* iframe cross-origin */ }
