@@ -154,6 +154,18 @@ function addConnection(from, to) {
   if (to.key === 'a2' && ['b1','b2','b3'].includes(from.key)) {
     console.log('🎯 triggering sim-rare for', from.key)
     setTimeout(() => openSimRare(from.key), 300)
+  } else if (to.key === 'a1' && ['b1','b2','b3'].includes(from.key)) {
+    // OmniSight connection → firework + 敬请期待
+    console.log('🎆 OmniSight connection — showing teaser')
+    showTeaserFirework((from.sx + to.sx) / 2, (from.sy + to.sy) / 2)
+    // Remove the connection after burst
+    pulseATargets(false)
+    if (path) path.remove()
+    if (glow) glow.remove()
+    // Remove from connections list
+    const ci = _connections.indexOf(conn)
+    if (ci !== -1) _connections.splice(ci, 1)
+    return
   } else {
     console.log('❌ sim-rare NOT triggered: to=', to.key, 'from=', from.key)
   }
@@ -201,6 +213,39 @@ function triggerInvalidBurst(cx, cy) {
     { transform: 'scale(8)', opacity: 0 }
   ], { duration: 600, easing: 'ease-out' }).onfinish = () => burst.remove()
   console.log('%c🔥  [Schema Error]: Matrix Mismatch', 'color:#FF5500;font-size:13px;font-weight:bold;font-family:monospace')
+}
+
+/* ── OmniSight teaser: particle firework + 敬请期待 ── */
+function showTeaserFirework(cx, cy) {
+  const colors = ['#FF6B6B','#FFE66D','#4ECDC4','#45B7D1','#96CEB4','#FF69B4','#FFD700','#7B68EE']
+  // Create particles
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div')
+    const angle = (Math.PI * 2 * i) / 60 + (Math.random() - 0.5) * 0.3
+    const dist = 150 + Math.random() * 320
+    const dx = Math.cos(angle) * dist
+    const dy = Math.sin(angle) * dist
+    const size = 5 + Math.random() * 10
+    const color = colors[Math.floor(Math.random() * colors.length)]
+    p.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;border-radius:50%;background:${color};pointer-events:none;z-index:20;box-shadow:0 0 ${size+2}px ${color}`
+    document.body.appendChild(p)
+    p.animate([
+      { transform: 'translate(0,0) scale(0)', opacity: 1 },
+      { transform: `translate(${dx}px,${dy}px) scale(1)`, opacity: 1, offset: 0.5 },
+      { transform: `translate(${dx*1.2}px,${dy*1.2}px) scale(0.3)`, opacity: 0 }
+    ], { duration: 1200, easing: 'ease-out' }).onfinish = () => p.remove()
+  }
+  // Show "敬请期待！" text
+  const txt = document.createElement('div')
+  txt.style.cssText = `position:fixed;left:${cx}px;top:${cy - 30}px;transform:translate(-50%,-50%);color:white;font-size:28px;font-weight:700;font-family:'Space Mono',monospace;pointer-events:none;z-index:21;text-shadow:0 0 20px rgba(255,255,255,0.5),0 0 40px rgba(255,255,255,0.3);letter-spacing:4px`
+  txt.textContent = '✨ 敬请期待！ ✨'
+  document.body.appendChild(txt)
+  txt.animate([
+    { transform: 'translate(-50%,-50%) scale(0)', opacity: 0 },
+    { transform: 'translate(-50%,-50%) scale(1.2)', opacity: 1, offset: 0.3 },
+    { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: 0.6 },
+    { transform: 'translate(-50%,-60%) scale(0.9)', opacity: 0 }
+  ], { duration: 2500, easing: 'ease-out' }).onfinish = () => txt.remove()
 }
 
 /* ═══════════════════════════════════════

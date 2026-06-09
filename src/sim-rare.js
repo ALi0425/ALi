@@ -232,6 +232,8 @@ export function openSimRare(bKey) {
             ? ['进度管理页面新增一个里程碑状态', '科技成果模块新增一个成果库页面']
             : pkey === 'b2'
             ? ['人才基本信息页面新增一个上传简历功能', '组队选才页面新增角色要求功能']
+            : pkey === 'b3'
+            ? ['成员管理里新增一个人员报工功能']
             : ['新增模块', '进度管理页面新增一个里程碑状态', '变更流程']
           options.forEach(text => {
             const chip = doc.createElement('span')
