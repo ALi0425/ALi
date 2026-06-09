@@ -16,7 +16,11 @@ const PROJECTS = {
 }
 
 export function openSimRare(bKey) {
-  if (_overlay) closeSimRare()
+  // Remove any stale overlay DOM element
+  const existing = document.getElementById('sim-rare-overlay')
+  if (existing) existing.remove()
+  _overlay = null
+
   const info = PROJECTS[bKey] || { name: '未知项目', tag: '' }
 
   _overlay = document.createElement('div')
