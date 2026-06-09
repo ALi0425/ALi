@@ -80,17 +80,16 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Zoom-aware font: track final zoom after scroll stops
+        // Zoom-aware font: live update during zoom, stays at final size
         if (!doc.querySelector('.rf_zoom_init')) {
           const vp = doc.querySelector('.react-flow__viewport')
           if (vp) {
             const m = doc.createElement('span'); m.className = 'rf_zoom_init'; m.style.display = 'none'
             doc.body.appendChild(m)
-            // Store original font sizes once
+            // Store original font sizes ONCE (never updated)
             doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
               el.dataset._zo = parseFloat(el.style.fontSize) || 13
             })
-            // Apply font size based on current zoom
             function applyZoom() {
               const zm = vp.style.transform.match(/scale\(([\d.]+)\)/)
               const zoom = zm ? parseFloat(zm[1]) : 1
@@ -100,17 +99,10 @@ export function openSimRare(bKey) {
                 el.style.fontSize = Math.max(scaled, Math.round(orig * 0.8)) + 'px'
               })
             }
-            // Apply immediately and on wheel (zoom) events
-            let zoomTimer = null
-            const onWheel = () => {
-              clearTimeout(zoomTimer)
-              zoomTimer = setTimeout(applyZoom, 100)  // debounce: apply 100ms after last wheel
-            }
+            // Live update on every wheel event (no debounce)
             const pane = vp.closest('.react-flow__pane') || doc.querySelector('.react-flow__renderer')
-            if (pane) {
-              pane.addEventListener('wheel', onWheel, { passive: true })
-            }
-            applyZoom()  // initial apply
+            if (pane) pane.addEventListener('wheel', applyZoom, { passive: true })
+            applyZoom()
           }
         }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
