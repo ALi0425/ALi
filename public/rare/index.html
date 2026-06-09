@@ -182,16 +182,18 @@
       if (u.includes('/apply-impact')) {
         await delay(500);
         if (!fullProject) fullProject = buildProject(DATA[BKEY]);
-        // Add the milestone field INSIDE the 进度管理 page (p2)
-        // p2 is at page position (470, 90), its fields start at (485, 118)
-        // Place milestone field below existing fields: 4 fields × 56px gap = 224px from start
+        // Add the milestone field inside 进度管理 page (p2)
         const milestoneField = {id:'f-new-ms',name:'里程碑状态',fieldType:'select',posX:485,posY:342,pageId:'p2',projectId:'proj-1',moduleId:'m1'}
         fullProject.fields.push(milestoneField)
-        // Add edge: 进度管理 page (p2) → milestone field
+        // Add edge: 进度管理 page → milestone field
         fullProject.edges.push({id:'e-new-1',sourceId:'p2',targetId:'f-new-ms',flowType:'has',status:'active',projectId:'proj-1',label:''})
-        // Add edge: milestone field → 执行进度 field (association)
+        // Add edge: milestone field → 执行进度 field
         const execField = fullProject.fields.find(f => f.name==='执行进度')
         if (execField) fullProject.edges.push({id:'e-new-2',sourceId:'f-new-ms',targetId:execField.id,flowType:'association',status:'active',projectId:'proj-1',label:'关联'})
+        // Also create a version commit
+        if (!window._srCommits) window._srCommits = []
+        const v = window._srCommits.length + 1
+        window._srCommits.push({id:'c'+v,version:v,message:'里程碑状态字段新增',createdAt:new Date().toISOString()})
         return ok({project:fullProject,affectedIds:['f-new-ms'],summary:'里程碑状态字段已添加到进度管理页面'});
       }
       // POST /api/inference/apply-impact-status
