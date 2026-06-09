@@ -55,7 +55,7 @@ const NODE_PROFILES = {
   b1: {
     title: '科技管理应用',
     path: '~/projects/tech-mgmt',
-    tag: 'B端 · 国网信通',
+    tag: 'B端 · 科技管理应用',
     metrics: ['跨部门协同', '流程解构', '资产纳管'],
     video: _BASE + 'tech-mgmt.mp4',
     content: `● 项目定位
