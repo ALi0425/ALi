@@ -80,30 +80,23 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Zoom-aware font: live update during zoom, stays at final size
-        if (!doc.querySelector('.rf_zoom_init')) {
-          const vp = doc.querySelector('.react-flow__viewport')
-          if (vp) {
-            const m = doc.createElement('span'); m.className = 'rf_zoom_init'; m.style.display = 'none'
-            doc.body.appendChild(m)
-            // Store original font sizes ONCE (never updated)
-            doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
-              el.dataset._zo = parseFloat(el.style.fontSize) || 13
-            })
-            function applyZoom() {
-              const zm = vp.style.transform.match(/scale\(([\d.]+)\)/)
-              const zoom = zm ? parseFloat(zm[1]) : 1
-              doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
-                const orig = parseFloat(el.dataset._zo) || 13
-                const scaled = Math.round(orig / Math.max(zoom, 0.1))
-                el.style.fontSize = Math.max(scaled, Math.round(orig * 0.8)) + 'px'
-              })
+        // Zoom-aware font: runs every interval tick (500ms) — no wheel listener needed
+        const vp = doc.querySelector('.react-flow__viewport')
+        if (vp) {
+          // Store original font size once
+          doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
+            if (!el.dataset._zo) el.dataset._zo = parseFloat(el.style.fontSize) || 13
+          })
+          // Compute and apply inverse font size
+          const zm = vp.style.transform.match(/scale\(([\d.]+)\)/)
+          const zoom = zm ? parseFloat(zm[1]) : 1
+          doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
+            const orig = parseFloat(el.dataset._zo) || 13
+            if (orig > 0) {
+              const scaled = Math.round(orig / Math.max(zoom, 0.1))
+              el.style.fontSize = Math.max(scaled, Math.round(orig * 0.7)) + 'px'
             }
-            // Live update on every wheel event (no debounce)
-            const pane = vp.closest('.react-flow__pane') || doc.querySelector('.react-flow__renderer')
-            if (pane) pane.addEventListener('wheel', applyZoom, { passive: true })
-            applyZoom()
-          }
+          })
         }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
