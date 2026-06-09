@@ -152,9 +152,13 @@
         return ok({
           refinedText: '在【科技项目管理:module】模块【进度管理:page】页面新增一个{里程碑状态:field}字段，值为未提交、审核中、审核通过、审核退回，当用户编辑保存后，状态为未提交；用户提交后，状态为审核中；当审核节点退回后，状态为审核退回；当所有审核节点都审核通过后，状态为审核通过。',
           entities: [
-            {name:'科技项目管理',type:'module',isNew:false,parentName:null},
-            {name:'进度管理',type:'page',isNew:false,parentName:'科技项目管理'},
             {name:'里程碑状态',type:'field',isNew:true,parentName:'进度管理',fieldType:'select'},
+            {name:'进度管理',type:'page',isNew:false,parentName:'科技项目管理',impact:'high',description:'增加里程碑状态字段，可对每个里程碑完成情况进行查看'},
+            {name:'执行进度',type:'field',isNew:false,parentName:'进度管理',impact:'medium',description:'考虑是否根据里程碑状态字段进行执行进度统计'},
+          ],
+          newEdges:[
+            {sourceName:'进度管理',targetName:'里程碑状态',label:'新增字段',flowType:'extension'},
+            {sourceName:'里程碑状态',targetName:'执行进度',label:'状态关联',flowType:'association'},
           ]
         });
       }
