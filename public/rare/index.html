@@ -150,11 +150,11 @@
       if (u.includes('/inference/refine') && method==='POST') {
         await delay(300);
         return ok({
-          refinedText: '新增需求涉及项目管理、成果管理等多个模块。建议梳理相关字段和操作流程。',
+          refinedText: '在【科技项目管理:module】模块【进度管理:page】页面新增一个{里程碑状态:field}字段，值为未提交、审核中、审核通过、审核退回，当用户编辑保存后，状态为未提交；用户提交后，状态为审核中；当审核节点退回后，状态为审核退回；当所有审核节点都审核通过后，状态为审核通过。',
           entities: [
-            {name:'新需求模块',type:'module',isNew:true,parentName:null},
-            {name:'影响字段',type:'field',isNew:false,parentName:'项目立项',fieldType:'string'},
-            {name:'关联操作',type:'action',isNew:true,parentName:'进度管理',actionType:'submit'},
+            {name:'科技项目管理',type:'module',isNew:false,parentName:null},
+            {name:'进度管理',type:'page',isNew:false,parentName:'科技项目管理'},
+            {name:'里程碑状态',type:'field',isNew:true,parentName:'进度管理',fieldType:'select'},
           ]
         });
       }

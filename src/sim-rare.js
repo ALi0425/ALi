@@ -146,7 +146,7 @@ export function openSimRare(bKey) {
           // Preset chips
           const chips = doc.createElement('div')
           chips.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap'
-          const options = ['1】新增模块', '2】修改字段', '3】变更流程']
+          const options = ['1】新增模块', '2】进度管理页面新增一个里程碑状态', '3】变更流程']
           options.forEach(text => {
             const chip = doc.createElement('span')
             chip.textContent = text
