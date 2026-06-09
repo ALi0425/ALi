@@ -183,21 +183,8 @@ export function createSphere(scene) {
     tagRefs.push({ obj, el, data })
   })
 
-  /* ── Fixed name for State 02 (top‑right, hidden initially) ── */
-  const nameFixedEl = document.createElement('span')
-  nameFixedEl.textContent = '李晶晶'
-  nameFixedEl.style.cssText = `
-    font-family: 'Space Mono', 'Courier New', monospace;
-    font-size: 16px; font-weight: 500;
-    color: rgba(255,255,255,0.6);
-    position: fixed; bottom: 80px; right: 32px;
-    z-index: 100;
-    opacity: 0;
-    transition: opacity 0.8s ease;
-    pointer-events: none;
-    letter-spacing: 0.06em;
-  `
-  document.body.appendChild(nameFixedEl)
+  /* ── Fixed name for State 02 — removed per user request ── */
+  const nameFixedEl = null
 
   /* ── PROJECT LABELS ── */
   const projPositions = fibonacciPoints(PROJECT_DATA.length, SPHERE_RADIUS * 1.02)

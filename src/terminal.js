@@ -56,6 +56,7 @@ const NODE_PROFILES = {
     path: '~/projects/tech-mgmt',
     tag: 'B端 · 国网信通',
     metrics: ['跨部门协同', '流程解构', '资产纳管'],
+    video: '/tech-mgmt.mp4',
     content: `● 项目定位
 → 面向国网信通的万级数据量、53家单位协同的大型信息化核心科技管理系统。
 
@@ -94,6 +95,7 @@ const NODE_PROFILES = {
     path: '~/projects/project-mgmt',
     tag: 'B端 · 全生命周期',
     metrics: ['业务解构', '权限划分', '多模块集成'],
+    video: '/project-mgmt.mp4',
     content: `● 项目定位
 → 面向企业大型系统万级数据量，涵盖全类型项目全生命周期管理。
 
