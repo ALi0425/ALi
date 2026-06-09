@@ -103,8 +103,10 @@ export function openSimRare(bKey) {
           // Read-only input showing selected value
           const inp = doc.createElement('input')
           inp.readOnly = true
-          inp.placeholder = '点击下方选择需求类型'
-          inp.style.cssText = 'width:100%;min-height:48px;padding:8px 16px;font-size:13px;color:#e0e0e0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;outline:none;font-family:inherit;box-sizing:border-box;cursor:pointer'
+          inp.placeholder = '选择需求类型'
+          inp.style.cssText = 'width:100%;padding:12px 16px;font-size:13px;color:#e0e0e0;background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.2);border-radius:8px;outline:none;font-family:inherit;box-sizing:border-box;cursor:pointer;transition:border-color 0.2s'
+          inp.addEventListener('focus', () => { inp.style.borderColor = 'rgba(34,197,94,0.5)' })
+          inp.addEventListener('blur', () => { inp.style.borderColor = 'rgba(34,197,94,0.2)' })
           container.appendChild(inp)
           // Preset chips
           const chips = doc.createElement('div')
@@ -113,9 +115,9 @@ export function openSimRare(bKey) {
           options.forEach(text => {
             const chip = doc.createElement('span')
             chip.textContent = text
-            chip.style.cssText = 'padding:4px 12px;border-radius:14px;font-size:11px;cursor:pointer;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);transition:all 0.2s'
+            chip.style.cssText = 'padding:5px 14px;border-radius:6px;font-size:11px;cursor:pointer;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);color:rgba(34,197,94,0.7);transition:all 0.2s;font-family:inherit'
             chip.addEventListener('mouseenter', () => { chip.style.background = 'rgba(34,197,94,0.15)'; chip.style.borderColor = 'rgba(34,197,94,0.3)'; chip.style.color = '#22c55e' })
-            chip.addEventListener('mouseleave', () => { chip.style.background = 'rgba(255,255,255,0.05)'; chip.style.borderColor = 'rgba(255,255,255,0.08)'; chip.style.color = 'rgba(255,255,255,0.6)' })
+            chip.addEventListener('mouseleave', () => { chip.style.background = 'rgba(34,197,94,0.06)'; chip.style.borderColor = 'rgba(34,197,94,0.15)'; chip.style.color = 'rgba(34,197,94,0.7)' })
             chip.addEventListener('click', () => { inp.value = text })
             chips.appendChild(chip)
           })
