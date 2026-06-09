@@ -149,7 +149,18 @@ export function openSimRare(bKey) {
             chip.style.cssText = 'padding:5px 14px;border-radius:6px;font-size:11px;cursor:pointer;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);color:rgba(34,197,94,0.7);transition:all 0.2s;font-family:inherit'
             chip.addEventListener('mouseenter', () => { chip.style.background = 'rgba(34,197,94,0.15)'; chip.style.borderColor = 'rgba(34,197,94,0.3)'; chip.style.color = '#22c55e' })
             chip.addEventListener('mouseleave', () => { chip.style.background = 'rgba(34,197,94,0.06)'; chip.style.borderColor = 'rgba(34,197,94,0.15)'; chip.style.color = 'rgba(34,197,94,0.7)' })
-            chip.addEventListener('click', () => { inp.value = text; ta.value = text; ta.dispatchEvent(new Event('input', { bubbles: true })) })
+            chip.addEventListener('click', () => {
+              inp.value = text
+              // Use native value setter to trigger React onChange
+              const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')
+              if (nativeSetter) {
+                nativeSetter.set.call(ta, text)
+                ta.dispatchEvent(new Event('input', { bubbles: true }))
+              } else {
+                ta.value = text
+                ta.dispatchEvent(new Event('input', { bubbles: true }))
+              }
+            })
             chips.appendChild(chip)
           })
           container.appendChild(chips)
