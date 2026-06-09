@@ -94,9 +94,9 @@ export function openSimRare(bKey) {
           }
           styleTag.textContent = `.react-flow__node *[style*="font-size"] { font-size: ${Math.max(targetPx, 10)}px !important }`
         }
-        // Fix "优化" button: dispatch native click on the React-managed element
+        // Fix "精炼 →" / "评估影响" button
         doc.querySelectorAll('button').forEach(btn => {
-          if (btn.textContent.includes('优化') && !btn.dataset._optFixed) {
+          if ((btn.textContent.includes('精炼') || btn.textContent.includes('评估')) && !btn.dataset._optFixed) {
             btn.dataset._optFixed = '1'
             btn.removeAttribute('disabled')
             // Override disabled so React doesn't block click
