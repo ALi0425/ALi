@@ -3882,7 +3882,7 @@ void main() {
 → 画布动态更新：评估后的需求确认后可入库，触发向量同步与全局图谱认知工作流。
 
 ● 交付成果
-→ 构建了可视化的嵌套交互画布，打破代码黑盒。`},b1:{title:"科技管理应用",path:"~/projects/tech-mgmt",tag:"B端 · 国网信通",metrics:["跨部门协同","流程解构","资产纳管"],video:bi+"tech-mgmt.mp4",content:`● 项目定位
+→ 构建了可视化的嵌套交互画布，打破代码黑盒。`},b1:{title:"科技管理应用",path:"~/projects/tech-mgmt",tag:"B端 · 科技管理应用",metrics:["跨部门协同","流程解构","资产纳管"],video:bi+"tech-mgmt.mp4",content:`● 项目定位
 → 面向国网信通的万级数据量、53家单位协同的大型信息化核心科技管理系统。
 
 ● 产品定义
