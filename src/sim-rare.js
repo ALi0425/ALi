@@ -80,25 +80,28 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Zoom-aware font: only updates if zoom changed >5% (prevents flickering)
+        // Zoom-aware font: inject CSS !important rule to survive React re-renders
         const vp = doc.querySelector('.react-flow__viewport')
         if (vp) {
-          doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
-            if (!el.dataset._zo) el.dataset._zo = parseFloat(el.style.fontSize) || 13
-          })
           const zm = vp.style.transform.match(/scale\(([\d.]+)\)/)
           const zoom = zm ? parseFloat(zm[1]) : 1
           const lastZoom = parseFloat(doc.body.dataset._lastZoom) || 0
-          // Only apply if zoom changed significantly (>5%) or first run
-          if (!lastZoom || Math.abs(zoom - lastZoom) / Math.max(lastZoom, 0.01) > 0.05) {
+          if (!lastZoom || Math.abs(zoom - lastZoom) / Math.max(lastZoom, 0.01) > 0.03) {
             doc.body.dataset._lastZoom = String(zoom)
+            // Read original sizes from all nodes, store once
             doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
-              const orig = parseFloat(el.dataset._zo) || 13
-              if (orig > 0) {
-                const scaled = Math.round(orig / Math.max(zoom, 0.1))
-                el.style.fontSize = Math.max(scaled, Math.round(orig * 0.7)) + 'px'
-              }
+              if (!el.dataset._zo) el.dataset._zo = parseFloat(el.style.fontSize) || 13
             })
+            // Compute target font size
+            const targetPx = Math.round(13 / Math.max(zoom, 0.1))
+            // Update or create a style rule with !important (survives React render)
+            let styleTag = doc.getElementById('rf-zoom-style')
+            if (!styleTag) {
+              styleTag = doc.createElement('style')
+              styleTag.id = 'rf-zoom-style'
+              doc.head.appendChild(styleTag)
+            }
+            styleTag.textContent = `.react-flow__node *[style*="font-size"] { font-size: ${Math.max(targetPx, 10)}px !important }`
           }
         }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
