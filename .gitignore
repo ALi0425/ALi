@@ -4,4 +4,4 @@ dist
 *.local
 .vite
 screenshot-*.png
-.github/workflows/
+# .github/workflows/ — needed for auto-deploy
