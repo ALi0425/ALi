@@ -80,23 +80,26 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Zoom-aware font: runs every interval tick (500ms) — no wheel listener needed
+        // Zoom-aware font: only updates if zoom changed >5% (prevents flickering)
         const vp = doc.querySelector('.react-flow__viewport')
         if (vp) {
-          // Store original font size once
           doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
             if (!el.dataset._zo) el.dataset._zo = parseFloat(el.style.fontSize) || 13
           })
-          // Compute and apply inverse font size
           const zm = vp.style.transform.match(/scale\(([\d.]+)\)/)
           const zoom = zm ? parseFloat(zm[1]) : 1
-          doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
-            const orig = parseFloat(el.dataset._zo) || 13
-            if (orig > 0) {
-              const scaled = Math.round(orig / Math.max(zoom, 0.1))
-              el.style.fontSize = Math.max(scaled, Math.round(orig * 0.7)) + 'px'
-            }
-          })
+          const lastZoom = parseFloat(doc.body.dataset._lastZoom) || 0
+          // Only apply if zoom changed significantly (>5%) or first run
+          if (!lastZoom || Math.abs(zoom - lastZoom) / Math.max(lastZoom, 0.01) > 0.05) {
+            doc.body.dataset._lastZoom = String(zoom)
+            doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
+              const orig = parseFloat(el.dataset._zo) || 13
+              if (orig > 0) {
+                const scaled = Math.round(orig / Math.max(zoom, 0.1))
+                el.style.fontSize = Math.max(scaled, Math.round(orig * 0.7)) + 'px'
+              }
+            })
+          }
         }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
