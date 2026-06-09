@@ -111,6 +111,25 @@ export function openSimRare(bKey) {
             }, { once: true })
           }
         })
+        // Add "回退" button to version items with milestone changes
+        const versionEls = doc.querySelectorAll('[style*="cursor"][style*="border"] > div')
+        versionEls.forEach(el => {
+          if (el.textContent.includes('里程碑状态') && !el.querySelector('.sr-rollback')) {
+            const rb = doc.createElement('button')
+            rb.className = 'sr-rollback'; rb.textContent = '↩ 回退'
+            rb.style.cssText = 'padding:2px 10px;border-radius:4px;font-size:10px;cursor:pointer;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:rgba(239,68,68,0.7);margin-top:4px;font-family:inherit'
+            rb.addEventListener('click', (e) => { e.stopPropagation()
+              // Clean cached project + reload iframe
+              if (window._fullProject) {
+                window._fullProject.fields = window._fullProject.fields.filter(f => f.name !== '里程碑状态')
+                window._fullProject.edges = window._fullProject.edges.filter(e => e.sourceId === 'f-new-ms' || e.targetId === 'f-new-ms' ? false : true)
+              }
+              window._srCommits = (window._srCommits||[]).filter(c => !c.message.includes('里程碑'))
+              doc.location.href = doc.location.href.split('?')[0] + '?project=' + BKEY + '&_t=' + Date.now()
+            })
+            el.appendChild(rb)
+          }
+        })
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
           if (!el.children?.length && (el.textContent||'').includes('Space') && (el.textContent||'').includes('拖拽')) {
