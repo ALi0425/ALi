@@ -48,7 +48,7 @@ export function openSimRare(bKey) {
       </div>
       <!-- Iframe body -->
       <div class="sr-body" id="sr-body" style="display:none">
-        <iframe class="sr-iframe" src="/rare/index.html?project=${bKey}&_t=${Date.now()}" loading="eager"></iframe>
+        <iframe class="sr-iframe" id="sr-iframe" src="/rare/index.html?project=${bKey}&_t=${Date.now()}" loading="eager"></iframe>
       </div>
     </div>
   `
@@ -58,6 +58,29 @@ export function openSimRare(bKey) {
   // Close handlers
   document.getElementById('sr-close').addEventListener('click', closeSimRare)
   document.getElementById('sr-backdrop').addEventListener('click', closeSimRare)
+
+  // Inject fixes into iframe once it loads (bypasses iframe caching issues)
+  document.getElementById('sr-iframe').addEventListener('load', (e) => {
+    try {
+      const doc = e.target.contentDocument || e.target.contentWindow?.document
+      if (!doc) return
+      // Inject CSS and button hiding into iframe
+      const style = doc.createElement('style')
+      style.textContent = `
+        /* Hide save/confirm/asset management buttons */
+        button:has(span) { } /* placeholder */
+      `
+      doc.head.appendChild(style)
+      // Start persistent button hiding inside iframe
+      const iv = setInterval(() => {
+        if (!doc.body) { clearInterval(iv); return }
+        doc.querySelectorAll('button').forEach(b => {
+          const t = (b.textContent || '').trim()
+          if (t === '保存' || t === '确认' || t.includes('资产管理')) b.style.display = 'none'
+        })
+      }, 500)
+    } catch(e) { /* iframe cross-origin */ }
+  })
 
   // Animate progress
   let pct = 0
