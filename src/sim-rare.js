@@ -80,9 +80,9 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Hide "Space + 拖拽" tooltip
-        doc.querySelectorAll('span, div').forEach(el => {
-          if ((el.textContent||'').includes('Space') && (el.textContent||'').includes('拖拽')) {
+        // Hide "Space + 拖拽" tooltip (leaf elements only!)
+        doc.querySelectorAll('span').forEach(el => {
+          if (!el.children?.length && (el.textContent||'').includes('Space') && (el.textContent||'').includes('拖拽')) {
             el.style.display = 'none'
           }
         })
