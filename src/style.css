@@ -335,6 +335,12 @@ html, body {
   width: 100%; height: 100%; object-fit: cover;
   display: block;
 }
+.bb-image:has(video) {
+  flex: none; max-height: 340px;
+}
+.bb-image video {
+  object-fit: contain; background: #000;
+}
 
 .bb-content {
   flex: 1; display: flex; flex-direction: column;
@@ -342,6 +348,9 @@ html, body {
   padding: 20px 14px;
   text-align: center;
   gap: 12px;
+}
+.bb-content-compact {
+  flex: none; padding: 10px 14px; gap: 6px;
 }
 
 .bb-title {
@@ -442,9 +451,6 @@ html, body {
   margin: 2px 0;
 }
 
-.cl-divider-line {
-  height: 1px; background: rgba(34,197,94,0.15); margin: 12px 0;
-}
 .cl-line {
   color: rgba(255,255,255,0.7);
   padding-left: 0;
@@ -928,4 +934,141 @@ html, body {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.3);
   min-height: 14px;
+}
+
+/* ═══════════════════════════════════════
+   CONTACT PAGE OVERLAY
+   ═══════════════════════════════════════ */
+
+#contact-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.2s ease;
+  background: #050505;
+}
+
+#contact-overlay .co-scroll-container {
+  width: 100%; height: 100%;
+  transform: translateY(100%);
+  overflow-y: auto;
+  display: flex; align-items: center; justify-content: center;
+  background: #050505;
+}
+
+.co-scroll-container {
+  position: relative;
+  width: 100%; height: 100%;
+  overflow-y: auto;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Scanlines */
+.co-scanlines {
+  position: absolute; inset: 0;
+  background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.08) 50%),
+              linear-gradient(90deg, rgba(255,0,0,0.04), rgba(0,255,0,0.02), rgba(0,0,255,0.04));
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none; z-index: 1; opacity: 0.3;
+}
+
+/* Glowing orb */
+.co-orb {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px; height: 500px;
+  background: rgba(34,197,94,0.04);
+  border-radius: 50%;
+  filter: blur(60px);
+  animation: pulse 4s ease-in-out infinite;
+  pointer-events: none; z-index: 1;
+}
+
+.co-content {
+  position: relative; z-index: 10;
+  text-align: center; max-width: 900px; width: 100%;
+  padding: 40px 20px;
+  font-family: "Space Mono", "Courier New", monospace;
+  color: white;
+}
+
+/* Status bar */
+.co-statusbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 48px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 11px; color: rgba(255,255,255,0.4);
+  text-transform: uppercase; letter-spacing: 0.15em;
+}
+.co-status-left { display: flex; align-items: center; gap: 16px; }
+.co-status-right { display: flex; align-items: center; gap: 12px; opacity: 0.4; }
+.co-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #22c55e;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Hero */
+.co-hero { margin-bottom: 48px; }
+.co-title {
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-weight: 700; letter-spacing: -0.03em;
+  line-height: 1.1; margin-bottom: 16px;
+  color: rgba(255,255,255,0.9);
+}
+.co-gradient {
+  background: linear-gradient(135deg, #22c55e, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.co-subtitle {
+  font-size: 14px; color: rgba(255,255,255,0.35);
+  line-height: 1.6; max-width: 500px; margin: 0 auto;
+  white-space: pre-line;
+}
+
+/* Contact cards */
+.co-cards {
+  display: flex; gap: 20px; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 48px;
+}
+.co-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 28px 40px;
+  min-width: 240px;
+  transition: border-color 0.3s ease;
+}
+.co-card:hover {
+  border-color: rgba(34,197,94,0.4);
+}
+.co-card-icon { font-size: 28px; margin-bottom: 8px; }
+.co-card-label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.15em; color: rgba(255,255,255,0.3);
+  margin-bottom: 4px;
+}
+.co-card-value {
+  font-size: 18px; font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.04em;
+}
+
+/* Footer */
+.co-footer {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 24px 32px;
+  font-size: 10px; color: rgba(255,255,255,0.25);
+  text-transform: uppercase; letter-spacing: 0.12em; z-index: 20;
+}
+.co-footer-left { display: flex; align-items: center; gap: 6px; }
+.co-footer-right { text-align: right; }
+.co-footer-right p { margin: 0; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.8; }
 }

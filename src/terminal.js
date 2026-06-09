@@ -166,7 +166,18 @@ function render(p) {
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
             ${p.video
-              ? `<div class="bb-image"><video src="${p.video}" autoplay loop muted playsinline></video></div>`
+              ? `<div class="bb-image"><video src="${p.video}" autoplay loop muted playsinline></video></div>
+                  <div class="bb-content bb-content-compact">
+                    <div class="bb-title">${p.title}</div>
+                    <div class="bb-divider"></div>
+                    <div class="bb-metrics">
+                      ${p.metrics.map(m => `<span class="bb-metric">◈ ${m}</span>`).join('')}
+                    </div>
+                    <div class="bb-footer">
+                      <span class="bb-blink">▍</span>
+                      <span class="bb-status">module_loaded · ready</span>
+                    </div>
+                  </div>`
               : p.image
               ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
               : `<div class="bb-content">
@@ -193,10 +204,6 @@ function render(p) {
             <div class="console-body">
               <div class="cl-project-name">${p.title}</div>
               ${renderContent(p.content)}
-              <div class="cl-divider-line"></div>
-              <div class="cl-section"><span class="cl-dot">●</span> 联系方式</div>
-              <div class="cl-bullet"><span class="cl-arrow">📞</span>同微信：15720164041</div>
-              <div class="cl-bullet"><span class="cl-arrow">📧</span>邮箱：15720164041@163.com</div>
             </div>
           </div>
         </div>

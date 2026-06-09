@@ -14,6 +14,7 @@ import { initExplosion, updateFloatingNodes } from './explosion.js'
 import { initMediaPipe } from './mediapipe.js'
 import { initConnections, updateConnections, clearConnections } from './connections.js'
 import { initSafari, resetSafari } from './safari.js'
+import { mountScrollTrigger, unmountScrollTrigger } from './contact.js'
 import { getState, STATES, onEnter } from './state.js'
 
 // ── Bootstrap ──
@@ -59,9 +60,17 @@ async function main() {
 
     if (state === STATES.IDLE) {
       updateSphere(sphere, mouse)
+      if (window.__contactMounted) {
+        unmountScrollTrigger(window)
+        window.__contactMounted = false
+      }
     } else if (state === STATES.FLOATING) {
       updateFloatingNodes(sphere, 16)
       updateConnections()
+      if (!window.__contactMounted) {
+        mountScrollTrigger(window)
+        window.__contactMounted = true
+      }
     }
 
     renderer.render(scene, camera)
