@@ -119,6 +119,7 @@ document.addEventListener('mousemove', (e) => {
 document.addEventListener('mouseup', () => {
   if (!_dragging) return
   _dragging = false
+  console.log('🐭 mouseup dragFrom:', _dragFrom?.key, 'dragTo:', _dragTo?.key, 'valid:', _dragTo ? isValid(_dragFrom.key, _dragTo.key) : 'no-target')
   if (_dragTo && isValid(_dragFrom.key, _dragTo.key)) {
     addConnection(_dragFrom, _dragTo)
   } else if (_dragTo) {
@@ -151,7 +152,10 @@ function addConnection(from, to) {
 
   // Open RARE simulation when b‑node → a2 (RARE)
   if (to.key === 'a2' && ['b1','b2','b3'].includes(from.key)) {
+    console.log('🎯 triggering sim-rare for', from.key)
     setTimeout(() => openSimRare(from.key), 300)
+  } else {
+    console.log('❌ sim-rare NOT triggered: to=', to.key, 'from=', from.key)
   }
 
   console.log(`%c🔗  ${from.key} → ${to.key} — VALID`, 'color:#22c55e;font-family:monospace')
