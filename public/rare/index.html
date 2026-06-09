@@ -114,6 +114,67 @@
           {id:'e-new-k2',sourceId:'f-new-k1',targetId:'f-new-k2',flowType:'has',status:'active',projectId:'proj-1',label:''},
         ],
       },
+      // ── B2 巡查问题在线管理 ──
+      '人才基本信息页面新增一个上传简历功能': {
+        refineText: '在【人才信息管理:module】模块【人才基本信息:page】页面新增一个{上传:action}按钮，用户点击按钮，上传自己的简历后点击【保存:action】按钮后，后续可下载查看详情，仅允许上传PDF格式。',
+        refineEntities: [
+          {name:'上传',type:'action',isNew:true,parentName:'人才基本信息',impact:'high',description:'上传简历操作'},
+          {name:'人才基本信息',type:'page',isNew:false,parentName:'人才信息管理',impact:'medium',description:'增加一个上传按钮'},
+          {name:'保存',type:'action',isNew:false,parentName:'人才基本信息',impact:'low',description:'需对上传的文件进行保存'},
+        ],
+        refineEdges: [
+          {sourceName:'人才基本信息',targetName:'上传',label:'新增操作',flowType:'extension'},
+          {sourceName:'上传',targetName:'保存',label:'后续操作',flowType:'association'},
+        ],
+        impactDesc: '进入人才信息管理模块，用户可上传简历，便于简历信息的在线管理',
+        newEntities: [
+          {name:'上传',type:'action',parentName:'人才基本信息'},
+        ],
+        affectedEntities: [
+          {name:'人才基本信息',type:'page',impact:'增加一个上传按钮'},
+          {name:'保存',type:'action',impact:'需对上传的文件进行保存，后续可从详情中查看'},
+        ],
+        newEdges: [
+          {sourceName:'上传',targetName:'保存',label:'后续操作',flowType:'association'},
+        ],
+        applyFields: [
+          {id:'a35',name:'上传',fieldType:'action',posX:375,posY:316,pageId:'p1',projectId:'proj-1',moduleId:'m1'},
+        ],
+        applyEdges: [
+          {id:'e84',sourceId:'p1',targetId:'a35',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e85',sourceId:'a35',targetId:'a4',flowType:'association',status:'active',projectId:'proj-1',label:'后续操作'},
+        ],
+      },
+      '组队选才页面新增角色要求功能': {
+        refineText: '在【任务管理:module】模块【组队选才:page】页面新增一个{角色要求:field}字段，用户选择相关角色要求，点击【生成初选名单:action】按钮，根据用户选择的要求，生成这个任务的相关角色。',
+        refineEntities: [
+          {name:'角色要求',type:'field',isNew:true,parentName:'组队选才',fieldType:'select',impact:'high',description:'选择角色要求'},
+          {name:'组队选才',type:'page',isNew:false,parentName:'任务管理',impact:'medium',description:'增加一个角色要求字段'},
+          {name:'生成初选名单',type:'action',isNew:false,parentName:'组队选才',impact:'medium',description:'生成初选名单后需遵循所选的角色要求'},
+        ],
+        refineEdges: [
+          {sourceName:'组队选才',targetName:'角色要求',label:'新增字段',flowType:'extension'},
+          {sourceName:'角色要求',targetName:'生成初选名单',label:'影响筛选',flowType:'association'},
+        ],
+        impactDesc: '进入组队选才页面，可根据选择的要求生成任务的角色，提升了效率',
+        newEntities: [
+          {name:'角色要求',type:'field',parentName:'组队选才',fieldType:'select'},
+        ],
+        affectedEntities: [
+          {name:'组队选才',type:'page',impact:'增加一个角色要求字段'},
+          {name:'生成初选名单',type:'action',impact:'生成初选名单后需遵循所选的角色要求，考虑后台逻辑的调整'},
+        ],
+        newEdges: [
+          {sourceName:'角色要求',targetName:'生成初选名单',label:'影响筛选',flowType:'association'},
+        ],
+        applyFields: [
+          {id:'f41',name:'角色要求',fieldType:'select',posX:1135,posY:596,pageId:'p7',projectId:'proj-1',moduleId:'m3'},
+        ],
+        applyEdges: [
+          {id:'e86',sourceId:'p7',targetId:'f41',flowType:'has',status:'active',projectId:'proj-1',label:''},
+          {id:'e87',sourceId:'f41',targetId:'a24',flowType:'association',status:'active',projectId:'proj-1',label:'影响筛选'},
+        ],
+      },
     };
     function getEval(requirement) {
       return EVAL[requirement] || EVAL['进度管理页面新增一个里程碑状态'];
