@@ -140,10 +140,16 @@
       if (u.includes('/inference/impact') && method==='POST') {
         await delay(1000);
         return ok({
-          impactDescription:'新增需求将对现有系统结构产生影响',
-          newEntities:[{name:'新需求模块',type:'module',parentName:null,fieldType:null,actionType:null}],
-          affectedEntities:[{name:'立项申请',type:'page',impact:'high'},{name:'项目名称',type:'field',impact:'medium'}],
-          newEdges:[{sourceName:'项目管理',targetName:'新需求模块',label:'扩展',flowType:'extension'}],
+          impactDescription:'进度管理页面，每个里程碑都会新增一个里程碑状态，用户可以以此来查看每个里程碑的完成情况，便于对项目进度进行把控',
+          newEntities:[{name:'里程碑状态',type:'field',parentName:'进度管理',fieldType:'select'}],
+          affectedEntities:[
+            {name:'进度管理',type:'page',impact:'high',description:'增加里程碑状态字段，可对每个里程碑完成情况进行查看'},
+            {name:'执行进度',type:'field',impact:'medium',description:'考虑是否根据里程碑状态字段进行执行进度统计'},
+          ],
+          newEdges:[
+            {sourceName:'进度管理',targetName:'里程碑状态',label:'新增字段',flowType:'extension'},
+            {sourceName:'里程碑状态',targetName:'执行进度',label:'状态关联',flowType:'association'},
+          ],
         });
       }
       // POST /api/inference/refine — submit refine
