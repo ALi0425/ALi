@@ -166,7 +166,7 @@ function render(p) {
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
             ${p.video
-              ? `<div class="bb-image"><video src="${p.video}" autoplay loop muted playsinline></video></div>`
+              ? `<div class="bb-image"><video data-src="${p.video}" autoplay loop muted playsinline preload="metadata"></video></div>`
               : p.image
               ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
               : `<div class="bb-content">
@@ -200,12 +200,36 @@ function render(p) {
     </div>
   `
 
-  // Force video autoplay (browser policy workaround)
-  setTimeout(() => {
-    _overlay.querySelectorAll('video').forEach(v => {
-      if (v.paused) v.play().catch(() => {})
+  // Video: set src from data-src, handle errors, force autoplay
+  _overlay.querySelectorAll('.bb-image video').forEach(v => {
+    const src = v.dataset.src
+    if (!src) return
+    v.src = src
+    v.addEventListener('error', () => {
+      // Video failed → show content fallback
+      const parent = v.closest('.bb-image') || v.parentElement
+      if (!parent) return
+      const browser = parent.closest('.tt-browser')
+      if (!browser) return
+      const bar = browser.querySelector('.bb-bar')
+      const fallback = document.createElement('div')
+      fallback.className = 'bb-content'
+      // Find matching profile to get metrics
+      const titleEl = bar?.querySelector('.bb-url span:last-child')
+      const title = titleEl?.textContent || p.title || ''
+      fallback.innerHTML = `
+        <div class="bb-title">${esc(title)}</div>
+        <div class="bb-divider"></div>
+        <div class="bb-metrics">
+          ${(p.metrics || []).map(m => `<span class="bb-metric">◈ ${esc(m)}</span>`).join('')}
+        </div>
+      `
+      v.remove()
+      parent.replaceWith(fallback)
     })
-  }, 300)
+    // Force play
+    setTimeout(() => { if (v.paused) v.play().catch(() => {}) }, 200)
+  })
 
   // Close
   _overlay.querySelector('#tt-close').addEventListener('click', closeTerminal)
