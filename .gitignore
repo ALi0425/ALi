@@ -4,4 +4,9 @@ dist
 *.local
 .vite
 screenshot-*.png
+*.txt
+*.docx
+*.xlsx
+开发计划-*.md
+/*.mp4
 # .github/workflows/ — needed for auto-deploy
