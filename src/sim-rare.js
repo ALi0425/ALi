@@ -94,11 +94,27 @@ export function openSimRare(bKey) {
           }
           styleTag.textContent = `.react-flow__node *[style*="font-size"] { font-size: ${Math.max(targetPx, 10)}px !important }`
         }
-        // Force "优化" button enabled — keep original styling
+        // Replace "优化" button with working clone (React blocks clicks on disabled)
         doc.querySelectorAll('button').forEach(btn => {
           if (btn.textContent.includes('优化') && !btn.dataset._optFixed) {
             btn.dataset._optFixed = '1'
-            Object.defineProperty(btn, 'disabled', { get: () => false, set: () => {} })
+            const clone = btn.cloneNode(true)
+            clone.disabled = false
+            clone.removeAttribute('disabled')
+            clone.dataset._optFixed = '1'
+            // Click clone → sync textarea → dispatch events → click original programmatically
+            clone.addEventListener('click', (e) => {
+              e.preventDefault(); e.stopPropagation()
+              // Find hidden textarea, set value, trigger React change
+              const ta = doc.querySelector('textarea')
+              if (ta) {
+                ta.value = ta.value || '1】测试需求'
+                ta.dispatchEvent(new Event('input', { bubbles: true }))
+              }
+              // Try clicking the original (which has React onClick)
+              setTimeout(() => { btn.dispatchEvent(new MouseEvent('click', { bubbles: true })) }, 50)
+            })
+            btn.parentNode?.replaceChild(clone, btn)
           }
         })
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
