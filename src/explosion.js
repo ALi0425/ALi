@@ -64,16 +64,26 @@ export function initExplosion(scene, sphere, camera) {
 
   document.addEventListener('click', () => {
     if (getState() !== STATES.IDLE) return
-
     if (clickTimer) {
-      clearTimeout(clickTimer)
-      clickTimer = null
+      clearTimeout(clickTimer); clickTimer = null
       startExplosion(scene, sphere, camera)
       return
     }
-
     clickTimer = setTimeout(() => { clickTimer = null }, DOUBLE_CLICK_DELAY)
   })
+
+  // Mobile: touch‑tap → same double‑tap logic
+  document.addEventListener('touchstart', (e) => {
+    if (getState() !== STATES.IDLE) return
+    if (e.touches.length > 1) return  // pinch, not tap
+    if (clickTimer) {
+      clearTimeout(clickTimer); clickTimer = null
+      e.preventDefault()  // prevent zoom
+      startExplosion(scene, sphere, camera)
+      return
+    }
+    clickTimer = setTimeout(() => { clickTimer = null }, DOUBLE_CLICK_DELAY)
+  }, { passive: false })
 
   // Global callback for MediaPipe
   window.__triggerExplosion = () => {

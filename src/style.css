@@ -1072,3 +1072,57 @@ html, body {
   0%, 100% { opacity: 0.4; }
   50%      { opacity: 0.8; }
 }
+
+/* ═══════════════════════════════════════
+   MOBILE ADAPTATION
+   ═══════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /* ── Terminal modal ── */
+  .tt-window {
+    width: 98vw; max-height: 98vh; min-height: auto;
+    border-radius: 10px;
+  }
+  .tt-body {
+    flex-direction: column; min-height: 0;
+  }
+  .tt-left {
+    width: 100%; flex-shrink: 0;
+    padding: 8px 8px 4px 8px;
+    border-right: none; border-bottom: 1px solid rgba(255,255,255,0.04);
+    max-height: 40vh;
+  }
+  .tt-right {
+    width: 100%; flex: 1;
+    padding: 8px;
+    overflow-y: auto;
+  }
+  .bb-image video { max-height: 200px; }
+  .bb-image:has(video) { max-height: 200px; }
+
+  /* ── Floating cards ── */
+  .project-label.card {
+    width: 260px !important; padding: 14px 16px !important;
+  }
+  .project-label.card .pl-title { font-size: 14px !important; }
+  .project-label.card .pl-desc  { font-size: 10px !important; }
+
+  /* ── Hide desktop-only features ── */
+  .endpoint { display: none !important; }
+  .conn-line, .conn-glow, .drag-line { display: none !important; }
+  #safari-overlay, .safari-overlay, [id*="safari"] { display: none !important; }
+  #sim-rare-overlay { display: none !important; }
+
+  /* ── Status bar ── */
+  .tt-tag { font-size: 8px; padding: 2px 8px; }
+
+  /* ── Contact page ── */
+  .co-title { font-size: clamp(1.5rem, 8vw, 2.5rem) !important; }
+  .co-cards { flex-direction: column; align-items: center; }
+  .co-card { min-width: 200px; padding: 20px 24px; }
+  .co-statusbar { font-size: 9px; flex-wrap: wrap; gap: 8px; }
+  .co-status-left { flex-wrap: wrap; gap: 8px; }
+
+  /* ── Safari / Token panel ── */
+  .sf-window, .token-panel, [class*="canvas-diff"] { display: none !important; }
+}

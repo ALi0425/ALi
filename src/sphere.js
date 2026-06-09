@@ -10,16 +10,19 @@ import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 import { dampMouse } from './interaction.js'
 import { getState, STATES } from './state.js'
 
+/* ── Mobile detection (evaluated once at load) ── */
+const MOBILE = window.innerWidth < 768
+
 /* ── Constants ── */
-const PARTICLE_COUNT = 1200
-const SPHERE_RADIUS  = 4.8
+const PARTICLE_COUNT = MOBILE ? 500 : 1200
+const SPHERE_RADIUS  = MOBILE ? 3.0 : 4.8
 const ROTATE_SPEED_Y = 0.0018
 const BREATHE_AMPL   = 0.025
 const BREATHE_SPEED  = 0.4
 
 /* ── Personal Info — only name + capability tags ── */
 const INFO_DATA = [
-  { text: '李晶晶', fontSize: 80, weight: '700', color: '#ffffff', glow: '0 0 80px rgba(34,197,94,0.6)', x: 0, y: 0, z: 4.8, isName: true },
+  { text: '李晶晶', fontSize: MOBILE ? 48 : 80, weight: '700', color: '#ffffff', glow: '0 0 80px rgba(34,197,94,0.6)', x: 0, y: 0, z: SPHERE_RADIUS, isName: true },
 ]
 
 const TAG_DATA = [
@@ -165,12 +168,13 @@ export function createSphere(scene) {
   const tagPositions = fibonacciPoints(TAG_DATA.length, SPHERE_RADIUS * 1.04)
   const tagRefs = []
 
+  const tagScale = MOBILE ? 0.65 : 1
   TAG_DATA.forEach((data, i) => {
     const el = document.createElement('span')
     el.textContent = data.text
     el.style.cssText = `
       font-family: 'Space Mono', 'Courier New', monospace;
-      font-size: ${data.fontSize}px;
+      font-size: ${Math.round(data.fontSize * tagScale)}px;
       font-weight: 300;
       color: ${data.color};
       text-shadow: ${data.glow || '0 0 8px rgba(34,197,94,0.15)'};
