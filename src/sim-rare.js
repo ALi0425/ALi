@@ -80,14 +80,38 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Increase all node text sizes 1.5× once for readability at any zoom
-        if (!doc.querySelector('.rf_font_done')) {
-          doc.querySelectorAll('.react-flow__node *[style*="font-size"]').forEach(el => {
-            const fs = parseFloat(el.style.fontSize)
-            if (fs && fs > 0 && fs <= 14) el.style.fontSize = Math.round(fs * 1.6) + 'px'
-          })
-          const m = doc.createElement('span'); m.className = 'rf_font_done'; m.style.display = 'none'
-          doc.body.appendChild(m)
+        // Zoom-aware font: track final zoom after scroll stops
+        if (!doc.querySelector('.rf_zoom_init')) {
+          const vp = doc.querySelector('.react-flow__viewport')
+          if (vp) {
+            const m = doc.createElement('span'); m.className = 'rf_zoom_init'; m.style.display = 'none'
+            doc.body.appendChild(m)
+            // Store original font sizes once
+            doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
+              el.dataset._zo = parseFloat(el.style.fontSize) || 13
+            })
+            // Apply font size based on current zoom
+            function applyZoom() {
+              const zm = vp.style.transform.match(/scale\(([\d.]+)\)/)
+              const zoom = zm ? parseFloat(zm[1]) : 1
+              doc.querySelectorAll('.react-flow__node [style*="font-size"]').forEach(el => {
+                const orig = parseFloat(el.dataset._zo) || 13
+                const scaled = Math.round(orig / Math.max(zoom, 0.1))
+                el.style.fontSize = Math.max(scaled, Math.round(orig * 0.8)) + 'px'
+              })
+            }
+            // Apply immediately and on wheel (zoom) events
+            let zoomTimer = null
+            const onWheel = () => {
+              clearTimeout(zoomTimer)
+              zoomTimer = setTimeout(applyZoom, 100)  // debounce: apply 100ms after last wheel
+            }
+            const pane = vp.closest('.react-flow__pane') || doc.querySelector('.react-flow__renderer')
+            if (pane) {
+              pane.addEventListener('wheel', onWheel, { passive: true })
+            }
+            applyZoom()  // initial apply
+          }
         }
         // Hide "Space + 拖拽" tooltip (leaf elements only!)
         doc.querySelectorAll('span').forEach(el => {
