@@ -80,6 +80,10 @@ export function openSimRare(bKey) {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
+        // Hide "按住 Space" tooltip
+        doc.querySelectorAll('*').forEach(el => {
+          if (el.children?.length === 0 && (el.textContent||'').trim().includes('按住 Space')) el.style.display = 'none'
+        })
         // Auto‑click "智能评估" tab to skip to evaluate page
         if (!_evalClicked) {
           doc.querySelectorAll('button, [role="button"], [style*="cursor"]').forEach(el => {
