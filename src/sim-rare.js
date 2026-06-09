@@ -94,14 +94,14 @@ export function openSimRare(bKey) {
             }
           })
         }
-        // Replace input placeholder containing "输入" with dropdown
-        doc.querySelectorAll('input').forEach(inp => {
-          if (inp.placeholder && inp.placeholder.includes('输入') && inp.type !== 'hidden') {
-            const sel = doc.createElement('select')
-            sel.style.cssText = 'flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:8px 16px;font-size:12px;color:#e0e0e0;outline:none;font-family:inherit;appearance:auto'
-            sel.innerHTML = '<option value="">选择需求类型…</option><option>1】新增模块</option><option>2】修改字段</option><option>3】变更流程</option>'
-            inp.parentNode?.replaceChild(sel, inp)
-          }
+        // Replace textarea with dropdown (smart input bar uses textarea, not input)
+        doc.querySelectorAll('textarea').forEach(ta => {
+          if (!ta.parentNode || ta.dataset._replaced) return
+          ta.dataset._replaced = '1'
+          const sel = doc.createElement('select')
+          sel.style.cssText = 'flex:1;min-height:60px;padding:8px 16px;font-size:13px;color:#e0e0e0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;outline:none;font-family:inherit;appearance:auto;width:100%;box-sizing:border-box'
+          sel.innerHTML = '<option value="">选择需求类型…</option><option>1】新增模块</option><option>2】修改字段</option><option>3】变更流程</option>'
+          ta.parentNode.replaceChild(sel, ta)
         })
       }, 500)
     } catch(e) { /* iframe cross-origin */ }
