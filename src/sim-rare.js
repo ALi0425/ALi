@@ -72,19 +72,28 @@ export function openSimRare(bKey) {
       `
       doc.head.appendChild(style)
       // Persistent UI fixes inside iframe
+      let _evalClicked = false
       const iv = setInterval(() => {
         if (!doc.body) { clearInterval(iv); return }
-        // Hide buttons: 保存/确认/资产管理/上传文件/Upload
+        // Hide buttons
         doc.querySelectorAll('button').forEach(b => {
           const t = (b.textContent || '').trim()
           if (t.includes('保存') || t.includes('确认') || t.includes('资产管理') || t.includes('上传') || t.includes('Upload')) b.style.display = 'none'
         })
-        // Replace text inputs with dropdowns (fieldType inputs)
-        doc.querySelectorAll('input[type="text"],input:not([type])').forEach(inp => {
-          if (inp.placeholder && inp.placeholder.includes('输入')) {
+        // Auto‑click "智能评估" tab to skip to evaluate page
+        if (!_evalClicked) {
+          doc.querySelectorAll('button, [role="button"], [style*="cursor"]').forEach(el => {
+            if ((el.textContent || '').trim().includes('智能评估')) {
+              el.click(); _evalClicked = true
+            }
+          })
+        }
+        // Replace input placeholder containing "输入" with dropdown
+        doc.querySelectorAll('input').forEach(inp => {
+          if (inp.placeholder && inp.placeholder.includes('输入') && inp.type !== 'hidden') {
             const sel = doc.createElement('select')
-            sel.style.cssText = inp.style.cssText + ';appearance:auto'
-            sel.innerHTML = '<option>1】</option><option>2】</option><option>3】</option>'
+            sel.style.cssText = 'flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:8px 16px;font-size:12px;color:#e0e0e0;outline:none;font-family:inherit;appearance:auto'
+            sel.innerHTML = '<option value="">选择需求类型…</option><option>1】新增模块</option><option>2】修改字段</option><option>3】变更流程</option>'
             inp.parentNode?.replaceChild(sel, inp)
           }
         })
