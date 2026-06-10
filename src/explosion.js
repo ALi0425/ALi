@@ -98,6 +98,9 @@ export function initExplosion(scene, sphere, camera) {
     if (dy > 50 && state === STATES.IDLE) {
       // Swipe up → explode
       startExplosion(scene, sphere, camera)
+    } else if (dy > 50 && state === STATES.FLOATING) {
+      // Swipe up in floating → contact page
+      window.dispatchEvent(new CustomEvent('open-contact'))
     } else if (dy < -50 && state === STATES.FLOATING) {
       // Swipe down → implode (return to sphere)
       resetExplosion(sphere)
@@ -370,7 +373,7 @@ function initNodeFloating(sphere, camera) {
 
   const isMobile = window.innerWidth < 768
   const base3D = isMobile
-    ? [[0, 3.2],[0, 1.6],[0, 0],[0,-1.6],[0,-3.2]]
+    ? [[0, 4.5],[0, 2.2],[0, 0],[0,-2.2],[0,-4.5]]
     : [[-3.0,2.0],[3.0,2.0],[0,0],[-3.0,-2.0],[3.0,-2.0]]
   const _vec3 = new THREE.Vector3()
 
@@ -455,6 +458,22 @@ function initNodeFloating(sphere, camera) {
           other.style.opacity = '1'
         })
       })
+
+      /* ── Mobile: long‑press → show bubbles ── */
+      let longTouch = null
+      el.addEventListener('touchstart', () => {
+        longTouch = setTimeout(() => {
+          el.classList.add('iridescent')
+          showBubbles(node, key)
+        }, 600)
+      }, { passive: true })
+      el.addEventListener('touchend', () => {
+        clearTimeout(longTouch)
+        setTimeout(() => {
+          el.classList.remove('iridescent')
+          hideBubbles(node)
+        }, 200)
+      }, { passive: true })
 
       /* ── State 03: Click → Terminal ── */
       el.addEventListener('click', (e) => {

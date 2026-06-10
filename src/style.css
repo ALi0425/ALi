@@ -1118,4 +1118,7 @@ html, body {
 
   /* ── Safari / Token panel ── */
   .sf-window, .token-panel, [class*="canvas-diff"] { display: none !important; }
+
+  /* ── Hide camera indicator (overlaps status) ── */
+  #camera-indicator { display: none !important; }
 }

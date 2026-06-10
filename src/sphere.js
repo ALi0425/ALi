@@ -17,7 +17,7 @@ const BREATHE_SPEED  = 0.4
 
 /* ── Personal Info — only name + capability tags ── */
 const INFO_DATA = (mobile) => [
-  { text: '李晶晶', fontSize: mobile ? 28 : 80, weight: '700', color: '#ffffff', glow: '0 0 80px rgba(34,197,94,0.6)', x: 0, y: 0, z: mobile ? 1.8 : 4.8, isName: true },
+  { text: '李晶晶', fontSize: mobile ? 22 : 80, weight: '700', color: '#ffffff', glow: '0 0 80px rgba(34,197,94,0.6)', x: 0, y: 0, z: mobile ? 1.2 : 4.8, isName: true },
 ]
 
 const TAG_DATA = [
@@ -122,8 +122,8 @@ function createProjectLabel(data) {
 export function createSphere(scene, mobile) {
   const group = new THREE.Group()
 
-  const PC = mobile ? 250 : 1200
-  const SR = mobile ? 1.8 : 4.8
+  const PC = mobile ? 200 : 1200
+  const SR = mobile ? 1.2 : 4.8
 
   /* ── Particles ── */
   const geo = new THREE.BufferGeometry()
@@ -166,7 +166,7 @@ export function createSphere(scene, mobile) {
   const tagPositions = fibonacciPoints(TAG_DATA.length, SR * 1.04)
   const tagRefs = []
 
-  const tagScale = mobile ? 0.5 : 1
+  const tagScale = mobile ? 0.4 : 1
   TAG_DATA.forEach((data, i) => {
     const el = document.createElement('span')
     el.textContent = data.text

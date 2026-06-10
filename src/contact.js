@@ -116,6 +116,8 @@ export function unmountScrollTrigger(container) {
   if (_overlay) { _overlay.style.opacity = '0'; _overlay.style.pointerEvents = 'none' }
 }
 
+export function openContact() { _target = 1; wake() }
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { _target = 0; wake() }
 })

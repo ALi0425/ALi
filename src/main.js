@@ -14,7 +14,7 @@ import { initExplosion, updateFloatingNodes } from './explosion.js'
 import { initMediaPipe } from './mediapipe.js'
 import { initConnections, updateConnections, clearConnections } from './connections.js'
 import { initSafari, resetSafari } from './safari.js'
-import { mountScrollTrigger, unmountScrollTrigger } from './contact.js'
+import { mountScrollTrigger, unmountScrollTrigger, openContact } from './contact.js'
 import { getState, STATES, onEnter } from './state.js'
 
 // ── Bootstrap ──
@@ -89,6 +89,8 @@ async function main() {
     renderer.setSize(w, h)
     labelRenderer.setSize(w, h)
   })
+
+  window.addEventListener('open-contact', () => openContact())
 
   console.log(
     '%c⏣  KERNEL ONLINE  ⏣',
