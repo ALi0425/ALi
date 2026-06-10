@@ -114,6 +114,7 @@ function showMobileHint(visible) {
   const el = document.getElementById('mobile-hint')
   if (!el) return
   el.style.opacity = visible ? '1' : '0'
+  el.classList.toggle('visible', visible)
 }
 
 function revealElement(id) {

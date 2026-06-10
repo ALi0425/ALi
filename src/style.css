@@ -1190,7 +1190,7 @@ html, body {
   #status-text { font-size: 9px !important; }
 
   /* ── Mobile floating hint: text breathing ── */
-  #mobile-hint {
+  #mobile-hint.visible {
     animation: hintBreathe 2.8s ease-in-out infinite;
   }
   @keyframes hintBreathe {
