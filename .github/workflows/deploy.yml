@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages & Cloudflare Pages
 on: [push]
 jobs:
     build-and-deploy:
@@ -11,7 +11,16 @@ jobs:
           with:
             node-version: 20
         - run: npm ci
-        - run: npx vite build --base=/ALi/
+        - name: Build for Cloudflare
+          run: npx vite build
+        - name: Deploy to Cloudflare Pages
+          uses: cloudflare/wrangler-action@v3
+          with:
+            apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+            accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+            command: pages deploy dist --project-name=ali-portfolio --branch=main
+        - name: Rebuild for GitHub Pages
+          run: npx vite build --base=/ALi/
         - uses: peaceiris/actions-gh-pages@v3
           with:
             github_token: ${{ secrets.GITHUB_TOKEN }}
