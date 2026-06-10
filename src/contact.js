@@ -99,6 +99,9 @@ export function mountScrollTrigger(container) {
   if (_handler) return
   ensureDOM()
   _handler = (e) => {
+    // Ignore wheel events when terminal modal is open
+    const term = document.getElementById('terminal-overlay')
+    if (term && term.classList.contains('active')) return
     _target = Math.max(0, Math.min(1, _target + e.deltaY / 500))
     wake()
   }

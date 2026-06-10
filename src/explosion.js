@@ -373,7 +373,7 @@ function initNodeFloating(sphere, camera) {
 
   const isMobile = window.innerWidth < 768
   const base3D = isMobile
-    ? [[0, 4.5],[0, 2.2],[0, 0],[0,-2.2],[0,-4.5]]
+    ? [[0, 5.5],[0, 2.8],[0, 0],[0,-2.8],[0,-5.5]]
     : [[-3.0,2.0],[3.0,2.0],[0,0],[-3.0,-2.0],[3.0,-2.0]]
   const _vec3 = new THREE.Vector3()
 

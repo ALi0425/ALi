@@ -1121,4 +1121,16 @@ html, body {
 
   /* ── Hide camera indicator (overlaps status) ── */
   #camera-indicator { display: none !important; }
+
+  /* ── Bubbles smaller on mobile ── */
+  .bubble {
+    font-size: 10px !important; padding: 6px 12px !important;
+    max-width: 160px !important; white-space: normal !important;
+  }
+
+  /* ── Status text smaller ── */
+  .project-label.card .pl-title { font-size: 11px !important; }
+
+  /* ── Modules text on status bar ── */
+  #status-text { font-size: 9px !important; }
 }
