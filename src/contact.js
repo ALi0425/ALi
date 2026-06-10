@@ -33,7 +33,7 @@ function ensureDOM() {
         </div>
         <div class="co-hero">
           <h2 class="co-title">CONTACT<br><span class="co-gradient">INFORMATION</span></h2>
-          <p class="co-subtitle">// Let's collaborate<br>// Response guaranteed within 24 cycles.</p>
+          <p class="co-subtitle">扫描下方二维码，或直接联系</p>
         </div>
         <div class="co-cards">
           <div class="co-card">
@@ -125,18 +125,17 @@ export function mountScrollTrigger(container) {
   }
   const onTouchMove = (e) => {
     if (_touchStartY === null || e.touches.length !== 1) return
-    const dy = (_touchStartY - e.touches[0].clientY) / window.innerHeight * 2.5
+    const dy = (_touchStartY - e.touches[0].clientY) / window.innerHeight * 1.8
     _target = Math.max(0, Math.min(1, _touchStartTarget + dy))
-    // Follow finger during touch, no spring
     _pos = _target
     render()
   }
   const onTouchEnd = () => {
     _touchStartY = null
-    // Gentle spring back to nearest "stable" position (0 or 1)
-    // If more than halfway visible, snap open; otherwise snap closed
-    if (_pos > 0.15) _target = 1
+    // Snap to 0 or 1 based on position
+    if (_pos > 0.3) _target = 1
     else _target = 0
+    _vel = 0
     _vel = 0
     wake()
   }

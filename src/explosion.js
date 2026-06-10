@@ -453,21 +453,21 @@ function initNodeFloating(sphere, camera) {
       if (el.dataset._listeners) return
       el.dataset._listeners = '1'
 
-      /* ── State 03: Hover Iridescent ── */
+      /* ── State 03: Hover Iridescent (skip on touch devices) ── */
+      const isTouchDevice = 'ontouchstart' in window
       el.addEventListener('mouseenter', () => {
-        if (node.dragging) return
+        if (node.dragging || isTouchDevice) return
         el.classList.add('iridescent')
         showBubbles(node, key)
-        // Dim all OTHER cards
         document.querySelectorAll('.project-label.card').forEach(other => {
           if (other !== el) other.style.opacity = '0.3'
         })
       })
 
       el.addEventListener('mouseleave', () => {
+        if (isTouchDevice) return
         el.classList.remove('iridescent')
         hideBubbles(node)
-        // Restore ALL cards
         document.querySelectorAll('.project-label.card').forEach(other => {
           other.style.opacity = '1'
         })
