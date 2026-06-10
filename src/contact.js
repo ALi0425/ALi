@@ -1,8 +1,8 @@
 /**
  * ═══════════════════════════════════════════
  *  Contact Page — scroll‑linked parallax
- *  Scroll down → page follows smoothly.
- *  Scroll up → page goes back down.
+ *  Swipe/wheel up → page slides up.
+ *  Swipe/wheel down → page slides down.
  * ═══════════════════════════════════════════
  */
 
@@ -11,11 +11,18 @@ let _pos = 0          // 0 = hidden, 1 = fully visible
 let _target = 0
 let _vel = 0
 let _raf = null
-let _handler = null
 let _lastT = 0
-let _dismissed = false  // prevents immediate re-open after close
+
+// Refs to registered listeners so unmount can clean them up
+let _wheelHandler = null
+let _touchStartHandler = null
+let _touchMoveHandler = null
+let _touchEndHandler = null
+
+// Small guard: prevents contact from reopening in the same gesture
+let _dismissed = false
 let _dismissTimer = null
-const DISMISS_COOLDOWN = 2500 // ms — cooldown before contact can reopen
+const DISMISS_COOLDOWN = 500 // ms
 
 /* ── Check if any modal overlay is active (blocks contact scroll) ── */
 function isModalOverlayActive() {
@@ -80,7 +87,6 @@ function render() {
   const visible = _pos > 0.02
   _overlay.style.pointerEvents = visible ? 'auto' : 'none'
   _overlay.style.opacity = visible ? '1' : '0'
-  // Lock body scroll when contact is open
   document.body.style.overflow = visible ? 'hidden' : ''
 }
 
@@ -89,7 +95,6 @@ function tick(now) {
   const dt = Math.min((now - (_lastT || now)) / 16, 4)
   _lastT = now
 
-  // critically‑damped spring toward target
   const k = 0.045 * dt
   const d = 0.80
   const accel = (_target - _pos) * k - _vel * d
@@ -100,16 +105,11 @@ function tick(now) {
 
   render()
 
-  // sleep when settled
   if (Math.abs(_pos - _target) < 0.003 && Math.abs(_vel) < 0.0005) {
     const wasOpen = _pos > 0.02
     _pos = _target; _vel = 0; render()
     cancelAnimationFrame(_raf); _raf = null; _lastT = 0
-    // If just closed → notify and set dismiss cooldown
     if (wasOpen && _pos < 0.02) {
-      _dismissed = true
-      if (_dismissTimer) clearTimeout(_dismissTimer)
-      _dismissTimer = setTimeout(() => { _dismissed = false; _dismissTimer = null }, DISMISS_COOLDOWN)
       window.dispatchEvent(new CustomEvent('contact-closed'))
     }
   }
@@ -120,42 +120,39 @@ function wake() { if (!_raf) { _lastT = 0; _raf = requestAnimationFrame(tick) } 
 /* ── Public API ── */
 
 export function mountScrollTrigger(container) {
-  if (_handler) return
+  // Already mounted — skip
+  if (_wheelHandler) return
   ensureDOM()
-  // Start with contact blocked — user must be on nodes page first before
-  // contact can be opened via swipe. Cooldown automatically clears.
-  _dismissed = true
-  if (_dismissTimer) { clearTimeout(_dismissTimer); _dismissTimer = null }
-  _dismissTimer = setTimeout(() => { _dismissed = false; _dismissTimer = null }, DISMISS_COOLDOWN)
-  _handler = (e) => {
+
+  // ── Wheel ──
+  _wheelHandler = (e) => {
     if (isModalOverlayActive()) return
-    if (_dismissed && e.deltaY > 0) return
     _target = Math.max(0, Math.min(1, _target + e.deltaY / 500))
     wake()
   }
-  container.addEventListener('wheel', _handler, { passive: true })
+  container.addEventListener('wheel', _wheelHandler, { passive: true })
 
-  // Touch support for mobile swipe (vertical only)
+  // ── Touch ──
   let _touchStartY = null
   let _touchStartTarget = 0
-  const onTouchStart = (e) => {
+
+  _touchStartHandler = (e) => {
     if (e.touches.length !== 1) return
     if (isModalOverlayActive()) return
-    if (_dismissed) return  // cooldown: prevent reopening too soon
+    if (_dismissed) return  // guard: still in cooldown from last close
     _touchStartY = e.touches[0].clientY
     _touchStartTarget = _target
     _vel = 0
   }
-  const onTouchMove = (e) => {
+  _touchMoveHandler = (e) => {
     if (_touchStartY === null || e.touches.length !== 1) return
     const dy = (_touchStartY - e.touches[0].clientY) / window.innerHeight * 1.8
     _target = Math.max(0, Math.min(1, _touchStartTarget + dy))
     _pos = _target
     render()
   }
-  const onTouchEnd = () => {
+  _touchEndHandler = () => {
     _touchStartY = null
-    // Snap to 0 or 1 based on position
     if (_pos > 0.3) _target = 1
     else {
       _target = 0
@@ -166,15 +163,31 @@ export function mountScrollTrigger(container) {
     _vel = 0
     wake()
   }
-  container.addEventListener('touchstart', onTouchStart, { passive: true })
-  container.addEventListener('touchmove', onTouchMove, { passive: true })
-  container.addEventListener('touchend', onTouchEnd, { passive: true })
+  container.addEventListener('touchstart', _touchStartHandler, { passive: true })
+  container.addEventListener('touchmove', _touchMoveHandler, { passive: true })
+  container.addEventListener('touchend', _touchEndHandler, { passive: true })
 }
 
 export function unmountScrollTrigger(container) {
-  if (!_handler) return
-  container.removeEventListener('wheel', _handler)
-  _handler = null
+  // Remove wheel
+  if (_wheelHandler) {
+    container.removeEventListener('wheel', _wheelHandler)
+    _wheelHandler = null
+  }
+  // Remove touch — these accumulated every mount cycle, causing ghost opens
+  if (_touchStartHandler) {
+    container.removeEventListener('touchstart', _touchStartHandler)
+    _touchStartHandler = null
+  }
+  if (_touchMoveHandler) {
+    container.removeEventListener('touchmove', _touchMoveHandler)
+    _touchMoveHandler = null
+  }
+  if (_touchEndHandler) {
+    container.removeEventListener('touchend', _touchEndHandler)
+    _touchEndHandler = null
+  }
+
   _target = 0; _pos = 0; _vel = 0; _lastT = 0; _dismissed = false
   if (_dismissTimer) { clearTimeout(_dismissTimer); _dismissTimer = null }
   if (_raf) { cancelAnimationFrame(_raf); _raf = null }
