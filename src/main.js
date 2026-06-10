@@ -34,7 +34,10 @@ async function main() {
 
   // 4. Interaction entry
   initExplosion(scene, sphere, camera)
-  initMediaPipe()
+  // Mobile: skip MediaPipe entirely (no camera access needed, avoids net probe)
+  if (!mobile) {
+    try { initMediaPipe() } catch (e) { console.warn('MediaPipe init skipped:', e) }
+  }
 
   // 5. State 04: Connections + Safari
   initConnections()
