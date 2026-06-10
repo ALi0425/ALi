@@ -109,6 +109,9 @@ function revealElement(id) {
   if (el) {
     el.style.opacity = ''
     el.classList.remove('opacity-0')
+    if (id === 'guide-hint') {
+      setTimeout(() => el.classList.add('animate-pulse'), 1200)
+    }
   }
 }
 
