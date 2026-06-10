@@ -113,10 +113,11 @@ export function initExplosion(scene, sphere, camera) {
     startExplosion(scene, sphere, camera)
   }
 
-  // Reset on Escape (skip if contact overlay is active)
+  // Reset on Escape (skip if contact overlay is open)
   window.addEventListener('keydown', (e) => {
     const co = document.getElementById('contact-overlay')
-    if (e.key === 'Escape' && getState() !== STATES.IDLE && !(co && co.style.opacity !== '0' && co.style.opacity !== '')) {
+    const coOpen = co && (co.getAttribute('style') || '').includes('opacity: 1')
+    if (e.key === 'Escape' && getState() !== STATES.IDLE && !coOpen) {
       resetExplosion(sphere)
     }
   })
@@ -637,12 +638,16 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
   const halfW = w / 2, halfH = h / 2
   const scale = 68
 
+  const mobile = window.innerWidth < 768
+  const xPos = mobile ? [0, 0, 0, 0, 0] : [-3.0, 3.0, 0, -3.0, 3.0]
+  const yPos = mobile ? [3.8, 1.9, 0, -1.9, -3.8] : [2.0, 2.0, 0, -2.0, -2.0]
+
   for (const node of nodes) {
     if (!node.appeared || node.dragging) continue
 
     const idx = nodes.indexOf(node)
-    const x3d = [-3.0, 3.0, 0, -3.0, 3.0][idx] || 0
-    const y3d = [2.0, 2.0, 0, -2.0, -2.0][idx] || 0
+    const x3d = xPos[idx] || 0
+    const y3d = yPos[idx] || 0
     const floatY = Math.sin(time * 1.2 + node.floatPhase) * 3
 
     if (node._pinned) {
