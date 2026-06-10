@@ -1188,4 +1188,13 @@ html, body {
 
   /* ── Modules text on status bar ── */
   #status-text { font-size: 9px !important; }
+
+  /* ── Mobile floating hint: text breathing ── */
+  #mobile-hint {
+    animation: hintBreathe 2.8s ease-in-out infinite;
+  }
+  @keyframes hintBreathe {
+    0%, 100% { opacity: 0.25; }
+    50%      { opacity: 0.75; }
+  }
 }

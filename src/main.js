@@ -72,6 +72,12 @@ async function main() {
         mountScrollTrigger(window)
         window.__contactMounted = true
       }
+      showMobileHint(true)
+    }
+
+    // Show/hide mobile floating hint
+    if (state === STATES.IDLE) {
+      showMobileHint(false)
     }
 
     renderer.render(scene, camera)
@@ -102,6 +108,12 @@ async function main() {
   )
   console.log('%cSYSTEM_STATUS: AUTHORIZED_BY_JJ', 'color: #22c55e; font-family: monospace;')
   console.log('%cCURIOSITY: 100%  |  TEAMWORK: ACTIVE', 'color: #525252; font-family: monospace;')
+}
+
+function showMobileHint(visible) {
+  const el = document.getElementById('mobile-hint')
+  if (!el) return
+  el.style.opacity = visible ? '1' : '0'
 }
 
 function revealElement(id) {
