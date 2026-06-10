@@ -85,6 +85,25 @@ export function initExplosion(scene, sphere, camera) {
     clickTimer = setTimeout(() => { clickTimer = null }, DOUBLE_CLICK_DELAY)
   }, { passive: false })
 
+  // Mobile: swipe up → explode, swipe down → implode
+  let _touchY = null
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) _touchY = e.touches[0].clientY
+  }, { passive: true })
+  document.addEventListener('touchend', (e) => {
+    if (_touchY === null) return
+    const dy = _touchY - (e.changedTouches?.[0]?.clientY || _touchY)
+    _touchY = null
+    const state = getState()
+    if (dy > 50 && state === STATES.IDLE) {
+      // Swipe up → explode
+      startExplosion(scene, sphere, camera)
+    } else if (dy < -50 && state === STATES.FLOATING) {
+      // Swipe down → implode (return to sphere)
+      resetExplosion(sphere)
+    }
+  }, { passive: true })
+
   // Global callback for MediaPipe
   window.__triggerExplosion = () => {
     if (getState() !== STATES.IDLE) return
