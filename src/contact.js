@@ -104,13 +104,26 @@ export function mountScrollTrigger(container) {
   if (_handler) return
   ensureDOM()
   _handler = (e) => {
-    // Ignore wheel events when terminal modal is open
     const term = document.getElementById('terminal-overlay')
     if (term && term.classList.contains('active')) return
     _target = Math.max(0, Math.min(1, _target + e.deltaY / 500))
     wake()
   }
   container.addEventListener('wheel', _handler, { passive: true })
+
+  // Touch support for mobile swipe
+  let _touchStartY = null
+  const onTouchStart = (e) => { if (e.touches.length === 1) _touchStartY = e.touches[0].clientY }
+  const onTouchMove = (e) => {
+    if (_touchStartY === null || e.touches.length !== 1) return
+    const dy = _touchStartY - e.touches[0].clientY
+    _target = Math.max(0, Math.min(1, dy / window.innerHeight * 2))
+    wake()
+  }
+  const onTouchEnd = () => { _touchStartY = null }
+  container.addEventListener('touchstart', onTouchStart, { passive: true })
+  container.addEventListener('touchmove', onTouchMove, { passive: true })
+  container.addEventListener('touchend', onTouchEnd, { passive: true })
 }
 
 export function unmountScrollTrigger(container) {

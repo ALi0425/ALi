@@ -95,10 +95,12 @@ export function initExplosion(scene, sphere, camera) {
     const dy = _touchY - (e.changedTouches?.[0]?.clientY || _touchY)
     _touchY = null
     const state = getState()
-    // Skip if contact overlay is open (touch events bubble through)
+    // Skip if contact overlay or terminal is open (touch events bubble through)
     const contactEl = document.getElementById('contact-overlay')
     const contactOpen = contactEl && (contactEl.getAttribute('style') || '').includes('opacity: 1')
-    if (contactOpen) return
+    const termEl = document.getElementById('terminal-overlay')
+    const termOpen = termEl && termEl.classList.contains('active')
+    if (contactOpen || termOpen) return
     if (dy > 50 && state === STATES.IDLE) {
       // Swipe up → explode
       startExplosion(scene, sphere, camera)
@@ -465,20 +467,40 @@ function initNodeFloating(sphere, camera) {
         })
       })
 
-      /* ── Mobile: long‑press → show bubbles ── */
+      /* ── Mobile: long‑press → show bubbles + ripple ── */
       let longTouch = null
+      let _rippleNodes = null
       el.addEventListener('touchstart', () => {
         longTouch = setTimeout(() => {
           el.classList.add('iridescent')
           showBubbles(node, key)
+          // Ripple: push other nodes away
+          if (sphere._floatingNodes) {
+            const cx = parseFloat(el.style.left) || 0
+            const cy = parseFloat(el.style.top) || 0
+            _rippleNodes = []
+            sphere._floatingNodes.forEach(other => {
+              if (other.key === key) return
+              const ox = parseFloat(other.el.style.left) || 0
+              const oy = parseFloat(other.el.style.top) || 0
+              const dx = ox - cx, dy = oy - cy
+              const dist = Math.sqrt(dx*dx + dy*dy) || 1
+              const force = Math.max(0, 150 - dist) / 150 * 80
+              other._dragOffsetX = (dx/dist) * force
+              other._dragOffsetY = (dy/dist) * force
+              _rippleNodes.push(other)
+            })
+          }
         }, 600)
       }, { passive: true })
       el.addEventListener('touchend', () => {
         clearTimeout(longTouch)
-        setTimeout(() => {
-          el.classList.remove('iridescent')
-          hideBubbles(node)
-        }, 200)
+        el.classList.remove('iridescent')
+        hideBubbles(node)
+        if (_rippleNodes) {
+          _rippleNodes.forEach(n => { n._dragOffsetX = 0; n._dragOffsetY = 0 })
+          _rippleNodes = null
+        }
       }, { passive: true })
 
       /* ── State 03: Click → Terminal ── */
@@ -624,7 +646,8 @@ function showBubbles(node, key) {
 function hideBubbles(node) {
   node.bubbles.forEach(b => {
     b.classList.remove('visible')
-    setTimeout(() => b.remove(), 400)
+    b.classList.add('hiding')
+    setTimeout(() => b.remove(), 300)
   })
   node.bubbles = []
 }
