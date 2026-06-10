@@ -1048,6 +1048,46 @@ html, body {
   letter-spacing: 0.12em; z-index: 20;
 }
 
+/* ── Desktop: flex column layout ── */
+#contact-overlay .co-scroll-container {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+#contact-overlay .co-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100dvh;
+  height: auto;
+  padding-top: 32px;
+}
+#contact-overlay .co-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 20px 0;
+}
+#contact-overlay .co-cards {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+}
+#contact-overlay .co-content .co-footer {
+  position: relative;
+  flex-shrink: 0;
+}
+#contact-overlay .co-statusbar {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+#contact-overlay .co-hero {
+  margin-bottom: 0;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 0.4; }
   50%      { opacity: 0.8; }
@@ -1097,10 +1137,38 @@ html, body {
 
   /* ── Contact page ── */
   .co-title { font-size: clamp(1.5rem, 8vw, 2.5rem) !important; }
-  .co-cards { flex-direction: column; align-items: center; gap: 12px; }
+  .co-cards { flex-direction: column; align-items: center; gap: 24px !important; }
   .co-card.co-card { width: 220px !important; }
   .co-card .pl-desc { font-size: 16px !important; }
   .co-statusbar { font-size: 9px; }
+
+  /* ── Contact page: flex column layout ── */
+  #contact-overlay .co-scroll-container {
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  #contact-overlay .co-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100dvh;
+    height: auto;
+    padding: 28px 16px 20px;
+  }
+  #contact-overlay .co-middle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+  #contact-overlay .co-content .co-footer {
+    position: relative;
+    flex-shrink: 0;
+    padding: 12px 0 4px;
+  }
 
   /* ── Safari / Token panel ── */
   .sf-window, .token-panel, [class*="canvas-diff"] { display: none !important; }
