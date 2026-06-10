@@ -91,6 +91,10 @@ async function main() {
   })
 
   window.addEventListener('open-contact', () => openContact())
+  window.addEventListener('contact-closed', () => {
+    // If contact closed but state is IDLE, re-explode to show floating cards
+    if (getState() === STATES.IDLE) window.__triggerExplosion?.()
+  })
 
   console.log(
     '%c⏣  KERNEL ONLINE  ⏣',

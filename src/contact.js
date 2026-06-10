@@ -86,8 +86,13 @@ function tick(now) {
 
   // sleep when settled
   if (Math.abs(_pos - _target) < 0.003 && Math.abs(_vel) < 0.0005) {
+    const wasOpen = _pos > 0.02
     _pos = _target; _vel = 0; render()
     cancelAnimationFrame(_raf); _raf = null; _lastT = 0
+    // If just closed → notify to restore floating state
+    if (wasOpen && _pos < 0.02) {
+      window.dispatchEvent(new CustomEvent('contact-closed'))
+    }
   }
 }
 

@@ -113,9 +113,10 @@ export function initExplosion(scene, sphere, camera) {
     startExplosion(scene, sphere, camera)
   }
 
-  // Reset on Escape
+  // Reset on Escape (skip if contact overlay is active)
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && getState() !== STATES.IDLE) {
+    const co = document.getElementById('contact-overlay')
+    if (e.key === 'Escape' && getState() !== STATES.IDLE && !(co && co.style.opacity !== '0' && co.style.opacity !== '')) {
       resetExplosion(sphere)
     }
   })
@@ -373,7 +374,7 @@ function initNodeFloating(sphere, camera) {
 
   const isMobile = window.innerWidth < 768
   const base3D = isMobile
-    ? [[0, 5.5],[0, 2.8],[0, 0],[0,-2.8],[0,-5.5]]
+    ? [[0, 3.8],[0, 1.9],[0, 0],[0,-1.9],[0,-3.8]]
     : [[-3.0,2.0],[3.0,2.0],[0,0],[-3.0,-2.0],[3.0,-2.0]]
   const _vec3 = new THREE.Vector3()
 
@@ -579,13 +580,22 @@ function showBubbles(node, key) {
   // Card center in screen coords
   const cx = rect.left + rect.width / 2
   const cy = rect.top + rect.height / 2
-  const gap = 80 // px from card edge
+  const isMobile = window.innerWidth < 768
+  const gap = isMobile ? 40 : 80
 
   const offsets = [
     { left: cx, top: cy - rect.height / 2 - gap, transform: 'translateX(-50%)' },
     { left: cx - rect.width / 2 - gap, top: cy, transform: 'translateX(-100%) translateY(-50%)' },
     { left: cx + rect.width / 2 + gap, top: cy, transform: 'translateY(-50%)' },
   ]
+
+  // Clamp positions to screen bounds on mobile
+  if (isMobile) {
+    offsets.forEach(o => {
+      o.left = Math.max(10, Math.min(window.innerWidth - 10, o.left || 999))
+      o.top = Math.max(10, Math.min(window.innerHeight - 10, o.top || 999))
+    })
+  }
 
   caps.forEach((text, i) => {
     const bubble = document.createElement('div')
