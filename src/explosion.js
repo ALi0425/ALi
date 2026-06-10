@@ -87,20 +87,26 @@ export function initExplosion(scene, sphere, camera) {
 
   // Mobile: swipe up → explode, swipe down → implode
   let _touchY = null
+  let _touchContactOpen = false
   document.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) _touchY = e.touches[0].clientY
+    if (e.touches.length === 1) {
+      _touchY = e.touches[0].clientY
+      // Save whether contact was open at touch START
+      const cel = document.getElementById('contact-overlay')
+      _touchContactOpen = !!(cel && (cel.getAttribute('style') || '').includes('opacity: 1'))
+    }
   }, { passive: true })
   document.addEventListener('touchend', (e) => {
     if (_touchY === null) return
     const dy = _touchY - (e.changedTouches?.[0]?.clientY || _touchY)
     _touchY = null
     const state = getState()
-    // Skip if contact overlay or terminal is open (touch events bubble through)
-    const contactEl = document.getElementById('contact-overlay')
-    const contactOpen = contactEl && (contactEl.getAttribute('style') || '').includes('opacity: 1')
+    // Skip entire swipe if contact was open at touch start (user is scrolling contact page)
+    if (_touchContactOpen) { _touchContactOpen = false; return }
+    // Also skip if terminal is open
     const termEl = document.getElementById('terminal-overlay')
-    const termOpen = termEl && termEl.classList.contains('active')
-    if (contactOpen || termOpen) return
+    if (termEl && termEl.classList.contains('active')) return
+    _touchContactOpen = false
     if (dy > 50 && state === STATES.IDLE) {
       // Swipe up → explode
       startExplosion(scene, sphere, camera)

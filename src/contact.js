@@ -64,8 +64,11 @@ function render() {
   if (!c) return
   const pct = (1 - _pos) * 100
   c.style.transform = `translateY(${pct}%)`
-  _overlay.style.pointerEvents = _pos > 0.02 ? 'auto' : 'none'
-  _overlay.style.opacity = _pos > 0.02 ? '1' : '0'
+  const visible = _pos > 0.02
+  _overlay.style.pointerEvents = visible ? 'auto' : 'none'
+  _overlay.style.opacity = visible ? '1' : '0'
+  // Lock body scroll when contact is open
+  document.body.style.overflow = visible ? 'hidden' : ''
 }
 
 function tick(now) {
@@ -118,18 +121,23 @@ export function mountScrollTrigger(container) {
     if (e.touches.length !== 1) return
     _touchStartY = e.touches[0].clientY
     _touchStartTarget = _target
-    _vel = 0  // stop spring momentum
+    _vel = 0
   }
   const onTouchMove = (e) => {
     if (_touchStartY === null || e.touches.length !== 1) return
     const dy = (_touchStartY - e.touches[0].clientY) / window.innerHeight * 2.5
     _target = Math.max(0, Math.min(1, _touchStartTarget + dy))
-    _pos = _target  // direct position, no spring for touch
+    // Follow finger during touch, no spring
+    _pos = _target
     render()
   }
   const onTouchEnd = () => {
     _touchStartY = null
-    // small spring toward target to settle
+    // Gentle spring back to nearest "stable" position (0 or 1)
+    // If more than halfway visible, snap open; otherwise snap closed
+    if (_pos > 0.15) _target = 1
+    else _target = 0
+    _vel = 0
     wake()
   }
   container.addEventListener('touchstart', onTouchStart, { passive: true })
