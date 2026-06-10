@@ -336,9 +336,10 @@ html, body {
   display: block;
 }
 .bb-image:has(video) {
-  flex: none; max-height: 340px;
+  flex: none;
 }
 .bb-image video {
+  width: 100%; height: auto; max-height: 360px;
   object-fit: contain; background: #000;
 }
 
@@ -1094,15 +1095,14 @@ html, body {
     padding: 8px;
     overflow-y: auto;
   }
-  .bb-image video { max-height: 200px; }
-  .bb-image:has(video) { max-height: 200px; }
+  .bb-image video { max-height: 180px; }
 
   /* ── Floating cards ── */
   .project-label.card {
-    width: 260px !important; padding: 14px 16px !important;
+    width: 220px !important; padding: 10px 14px !important;
   }
-  .project-label.card .pl-title { font-size: 14px !important; }
-  .project-label.card .pl-desc  { font-size: 10px !important; }
+  .project-label.card .pl-title { font-size: 12px !important; }
+  .project-label.card .pl-desc  { font-size: 9px !important; }
 
   /* ── Hide desktop-only features ── */
   .endpoint { display: none !important; }

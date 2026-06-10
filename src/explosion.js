@@ -349,7 +349,10 @@ function initNodeFloating(sphere, camera) {
   })()
   overlay.innerHTML = ''
 
-  const base3D = [[-3.0,2.0],[3.0,2.0],[0,0],[-3.0,-2.0],[3.0,-2.0]]
+  const isMobile = window.innerWidth < 768
+  const base3D = isMobile
+    ? [[0, 3.2],[0, 1.6],[0, 0],[0,-1.6],[0,-3.2]]
+    : [[-3.0,2.0],[3.0,2.0],[0,0],[-3.0,-2.0],[3.0,-2.0]]
   const _vec3 = new THREE.Vector3()
 
   const nodes = sphere.nodeRefs.map((ref, i) => {

@@ -15,7 +15,7 @@ export function createScene(container) {
 
   // ── Camera ──
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100)
-  camera.position.set(0, 0.5, MOBILE ? 7.5 : 11)
+  camera.position.set(0, 0.5, MOBILE ? 5.0 : 11)
   camera.lookAt(0, 0, 0)
 
   // ── WebGL Renderer ──
