@@ -1129,7 +1129,8 @@ html, body {
   }
 
   /* ── Status text smaller ── */
-  .project-label.card .pl-title { font-size: 11px !important; }
+  .project-label.card .pl-title { font-size: 14px !important; }
+  .project-label.card .pl-desc  { font-size: 11px !important; }
 
   /* ── Modules text on status bar ── */
   #status-text { font-size: 9px !important; }

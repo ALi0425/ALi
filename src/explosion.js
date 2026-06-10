@@ -95,6 +95,10 @@ export function initExplosion(scene, sphere, camera) {
     const dy = _touchY - (e.changedTouches?.[0]?.clientY || _touchY)
     _touchY = null
     const state = getState()
+    // Skip if contact overlay is open (touch events bubble through)
+    const contactEl = document.getElementById('contact-overlay')
+    const contactOpen = contactEl && (contactEl.getAttribute('style') || '').includes('opacity: 1')
+    if (contactOpen) return
     if (dy > 50 && state === STATES.IDLE) {
       // Swipe up → explode
       startExplosion(scene, sphere, camera)
@@ -375,7 +379,7 @@ function initNodeFloating(sphere, camera) {
 
   const isMobile = window.innerWidth < 768
   const base3D = isMobile
-    ? [[0, 3.8],[0, 1.9],[0, 0],[0,-1.9],[0,-3.8]]
+    ? [[0, 2.8],[0, 1.4],[0, 0],[0,-1.4],[0,-2.8]]
     : [[-3.0,2.0],[3.0,2.0],[0,0],[-3.0,-2.0],[3.0,-2.0]]
   const _vec3 = new THREE.Vector3()
 
@@ -586,7 +590,7 @@ function showBubbles(node, key) {
 
   const offsets = [
     { left: cx, top: cy - rect.height / 2 - gap, transform: 'translateX(-50%)' },
-    { left: cx - rect.width / 2 - gap, top: cy, transform: 'translateX(-100%) translateY(-50%)' },
+    { left: cx - rect.width / 2 - gap, top: cy, transform: isMobile ? 'translateY(-50%)' : 'translateX(-100%) translateY(-50%)' },
     { left: cx + rect.width / 2 + gap, top: cy, transform: 'translateY(-50%)' },
   ]
 
@@ -640,7 +644,7 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
 
   const mobile = window.innerWidth < 768
   const xPos = mobile ? [0, 0, 0, 0, 0] : [-3.0, 3.0, 0, -3.0, 3.0]
-  const yPos = mobile ? [3.8, 1.9, 0, -1.9, -3.8] : [2.0, 2.0, 0, -2.0, -2.0]
+  const yPos = mobile ? [2.8, 1.4, 0, -1.4, -2.8] : [2.0, 2.0, 0, -2.0, -2.0]
 
   for (const node of nodes) {
     if (!node.appeared || node.dragging) continue
