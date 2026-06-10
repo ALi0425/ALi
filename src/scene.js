@@ -7,15 +7,13 @@
 import * as THREE from 'three'
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
 
-const MOBILE = window.innerWidth < 768
-
-export function createScene(container) {
+export function createScene(container, mobile) {
   // ── Scene ──
   const scene = new THREE.Scene()
 
   // ── Camera ──
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100)
-  camera.position.set(0, 0.5, MOBILE ? 5.0 : 11)
+  camera.position.set(0, 0.5, mobile ? 5.0 : 11)
   camera.lookAt(0, 0, 0)
 
   // ── WebGL Renderer ──

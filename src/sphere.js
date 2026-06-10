@@ -10,19 +10,14 @@ import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 import { dampMouse } from './interaction.js'
 import { getState, STATES } from './state.js'
 
-/* ── Mobile detection (evaluated once at load) ── */
-const MOBILE = window.innerWidth < 768
-
 /* ── Constants ── */
-const PARTICLE_COUNT = MOBILE ? 250 : 1200
-const SPHERE_RADIUS  = MOBILE ? 1.8 : 4.8
 const ROTATE_SPEED_Y = 0.0018
 const BREATHE_AMPL   = 0.025
 const BREATHE_SPEED  = 0.4
 
 /* ── Personal Info — only name + capability tags ── */
-const INFO_DATA = [
-  { text: '李晶晶', fontSize: MOBILE ? 28 : 80, weight: '700', color: '#ffffff', glow: '0 0 80px rgba(34,197,94,0.6)', x: 0, y: 0, z: SPHERE_RADIUS, isName: true },
+const INFO_DATA = (mobile) => [
+  { text: '李晶晶', fontSize: mobile ? 28 : 80, weight: '700', color: '#ffffff', glow: '0 0 80px rgba(34,197,94,0.6)', x: 0, y: 0, z: mobile ? 1.8 : 4.8, isName: true },
 ]
 
 const TAG_DATA = [
@@ -124,13 +119,16 @@ function createProjectLabel(data) {
    MAIN SPHERE FACTORY
    ═══════════════════════════════════════ */
 
-export function createSphere(scene) {
+export function createSphere(scene, mobile) {
   const group = new THREE.Group()
+
+  const PC = mobile ? 250 : 1200
+  const SR = mobile ? 1.8 : 4.8
 
   /* ── Particles ── */
   const geo = new THREE.BufferGeometry()
   geo.setAttribute('position', new THREE.BufferAttribute(
-    fibonacciPoints(PARTICLE_COUNT, SPHERE_RADIUS), 3
+    fibonacciPoints(PC, SR), 3
   ))
 
   const mat = new THREE.PointsMaterial({
@@ -155,7 +153,7 @@ export function createSphere(scene) {
   const infoRefs = []
   let nameRef = null
 
-  INFO_DATA.forEach((data) => {
+  INFO_DATA(mobile).forEach((data) => {
     const el = createInfoLabel(data)
     const obj = new CSS2DObject(el)
     obj.position.set(data.x, data.y, data.z)
@@ -165,10 +163,10 @@ export function createSphere(scene) {
   })
 
   /* ── CAPABILITY TAGS — scattered on sphere surface ── */
-  const tagPositions = fibonacciPoints(TAG_DATA.length, SPHERE_RADIUS * 1.04)
+  const tagPositions = fibonacciPoints(TAG_DATA.length, SR * 1.04)
   const tagRefs = []
 
-  const tagScale = MOBILE ? 0.5 : 1
+  const tagScale = mobile ? 0.5 : 1
   TAG_DATA.forEach((data, i) => {
     const el = document.createElement('span')
     el.textContent = data.text
@@ -191,7 +189,7 @@ export function createSphere(scene) {
   const nameFixedEl = null
 
   /* ── PROJECT LABELS ── */
-  const projPositions = fibonacciPoints(PROJECT_DATA.length, SPHERE_RADIUS * 1.02)
+  const projPositions = fibonacciPoints(PROJECT_DATA.length, SR * 1.02)
   const nodeRefs = []
 
   PROJECT_DATA.forEach((data, i) => {

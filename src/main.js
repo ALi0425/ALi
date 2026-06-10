@@ -22,10 +22,11 @@ async function main() {
   const container = document.getElementById('three-container')
 
   // 1. Three.js Scene
-  const { scene, camera, renderer, labelRenderer } = createScene(container)
+  const mobile = window.innerWidth < 768
+  const { scene, camera, renderer, labelRenderer } = createScene(container, mobile)
 
   // 2. Particle Sphere + Nodes
-  const sphere = createSphere(scene)
+  const sphere = createSphere(scene, mobile)
   const mouse  = createMouseTracker()
 
   // 3. UI Components
