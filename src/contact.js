@@ -21,37 +21,34 @@ function ensureDOM() {
   _overlay.innerHTML = `
     <div class="co-scroll-container" id="co-scroll-container">
       <div class="co-scanlines"></div>
-      <div class="co-orb"></div>
       <div class="co-content">
         <div class="co-statusbar">
           <div class="co-status-left">
             <span class="co-status-dot"></span>
             <span>SYSTEM_ONLINE</span>
-            <span>SECURE_CONNECTION_ESTABLISHED</span>
+            <span class="co-secure">SECURE_CONNECTION</span>
           </div>
-          <div class="co-status-right">🔋📶</div>
         </div>
         <div class="co-hero">
           <h2 class="co-title">CONTACT<br><span class="co-gradient">INFORMATION</span></h2>
           <p class="co-subtitle">扫描下方二维码，或直接联系</p>
         </div>
         <div class="co-cards">
-          <div class="co-card">
-            <div class="co-card-icon">📞</div>
-            <div class="co-card-label">WECHAT</div>
-            <div class="co-card-value">15720164041</div>
+          <div class="project-label card co-card">
+            <div class="pl-body">
+              <span class="pl-title" style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.12em">📞 WECHAT</span>
+              <span class="pl-desc" style="font-size:16px;color:rgba(255,255,255,0.9);font-weight:600">15720164041</span>
+            </div>
           </div>
-          <div class="co-card">
-            <div class="co-card-icon">📧</div>
-            <div class="co-card-label">EMAIL</div>
-            <div class="co-card-value">15720164041@163.com</div>
+          <div class="project-label card co-card">
+            <div class="pl-body">
+              <span class="pl-title" style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.12em">📧 EMAIL</span>
+              <span class="pl-desc" style="font-size:16px;color:rgba(255,255,255,0.9);font-weight:600">15720164041@163.com</span>
+            </div>
           </div>
         </div>
         <div class="co-footer">
-          <div class="co-footer-left">
-            <span>LOCATION: CHINA</span>
-          </div>
-          <div class="co-footer-right"><p>© ALI</p></div>
+          <span>© ALI · 2026</span>
         </div>
       </div>
     </div>

@@ -957,6 +957,10 @@ html, body {
   overflow-y: auto;
   display: flex; align-items: center; justify-content: center;
   background: #050505;
+  background-image:
+    linear-gradient(to right, #1a1a1a 1px, transparent 1px),
+    linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
+  background-size: 4rem 4rem;
 }
 
 .co-scroll-container {
@@ -1014,11 +1018,11 @@ html, body {
 }
 
 /* Hero */
-.co-hero { margin-bottom: 48px; }
+.co-hero { margin-bottom: 32px; }
 .co-title {
-  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
   font-weight: 700; letter-spacing: -0.03em;
-  line-height: 1.1; margin-bottom: 16px;
+  line-height: 1.1; margin-bottom: 12px;
   color: rgba(255,255,255,0.9);
 }
 .co-gradient {
@@ -1028,49 +1032,21 @@ html, body {
   background-clip: text;
 }
 .co-subtitle {
-  font-size: 14px; color: rgba(255,255,255,0.35);
+  font-size: 12px; color: rgba(255,255,255,0.35);
   line-height: 1.6; max-width: 500px; margin: 0 auto;
-  white-space: pre-line;
 }
 
-/* Contact cards */
-.co-cards {
-  display: flex; gap: 20px; justify-content: center;
-  flex-wrap: wrap; margin-bottom: 48px;
-}
-.co-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px; padding: 28px 40px;
-  min-width: 240px;
-  transition: border-color 0.3s ease;
-}
-.co-card:hover {
-  border-color: rgba(34,197,94,0.4);
-}
-.co-card-icon { font-size: 28px; margin-bottom: 8px; }
-.co-card-label {
-  font-size: 10px; text-transform: uppercase;
-  letter-spacing: 0.15em; color: rgba(255,255,255,0.3);
-  margin-bottom: 4px;
-}
-.co-card-value {
-  font-size: 18px; font-weight: 600;
-  color: rgba(255,255,255,0.85);
-  letter-spacing: 0.04em;
-}
+/* Contact cards — reuse .project-label.card styling via co-card class */
+.co-card { pointer-events: auto !important; cursor: default !important; }
+.co-card:hover { border-color: rgba(34,197,94,0.4) !important; }
 
 /* Footer */
 .co-footer {
   position: absolute; bottom: 0; left: 0; right: 0;
-  display: flex; justify-content: space-between; align-items: flex-end;
-  padding: 24px 32px;
-  font-size: 10px; color: rgba(255,255,255,0.25);
-  text-transform: uppercase; letter-spacing: 0.12em; z-index: 20;
+  text-align: center; padding: 20px;
+  font-size: 10px; color: rgba(255,255,255,0.2);
+  letter-spacing: 0.12em; z-index: 20;
 }
-.co-footer-left { display: flex; align-items: center; gap: 6px; }
-.co-footer-right { text-align: right; }
-.co-footer-right p { margin: 0; }
 
 @keyframes pulse {
   0%, 100% { opacity: 0.4; }
@@ -1121,10 +1097,10 @@ html, body {
 
   /* ── Contact page ── */
   .co-title { font-size: clamp(1.5rem, 8vw, 2.5rem) !important; }
-  .co-cards { flex-direction: column; align-items: center; }
-  .co-card { min-width: 200px; padding: 20px 24px; }
-  .co-statusbar { font-size: 9px; flex-wrap: wrap; gap: 8px; }
-  .co-status-left { flex-wrap: wrap; gap: 8px; }
+  .co-cards { flex-direction: column; align-items: center; gap: 12px; }
+  .co-card.co-card { width: 220px !important; }
+  .co-card .pl-desc { font-size: 16px !important; }
+  .co-statusbar { font-size: 9px; }
 
   /* ── Safari / Token panel ── */
   .sf-window, .token-panel, [class*="canvas-diff"] { display: none !important; }
