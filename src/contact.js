@@ -111,16 +111,27 @@ export function mountScrollTrigger(container) {
   }
   container.addEventListener('wheel', _handler, { passive: true })
 
-  // Touch support for mobile swipe
+  // Touch support for mobile swipe (vertical only)
   let _touchStartY = null
-  const onTouchStart = (e) => { if (e.touches.length === 1) _touchStartY = e.touches[0].clientY }
+  let _touchStartTarget = 0
+  const onTouchStart = (e) => {
+    if (e.touches.length !== 1) return
+    _touchStartY = e.touches[0].clientY
+    _touchStartTarget = _target
+    _vel = 0  // stop spring momentum
+  }
   const onTouchMove = (e) => {
     if (_touchStartY === null || e.touches.length !== 1) return
-    const dy = _touchStartY - e.touches[0].clientY
-    _target = Math.max(0, Math.min(1, dy / window.innerHeight * 2))
+    const dy = (_touchStartY - e.touches[0].clientY) / window.innerHeight * 2.5
+    _target = Math.max(0, Math.min(1, _touchStartTarget + dy))
+    _pos = _target  // direct position, no spring for touch
+    render()
+  }
+  const onTouchEnd = () => {
+    _touchStartY = null
+    // small spring toward target to settle
     wake()
   }
-  const onTouchEnd = () => { _touchStartY = null }
   container.addEventListener('touchstart', onTouchStart, { passive: true })
   container.addEventListener('touchmove', onTouchMove, { passive: true })
   container.addEventListener('touchend', onTouchEnd, { passive: true })

@@ -470,8 +470,11 @@ function initNodeFloating(sphere, camera) {
       /* ── Mobile: long‑press → show bubbles + ripple ── */
       let longTouch = null
       let _rippleNodes = null
+      let _wasLongPress = false
       el.addEventListener('touchstart', () => {
+        _wasLongPress = false
         longTouch = setTimeout(() => {
+          _wasLongPress = true
           el.classList.add('iridescent')
           showBubbles(node, key)
           // Ripple: push other nodes away
@@ -503,8 +506,9 @@ function initNodeFloating(sphere, camera) {
         }
       }, { passive: true })
 
-      /* ── State 03: Click → Terminal ── */
+      /* ── State 03: Click → Terminal (skip after long‑press) ── */
       el.addEventListener('click', (e) => {
+        if (_wasLongPress) { _wasLongPress = false; return }
         if (e.target.closest('.endpoint')) return
         if (node._justDragged) { node._justDragged = false; return }
         node.dragging = false
@@ -610,19 +614,16 @@ function showBubbles(node, key) {
   const isMobile = window.innerWidth < 768
   const gap = isMobile ? 40 : 80
 
-  const offsets = [
-    { left: cx, top: cy - rect.height / 2 - gap, transform: 'translateX(-50%)' },
-    { left: cx - rect.width / 2 - gap, top: cy, transform: isMobile ? 'translateY(-50%)' : 'translateX(-100%) translateY(-50%)' },
-    { left: cx + rect.width / 2 + gap, top: cy, transform: 'translateY(-50%)' },
-  ]
+  // All bubbles above the card, evenly spread horizontally
+  const bubbleWidth = isMobile ? 100 : 140
+  const totalWidth = caps.length * bubbleWidth + (caps.length - 1) * 10
+  const startX = cx - totalWidth / 2 + bubbleWidth / 2
 
-  // Clamp positions to screen bounds on mobile
-  if (isMobile) {
-    offsets.forEach(o => {
-      o.left = Math.max(10, Math.min(window.innerWidth - 10, o.left || 999))
-      o.top = Math.max(10, Math.min(window.innerHeight - 10, o.top || 999))
-    })
-  }
+  const offsets = caps.map((_, i) => ({
+    left: startX + i * (bubbleWidth + 10),
+    top: cy - rect.height / 2 - gap,
+    transform: 'translateX(-50%)',
+  }))
 
   caps.forEach((text, i) => {
     const bubble = document.createElement('div')
@@ -686,9 +687,9 @@ export function updateFloatingNodes(sphere, deltaMs = 16) {
       }
       node.el.style.transform = 'translate(-50%, calc(-50% + ' + floatPx + 'px))'
     } else {
-      // Normal: base position + float
-      const sx = halfW + x3d * scale
-      const sy = halfH - y3d * scale
+      // Normal: base position + float + ripple offset
+      const sx = halfW + x3d * scale + (node._dragOffsetX || 0)
+      const sy = halfH - y3d * scale + (node._dragOffsetY || 0)
       node.el.style.left = sx + 'px'
       node.el.style.top = (sy + floatY) + 'px'
       node.el.style.transform = 'translate(-50%, -50%)'
