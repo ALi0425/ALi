@@ -33,7 +33,7 @@ const TAG_DATA = [
   { text: '大型项目协同',        fontSize: 26, color: '#ffffff' },
   { text: '结构化文档编制',       fontSize: 22, color: '#ffffff' },
   { text: '工作流编排',          fontSize: 24, color: '#22c55e' },
-  { text: '27岁',               fontSize: 22, color: '#ffffff' },
+  { text: '28岁',               fontSize: 22, color: '#ffffff' },
   { text: '多模态增量清洗',       fontSize: 24, color: '#ffffff' },
   { text: '复杂业务流程解构',     fontSize: 26, color: '#ffffff' },
   { text: '权限协同与资源调配',   fontSize: 28, color: '#ffffff' },
