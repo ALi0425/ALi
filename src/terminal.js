@@ -166,7 +166,7 @@ function render(p) {
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
             ${p.video
-              ? `<div class="bb-image"><video autoplay loop muted playsinline preload="metadata"></video></div>`
+              ? `<div class="bb-image"><video loop muted playsinline preload="none"></video></div>`
               : p.image
               ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
               : `<div class="bb-content">
@@ -200,26 +200,27 @@ function render(p) {
     </div>
   `
 
-  // ── Detect mobile ──
-  const _isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+  // ── Video source picker ──
+  function pickVideoSrc(webmSrc, mp4Src) {
+    // Mobile: always MP4 (H.264 hardware decode, universal)
+    const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+    if (isMobile) return { src: mp4Src, type: 'video/mp4', label: 'MP4' }
+    // Desktop: prefer WebM VP9 (better compression), fallback MP4
+    const v = document.createElement('video')
+    if (v.canPlayType('video/webm; codecs="vp9"')) {
+      return { src: webmSrc, type: 'video/webm; codecs="vp9"', label: 'WebM' }
+    }
+    return { src: mp4Src, type: 'video/mp4', label: 'MP4' }
+  }
 
-  // Video: multi-source, mobile-aware, with retry
+  // Video: single source, simple retry
   _overlay.querySelectorAll('.bb-image video').forEach(v => {
     const container = v.closest('.bb-image') || v.parentElement
     if (!container) return
 
-    // Build source URLs: derive mp4 path from webm path
     const webmSrc = p.video
     if (!webmSrc) return
     const mp4Src = webmSrc.replace(/\.webm$/, '.mp4')
-
-    // Use MP4 on mobile (better hardware decode), WebM+MP4 on desktop
-    const sources = _isMobile
-      ? [{ src: mp4Src, type: 'video/mp4' }]
-      : [
-          { src: webmSrc, type: 'video/webm; codecs="vp9"' },
-          { src: mp4Src, type: 'video/mp4' },
-        ]
 
     // Create loading bar
     const loader = document.createElement('div')
@@ -232,124 +233,71 @@ function render(p) {
     const fill = loader.querySelector('.bb-loader-fill')
     fill.style.width = '0%'
 
-    // Set sources
-    sources.forEach(s => {
-      const source = document.createElement('source')
-      source.src = s.src
-      source.type = s.type
-      v.appendChild(source)
-    })
-    v.load() // Start loading with new sources
+    /* ── State ── */
+    let _ready = false
+    let _usedFormats = []   // track tried formats
+    let _loadedSrc = null
 
-    // ── Progress tracking ──
+    function setVideoSource(src) {
+      _loadedSrc = src
+      v.src = src
+      v.load()
+    }
+
+    // Pick best format and load
+    const firstPick = pickVideoSrc(webmSrc, mp4Src)
+    _usedFormats.push(firstPick.label)
+    setVideoSource(firstPick.src)
+
+    /* ── Progress ── */
     let progressRaf = null
-    let loadTimer = null
-    let stalled = false
-
     function tickProgress() {
-      if (v.buffered && v.buffered.length > 0) {
-        const loaded = v.buffered.end(0)
-        const total = v.duration || 1
-        const pct = Math.min(loaded / total * 100, 100)
+      if (v.buffered && v.buffered.length > 0 && v.duration) {
+        const pct = Math.min(v.buffered.end(0) / v.duration * 100, 100)
         fill.style.width = pct + '%'
       }
       progressRaf = requestAnimationFrame(tickProgress)
     }
-
-    v.addEventListener('loadstart', () => {
-      progressRaf = requestAnimationFrame(tickProgress)
-      // Fallback timer: if still loading after 15s, retry
-      loadTimer = setTimeout(() => {
-        if (!stalled) {
-          stalled = true
-          fill.style.width = '60%'
-          loader.querySelector('.bb-loader-txt').textContent = '加载较慢，重试中…'
-          retrySource(v, sources)
-        }
-      }, 15000)
-    })
+    v.addEventListener('loadstart', () => { progressRaf = requestAnimationFrame(tickProgress) }, { once: true })
 
     v.addEventListener('progress', () => {
-      if (!v.buffered || !v.buffered.length) return
-      const loaded = v.buffered.end(0)
-      const total = v.duration || 1
-      const pct = Math.min(loaded / total * 100, 100)
-      fill.style.width = pct + '%'
-      stalled = false
+      if (!v.buffered || !v.buffered.length || !v.duration) return
+      fill.style.width = Math.min(v.buffered.end(0) / v.duration * 100, 100) + '%'
     })
 
-    // ── canplay: show video ASAP ──
-    let _canPlayFired = false
+    /* ── Can play: show video ── */
     v.addEventListener('canplay', () => {
-      if (_canPlayFired) return
-      _canPlayFired = true
+      if (_ready) return
+      _ready = true
       if (progressRaf) { cancelAnimationFrame(progressRaf); progressRaf = null }
-      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
       fill.style.width = '100%'
       v.classList.add('ready')
-      setTimeout(() => {
-        loader.style.opacity = '0'
-        setTimeout(() => loader.remove(), 400)
-      }, 200)
+      setTimeout(() => { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 400) }, 200)
       v.play().catch(() => {})
     })
 
-    // ── waiting / stalled: show indicator (only after playback started) ──
+    /* ── Waiting during playback (not initial load) ── */
     let _hasPlayed = false
-    v.addEventListener('playing', () => {
-      _hasPlayed = true
-      loader.querySelector('.bb-loader-txt').textContent = '加载中…'
-    })
+    v.addEventListener('playing', () => { _hasPlayed = true; loader.querySelector('.bb-loader-txt').textContent = '加载中…' })
     v.addEventListener('waiting', () => {
-      // Only show "缓冲中" if video was already playing (not during initial load)
-      if (_hasPlayed) {
-        loader.querySelector('.bb-loader-txt').textContent = '缓冲中…'
-      }
+      if (_hasPlayed) loader.querySelector('.bb-loader-txt').textContent = '缓冲中…'
     })
 
-    // ── Error: try fallback format, then show text ──
-    let _retryCount = 0
-    const MAX_RETRIES = 1
-
-    function retrySource(el, srcList) {
-      _retryCount++
-      if (_retryCount > MAX_RETRIES) {
-        showTextFallback(el, container, p, loader)
-        return
-      }
-      // Reset state for fresh load
-      _canPlayFired = false
-      _hasPlayed = false
-      // Remove current sources and try the next available format
-      while (el.firstChild) el.removeChild(el.firstChild)
-      // Try reverse order (e.g., if WebM failed, try MP4)
-      const alternate = [...srcList].reverse()
-      alternate.forEach(s => {
-        const source = document.createElement('source')
-        source.src = s.src
-        source.type = s.type
-        el.appendChild(source)
-      })
-      el.load()
-      loader.querySelector('.bb-loader-txt').textContent = '切换格式重试…'
-      fill.style.width = '0%'
-    }
-
-    v.addEventListener('stalled', () => {
-      if (!stalled) {
-        stalled = true
-        retrySource(v, sources)
-      }
-    })
+    /* ── Error: retry with the other format ── */
     v.addEventListener('error', () => {
       if (progressRaf) { cancelAnimationFrame(progressRaf); progressRaf = null }
-      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
-      // Only show fallback if we haven't already retried
-      if (_retryCount === 0) {
-        retrySource(v, sources)
-      } else {
+      if (_ready) return // already playing, ignore
+
+      const alt = _loadedSrc === webmSrc ? mp4Src : webmSrc
+      const altLabel = _loadedSrc === webmSrc ? 'MP4' : 'WebM'
+      if (_usedFormats.includes(altLabel)) {
         showTextFallback(v, container, p, loader)
+        return
       }
+      _usedFormats.push(altLabel)
+      loader.querySelector('.bb-loader-txt').textContent = '切换格式…'
+      fill.style.width = '0%'
+      setVideoSource(alt)
     })
   })
 
