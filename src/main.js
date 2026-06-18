@@ -16,6 +16,7 @@ import { initConnections, updateConnections, clearConnections } from './connecti
 import { initSafari, resetSafari } from './safari.js'
 import { mountScrollTrigger, unmountScrollTrigger, openContact } from './contact.js'
 import { getState, STATES, onEnter } from './state.js'
+import { preloadVideos } from './preload.js'
 
 // ── Bootstrap ──
 async function main() {
@@ -43,6 +44,11 @@ async function main() {
   onEnter(STATES.IDLE, () => {
     clearConnections()
     resetSafari()
+  })
+
+  // Start video preloading as soon as user shows intent to interact
+  onEnter(STATES.EXPLODE, () => {
+    preloadVideos()
   })
 
   // 7. Entrance reveal

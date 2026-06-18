@@ -166,7 +166,7 @@ function render(p) {
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
             ${p.video
-              ? `<div class="bb-image"><video data-src="${p.video}" autoplay loop muted playsinline preload="metadata"></video></div>`
+              ? `<div class="bb-image"><video autoplay loop muted playsinline preload="metadata"></video></div>`
               : p.image
               ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
               : `<div class="bb-content">
@@ -200,13 +200,28 @@ function render(p) {
     </div>
   `
 
-  // Video: add loading bar, set src, handle events
-  _overlay.querySelectorAll('.bb-image video').forEach(v => {
-    const src = v.dataset.src
-    if (!src) return
+  // ── Detect mobile ──
+  const _isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
 
+  // Video: multi-source, mobile-aware, with retry
+  _overlay.querySelectorAll('.bb-image video').forEach(v => {
     const container = v.closest('.bb-image') || v.parentElement
     if (!container) return
+
+    // Build source URLs: derive mp4 path from webm path
+    const webmSrc = p.video
+    if (!webmSrc) return
+    const mp4Src = webmSrc.replace(/\.webm$/, '.mp4')
+
+    // Use MP4 on mobile (better hardware decode), WebM+MP4 on desktop
+    const sources = _isMobile
+      ? [{ src: mp4Src, type: 'video/mp4' }]
+      : [
+          { src: webmSrc, type: 'video/webm; codecs="vp9"' },
+          { src: mp4Src, type: 'video/mp4' },
+        ]
+
+    // Create loading bar
     const loader = document.createElement('div')
     loader.className = 'bb-loader'
     loader.innerHTML = `
@@ -215,38 +230,63 @@ function render(p) {
     `
     container.appendChild(loader)
     const fill = loader.querySelector('.bb-loader-fill')
-    // Start at 0 — grows naturally as buffer fills
     fill.style.width = '0%'
 
-    v.src = src
+    // Set sources
+    sources.forEach(s => {
+      const source = document.createElement('source')
+      source.src = s.src
+      source.type = s.type
+      v.appendChild(source)
+    })
+    v.load() // Start loading with new sources
 
-    // Progress tracking: progress event + rAF backup
+    // ── Progress tracking ──
     let progressRaf = null
+    let loadTimer = null
+    let stalled = false
+
     function tickProgress() {
       if (v.buffered && v.buffered.length > 0) {
         const loaded = v.buffered.end(0)
         const total = v.duration || 1
         const pct = Math.min(loaded / total * 100, 100)
         fill.style.width = pct + '%'
-        if (pct >= 100) return
       }
       progressRaf = requestAnimationFrame(tickProgress)
     }
-    // Start tracking on loadstart
-    v.addEventListener('loadstart', () => { progressRaf = requestAnimationFrame(tickProgress) })
-    // progress event (more reliable across browsers)
+
+    v.addEventListener('loadstart', () => {
+      progressRaf = requestAnimationFrame(tickProgress)
+      // Fallback timer: if still loading after 15s, retry
+      loadTimer = setTimeout(() => {
+        if (!stalled) {
+          stalled = true
+          fill.style.width = '60%'
+          loader.querySelector('.bb-loader-txt').textContent = '加载较慢，重试中…'
+          retrySource(v, sources)
+        }
+      }, 15000)
+    })
+
     v.addEventListener('progress', () => {
       if (!v.buffered || !v.buffered.length) return
       const loaded = v.buffered.end(0)
       const total = v.duration || 1
       const pct = Math.min(loaded / total * 100, 100)
       fill.style.width = pct + '%'
+      stalled = false
     })
 
-    // Can play → fill to 100%, then hide
+    // ── canplay: show video ASAP ──
+    let _canPlayFired = false
     v.addEventListener('canplay', () => {
+      if (_canPlayFired) return
+      _canPlayFired = true
       if (progressRaf) { cancelAnimationFrame(progressRaf); progressRaf = null }
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
       fill.style.width = '100%'
+      v.classList.add('ready')
       setTimeout(() => {
         loader.style.opacity = '0'
         setTimeout(() => loader.remove(), 400)
@@ -254,29 +294,84 @@ function render(p) {
       v.play().catch(() => {})
     })
 
-    // Error → show content fallback
+    // ── waiting / stalled: show indicator (only after playback started) ──
+    let _hasPlayed = false
+    v.addEventListener('playing', () => {
+      _hasPlayed = true
+      loader.querySelector('.bb-loader-txt').textContent = '加载中…'
+    })
+    v.addEventListener('waiting', () => {
+      // Only show "缓冲中" if video was already playing (not during initial load)
+      if (_hasPlayed) {
+        loader.querySelector('.bb-loader-txt').textContent = '缓冲中…'
+      }
+    })
+
+    // ── Error: try fallback format, then show text ──
+    let _retryCount = 0
+    const MAX_RETRIES = 1
+
+    function retrySource(el, srcList) {
+      _retryCount++
+      if (_retryCount > MAX_RETRIES) {
+        showTextFallback(el, container, p, loader)
+        return
+      }
+      // Reset state for fresh load
+      _canPlayFired = false
+      _hasPlayed = false
+      // Remove current sources and try the next available format
+      while (el.firstChild) el.removeChild(el.firstChild)
+      // Try reverse order (e.g., if WebM failed, try MP4)
+      const alternate = [...srcList].reverse()
+      alternate.forEach(s => {
+        const source = document.createElement('source')
+        source.src = s.src
+        source.type = s.type
+        el.appendChild(source)
+      })
+      el.load()
+      loader.querySelector('.bb-loader-txt').textContent = '切换格式重试…'
+      fill.style.width = '0%'
+    }
+
+    v.addEventListener('stalled', () => {
+      if (!stalled) {
+        stalled = true
+        retrySource(v, sources)
+      }
+    })
     v.addEventListener('error', () => {
       if (progressRaf) { cancelAnimationFrame(progressRaf); progressRaf = null }
-      loader.remove()
-      const parent = container
-      const browser = parent.closest('.tt-browser')
-      if (!browser) return
-      const bar = browser.querySelector('.bb-bar')
-      const fallback = document.createElement('div')
-      fallback.className = 'bb-content'
-      const titleEl = bar?.querySelector('.bb-url span:last-child')
-      const title = titleEl?.textContent || p.title || ''
-      fallback.innerHTML = `
-        <div class="bb-title">${esc(title)}</div>
-        <div class="bb-divider"></div>
-        <div class="bb-metrics">
-          ${(p.metrics || []).map(m => `<span class="bb-metric">◈ ${esc(m)}</span>`).join('')}
-        </div>
-      `
-      v.remove()
-      parent.replaceWith(fallback)
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
+      // Only show fallback if we haven't already retried
+      if (_retryCount === 0) {
+        retrySource(v, sources)
+      } else {
+        showTextFallback(v, container, p, loader)
+      }
     })
   })
+
+  /**
+   * Show text fallback when video fails completely.
+   */
+  function showTextFallback(videoEl, container, project, loaderEl) {
+    if (loaderEl) loaderEl.remove()
+    videoEl.remove()
+    const browser = container.closest('.tt-browser')
+    if (!browser) return
+    const fallback = document.createElement('div')
+    fallback.className = 'bb-content'
+    fallback.innerHTML = `
+      <div class="bb-title">${esc(project.title)}</div>
+      <div class="bb-divider"></div>
+      <div class="bb-metrics">
+        ${(project.metrics || []).map(m => `<span class="bb-metric">◈ ${esc(m)}</span>`).join('')}
+      </div>
+    `
+    container.replaceWith(fallback)
+  }
 
   // Close
   _overlay.querySelector('#tt-close').addEventListener('click', closeTerminal)

@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/assets/*",
+    "/*.webm",
+    "/*.mp4",
+    "/*.png",
+    "/*.jpg",
+    "/*.jpeg",
+    "/*.svg",
+    "/*.ico",
+    "/rare/*",
+    "/sim-rare/*",
+    "/favicon.svg",
+    "/icons.svg",
+    "/project-b2.png",
+    "/rare-video.mp4"
+  ]
+}
