@@ -200,21 +200,56 @@ function render(p) {
     </div>
   `
 
-  // Video: set src from data-src, handle errors, force autoplay
+  // Video: add loading bar, set src, handle events
   _overlay.querySelectorAll('.bb-image video').forEach(v => {
     const src = v.dataset.src
     if (!src) return
+
+    // Add loading overlay
+    const container = v.closest('.bb-image') || v.parentElement
+    if (!container) return
+    const loader = document.createElement('div')
+    loader.className = 'bb-loader'
+    loader.innerHTML = `
+      <div class="bb-loader-bar"><div class="bb-loader-fill" id="bb-loader-fill"></div></div>
+      <span class="bb-loader-txt">加载中…</span>
+    `
+    container.appendChild(loader)
+    const fill = loader.querySelector('.bb-loader-fill')
+
     v.src = src
+
+    // Track buffering progress
+    let progressRaf = null
+    function trackProgress() {
+      if (!v.buffered || !v.buffered.length) return
+      const loaded = v.buffered.end(0)
+      const total = v.duration || 1
+      const pct = Math.min(loaded / total * 100, 100)
+      if (fill) fill.style.width = pct + '%'
+      if (pct < 100) progressRaf = requestAnimationFrame(trackProgress)
+    }
+    v.addEventListener('loadstart', () => { progressRaf = requestAnimationFrame(trackProgress) })
+
+    // Can play → hide loader, start playback
+    v.addEventListener('canplay', () => {
+      if (progressRaf) { cancelAnimationFrame(progressRaf); progressRaf = null }
+      if (fill) fill.style.width = '100%'
+      loader.style.opacity = '0'
+      setTimeout(() => loader.remove(), 400)
+      v.play().catch(() => {})
+    })
+
+    // Error → show content fallback
     v.addEventListener('error', () => {
-      // Video failed → show content fallback
-      const parent = v.closest('.bb-image') || v.parentElement
-      if (!parent) return
+      if (progressRaf) { cancelAnimationFrame(progressRaf); progressRaf = null }
+      loader.remove()
+      const parent = container
       const browser = parent.closest('.tt-browser')
       if (!browser) return
       const bar = browser.querySelector('.bb-bar')
       const fallback = document.createElement('div')
       fallback.className = 'bb-content'
-      // Find matching profile to get metrics
       const titleEl = bar?.querySelector('.bb-url span:last-child')
       const title = titleEl?.textContent || p.title || ''
       fallback.innerHTML = `
@@ -227,8 +262,6 @@ function render(p) {
       v.remove()
       parent.replaceWith(fallback)
     })
-    // Force play
-    setTimeout(() => { if (v.paused) v.play().catch(() => {}) }, 200)
   })
 
   // Close

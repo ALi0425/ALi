@@ -349,6 +349,37 @@ html, body {
   width: 100%; height: 100%; object-fit: cover;
 }
 
+/* ── Video loading bar ── */
+.bb-loader {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px;
+  background: rgba(0,0,0,0.6);
+  transition: opacity 0.4s ease;
+  z-index: 2;
+}
+.bb-loader-bar {
+  width: 200px; height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px; overflow: hidden;
+}
+.bb-loader-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+.bb-loader-txt {
+  font-family: "Space Mono", monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.08em;
+}
+.bb-image {
+  position: relative;
+}
+
 .bb-content {
   flex: 1; display: flex; flex-direction: column;
   justify-content: center; align-items: center;
