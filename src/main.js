@@ -11,7 +11,7 @@ import { createSphere, updateSphere } from './sphere.js'
 import { createMouseTracker } from './interaction.js'
 import { createStatusBar } from './status-bar.js'
 import { initExplosion, updateFloatingNodes } from './explosion.js'
-import { initMediaPipe } from './mediapipe.js'
+// Gesture recognition disabled (MediaPipe removed)
 import { initConnections, updateConnections, clearConnections } from './connections.js'
 import { initSafari, resetSafari } from './safari.js'
 import { mountScrollTrigger, unmountScrollTrigger, openContact } from './contact.js'
@@ -34,10 +34,6 @@ async function main() {
 
   // 4. Interaction entry
   initExplosion(scene, sphere, camera)
-  // Mobile: skip MediaPipe entirely (no camera access needed, avoids net probe)
-  if (!mobile) {
-    try { initMediaPipe() } catch (e) { console.warn('MediaPipe init skipped:', e) }
-  }
 
   // 5. State 04: Connections + Safari
   initConnections()
@@ -52,7 +48,6 @@ async function main() {
   // 7. Entrance reveal
   setTimeout(() => {
     revealElement('system-info')
-    revealElement('camera-indicator')
     setTimeout(() => revealElement('guide-hint'), 1200)
   }, 400)
 

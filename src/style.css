@@ -370,6 +370,17 @@ html, body {
   border-radius: 3px;
   transition: width 0.2s ease;
 }
+/* Immediate activity pulse while waiting for buffered data */
+.bb-loader.connecting .bb-loader-fill {
+  animation: loaderPulse 1.0s ease-in-out infinite;
+}
+.bb-loader.loading .bb-loader-fill {
+  animation: loaderPulse 0.6s ease-in-out infinite;
+}
+@keyframes loaderPulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
 .bb-loader-txt {
   font-family: "Space Mono", monospace;
   font-size: 10px;
@@ -1215,9 +1226,6 @@ html, body {
 
   /* ── Safari / Token panel ── */
   .sf-window, .token-panel, [class*="canvas-diff"] { display: none !important; }
-
-  /* ── Hide camera indicator (overlaps status) ── */
-  #camera-indicator { display: none !important; }
 
   /* ── Bubbles smaller on mobile ── */
   .bubble {

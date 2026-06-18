@@ -205,36 +205,58 @@ function render(p) {
     const src = v.dataset.src
     if (!src) return
 
-    // Add loading overlay
     const container = v.closest('.bb-image') || v.parentElement
     if (!container) return
     const loader = document.createElement('div')
     loader.className = 'bb-loader'
     loader.innerHTML = `
-      <div class="bb-loader-bar"><div class="bb-loader-fill" id="bb-loader-fill"></div></div>
-      <span class="bb-loader-txt">加载中…</span>
+      <div class="bb-loader-bar"><div class="bb-loader-fill"></div></div>
+      <span class="bb-loader-txt">连接中…</span>
     `
     container.appendChild(loader)
     const fill = loader.querySelector('.bb-loader-fill')
+    // Immediate visual: animated pulse at 20% (before any event fires)
+    fill.style.width = '20%'
+    loader.classList.add('connecting')
 
     v.src = src
 
-    // Track buffering progress
-    let progressRaf = null
-    function trackProgress() {
-      if (!v.buffered || !v.buffered.length) return
+    // Start → switch to real tracking
+    v.addEventListener('loadstart', () => {
+      loader.classList.remove('connecting')
+      loader.classList.add('loading')
+      loader.querySelector('.bb-loader-txt').textContent = '加载中…'
+    })
+
+    // Real-time buffered progress
+    let progressCleanup = null
+    function onProgress() {
+      if (!v.buffered || !v.buffered.length) {
+        progressCleanup = requestAnimationFrame(onProgress)
+        return
+      }
+      loader.classList.remove('loading')
       const loaded = v.buffered.end(0)
       const total = v.duration || 1
       const pct = Math.min(loaded / total * 100, 100)
       if (fill) fill.style.width = pct + '%'
-      if (pct < 100) progressRaf = requestAnimationFrame(trackProgress)
+      if (pct < 100) progressCleanup = requestAnimationFrame(onProgress)
     }
-    v.addEventListener('loadstart', () => { progressRaf = requestAnimationFrame(trackProgress) })
+    v.addEventListener('loadstart', () => { progressCleanup = requestAnimationFrame(onProgress) })
+    // Also listen for progress events (more reliable than rAF alone)
+    v.addEventListener('progress', () => {
+      if (!v.buffered || !v.buffered.length) return
+      loader.classList.remove('loading')
+      const loaded = v.buffered.end(0)
+      const total = v.duration || 1
+      const pct = Math.min(loaded / total * 100, 100)
+      if (fill) fill.style.width = pct + '%'
+    })
 
     // Can play → hide loader, start playback
     v.addEventListener('canplay', () => {
-      if (progressRaf) { cancelAnimationFrame(progressRaf); progressRaf = null }
-      if (fill) fill.style.width = '100%'
+      if (progressCleanup) { cancelAnimationFrame(progressCleanup); progressCleanup = null }
+      fill.style.width = '100%'
       loader.style.opacity = '0'
       setTimeout(() => loader.remove(), 400)
       v.play().catch(() => {})
