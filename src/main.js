@@ -61,16 +61,21 @@ async function main() {
     requestAnimationFrame(animate)
 
     const state = getState()
+    const termActive = document.getElementById('terminal-overlay')?.classList.contains('active')
+    const safariActive = document.getElementById('safari-overlay')?.classList.contains('active')
+    const overlayOpen = termActive || safariActive
 
     if (state === STATES.IDLE) {
-      updateSphere(sphere, mouse)
+      if (!overlayOpen) updateSphere(sphere, mouse)
       if (window.__contactMounted) {
         unmountScrollTrigger(window)
         window.__contactMounted = false
       }
     } else if (state === STATES.FLOATING) {
-      updateFloatingNodes(sphere, 16)
-      updateConnections()
+      if (!overlayOpen) {
+        updateFloatingNodes(sphere, 16)
+        updateConnections()
+      }
       if (!window.__contactMounted) {
         mountScrollTrigger(window)
         window.__contactMounted = true
@@ -85,8 +90,11 @@ async function main() {
       showDesktopHint(false)
     }
 
-    renderer.render(scene, camera)
-    labelRenderer.render(scene, camera)
+    // Skip 3D render when overlay is open — frees GPU for video playback
+    if (!overlayOpen) {
+      renderer.render(scene, camera)
+      labelRenderer.render(scene, camera)
+    }
   }
 
   animate()
