@@ -166,7 +166,7 @@ function render(p) {
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
             ${p.video
-              ? `<div class="bb-image"><video loop muted playsinline preload="none"></video></div>`
+              ? `<div class="bb-image"><video autoplay loop muted playsinline preload="auto"></video></div>`
               : p.image
               ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
               : `<div class="bb-content">
@@ -242,6 +242,11 @@ function render(p) {
       _loadedSrc = src
       v.src = src
       v.load()
+      // 立即请求播放（在用户手势上下文中），浏览器会等待足够数据后自动开始
+      // Mobile Safari 要求 play() 必须在用户手势中调用，否则会被拦截
+      v.play().catch(() => {
+        // 浏览器暂时无法播放（数据还没加载完），canplay 事件会再试
+      })
     }
 
     // Pick best format and load
