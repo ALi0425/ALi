@@ -76,11 +76,13 @@ async function main() {
         window.__contactMounted = true
       }
       showMobileHint(true)
+      showDesktopHint(true)
     }
 
-    // Show/hide mobile floating hint
+    // Show/hide floating hints
     if (state === STATES.IDLE) {
       showMobileHint(false)
+      showDesktopHint(false)
     }
 
     renderer.render(scene, camera)
@@ -115,6 +117,13 @@ async function main() {
 
 function showMobileHint(visible) {
   const el = document.getElementById('mobile-hint')
+  if (!el) return
+  el.style.opacity = visible ? '1' : '0'
+  el.classList.toggle('visible', visible)
+}
+
+function showDesktopHint(visible) {
+  const el = document.getElementById('desktop-hint')
   if (!el) return
   el.style.opacity = visible ? '1' : '0'
   el.classList.toggle('visible', visible)
