@@ -15,7 +15,7 @@ const NODE_PROFILES = {
     path: '~/projects/omnisight',
     tag: 'AI · 数据工程',
     metrics: ['n8n工作流编排', 'GraphRAG', 'LLM数据提取'],
-    video: _BASE + 'omnisight.mp4',
+    video: _BASE + 'o.webm',
     content: `● 项目定位
 → 面向企业高层的通用型大模型资产盘点与战略决策导航系统
 
@@ -36,7 +36,7 @@ const NODE_PROFILES = {
     path: '~/projects/rare',
     tag: 'AI4SE · 逆向工程',
     metrics: ['元数据逆向解析', '嵌套交互画布', 'LLM智能评估'],
-    video: _BASE + 'rare-video.mp4',
+    video: _BASE + 'rv.webm',
     content: `● 项目定位
 → 针对大型遗留系统"文档缺失、代码断层、需求变更影响面难评估"的 AI4SE 效能工具。
 
@@ -57,7 +57,7 @@ const NODE_PROFILES = {
     path: '~/projects/tech-mgmt',
     tag: 'B端 · 科技管理应用',
     metrics: ['跨部门协同', '流程解构', '资产纳管'],
-    video: _BASE + 'tech-mgmt.mp4',
+    video: _BASE + 'tm.webm',
     content: `● 项目定位
 → 面向国网信通的万级数据量、53家单位协同的大型信息化核心科技管理系统。
 
@@ -77,7 +77,7 @@ const NODE_PROFILES = {
     path: '~/projects/patrol',
     tag: 'B端 · 合规治理',
     metrics: ['合规双审', '人才分配', '全流程留痕'],
-    video: _BASE + 'project-b2.mp4',
+    video: _BASE + 'pb2.webm',
     content: `● 项目定位
 → 聚焦巡察问题全生命周期的数字化与合规化双审治理，面向集团万级数据量大型系统。
 
@@ -96,7 +96,7 @@ const NODE_PROFILES = {
     path: '~/projects/project-mgmt',
     tag: 'B端 · 全生命周期',
     metrics: ['业务解构', '权限划分', '多模块集成'],
-    video: _BASE + 'project-mgmt.mp4',
+    video: _BASE + 'pm.webm',
     content: `● 项目定位
 → 面向企业大型系统万级数据量，涵盖全类型项目全生命周期管理。
 
