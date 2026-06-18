@@ -211,54 +211,39 @@ function render(p) {
     loader.className = 'bb-loader'
     loader.innerHTML = `
       <div class="bb-loader-bar"><div class="bb-loader-fill"></div></div>
-      <span class="bb-loader-txt">连接中…</span>
+      <span class="bb-loader-txt">加载中…</span>
     `
     container.appendChild(loader)
     const fill = loader.querySelector('.bb-loader-fill')
-    // Immediate visual: animated pulse at 20% (before any event fires)
-    fill.style.width = '20%'
-    loader.classList.add('connecting')
+    // Start at 0 — grows naturally as buffer fills
+    fill.style.width = '0%'
 
     v.src = src
 
-    // Start → switch to real tracking
-    v.addEventListener('loadstart', () => {
-      loader.classList.remove('connecting')
-      loader.classList.add('loading')
-      loader.querySelector('.bb-loader-txt').textContent = '加载中…'
-    })
-
-    // Real-time buffered progress
-    let progressCleanup = null
-    function onProgress() {
+    // Poll + progress event → update fill width smoothly
+    let progressRaf = null
+    function updateProgress() {
       if (!v.buffered || !v.buffered.length) {
-        progressCleanup = requestAnimationFrame(onProgress)
+        progressRaf = requestAnimationFrame(updateProgress)
         return
       }
-      loader.classList.remove('loading')
       const loaded = v.buffered.end(0)
       const total = v.duration || 1
       const pct = Math.min(loaded / total * 100, 100)
-      if (fill) fill.style.width = pct + '%'
-      if (pct < 100) progressCleanup = requestAnimationFrame(onProgress)
+      fill.style.width = pct + '%'
+      if (pct < 100) progressRaf = requestAnimationFrame(updateProgress)
     }
-    v.addEventListener('loadstart', () => { progressCleanup = requestAnimationFrame(onProgress) })
-    // Also listen for progress events (more reliable than rAF alone)
-    v.addEventListener('progress', () => {
-      if (!v.buffered || !v.buffered.length) return
-      loader.classList.remove('loading')
-      const loaded = v.buffered.end(0)
-      const total = v.duration || 1
-      const pct = Math.min(loaded / total * 100, 100)
-      if (fill) fill.style.width = pct + '%'
-    })
+    // Start tracking as soon as script runs (shows 0% bar immediately)
+    progressRaf = requestAnimationFrame(updateProgress)
 
-    // Can play → hide loader, start playback
+    // Can play → fill to 100%, then hide
     v.addEventListener('canplay', () => {
-      if (progressCleanup) { cancelAnimationFrame(progressCleanup); progressCleanup = null }
+      if (progressRaf) { cancelAnimationFrame(progressRaf); progressRaf = null }
       fill.style.width = '100%'
-      loader.style.opacity = '0'
-      setTimeout(() => loader.remove(), 400)
+      setTimeout(() => {
+        loader.style.opacity = '0'
+        setTimeout(() => loader.remove(), 400)
+      }, 200)
       v.play().catch(() => {})
     })
 
