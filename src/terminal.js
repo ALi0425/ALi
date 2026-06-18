@@ -220,21 +220,28 @@ function render(p) {
 
     v.src = src
 
-    // Poll + progress event → update fill width smoothly
+    // Progress tracking: progress event + rAF backup
     let progressRaf = null
-    function updateProgress() {
-      if (!v.buffered || !v.buffered.length) {
-        progressRaf = requestAnimationFrame(updateProgress)
-        return
+    function tickProgress() {
+      if (v.buffered && v.buffered.length > 0) {
+        const loaded = v.buffered.end(0)
+        const total = v.duration || 1
+        const pct = Math.min(loaded / total * 100, 100)
+        fill.style.width = pct + '%'
+        if (pct >= 100) return
       }
+      progressRaf = requestAnimationFrame(tickProgress)
+    }
+    // Start tracking on loadstart
+    v.addEventListener('loadstart', () => { progressRaf = requestAnimationFrame(tickProgress) })
+    // progress event (more reliable across browsers)
+    v.addEventListener('progress', () => {
+      if (!v.buffered || !v.buffered.length) return
       const loaded = v.buffered.end(0)
       const total = v.duration || 1
       const pct = Math.min(loaded / total * 100, 100)
       fill.style.width = pct + '%'
-      if (pct < 100) progressRaf = requestAnimationFrame(updateProgress)
-    }
-    // Start tracking as soon as script runs (shows 0% bar immediately)
-    progressRaf = requestAnimationFrame(updateProgress)
+    })
 
     // Can play → fill to 100%, then hide
     v.addEventListener('canplay', () => {
