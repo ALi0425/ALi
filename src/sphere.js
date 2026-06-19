@@ -25,7 +25,7 @@ const TAG_DATA = [
   { text: '全程项目管理',        fontSize: 24, color: '#22c55e' },
   { text: 'n8n低代码平台',       fontSize: 34, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
   { text: 'vibe coding全栈交付', fontSize: 26, color: '#ffffff' },
-  { text: '4年企业级B端系统',    fontSize: 28, color: '#ffffff' },
+  { text: '近5年企业级B端系统',   fontSize: 28, color: '#ffffff' },
   { text: '华北理工大学',         fontSize: 20, color: '#ffffff' },
   { text: '工作流自动化',        fontSize: 28, color: '#22c55e' },
   { text: 'RAG与知识图谱',       fontSize: 32, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
