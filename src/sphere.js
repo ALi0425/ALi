@@ -21,23 +21,18 @@ const INFO_DATA = (mobile) => [
 ]
 
 const TAG_DATA = [
-  { text: '国产ERP 信息化项目',   fontSize: 30, color: '#ffffff' },
-  { text: '全程项目管理',        fontSize: 24, color: '#22c55e' },
-  { text: 'n8n低代码平台',       fontSize: 34, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
-  { text: 'vibe coding全栈交付', fontSize: 26, color: '#ffffff' },
-  { text: '近5年企业级B端系统',   fontSize: 28, color: '#ffffff' },
-  { text: '华北理工大学',         fontSize: 20, color: '#ffffff' },
-  { text: '工作流自动化',        fontSize: 28, color: '#22c55e' },
-  { text: 'RAG与知识图谱',       fontSize: 32, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
-  { text: '业务逻辑抽象',        fontSize: 22, color: '#ffffff' },
-  { text: '大型项目协同',        fontSize: 26, color: '#ffffff' },
-  { text: '结构化文档编制',       fontSize: 22, color: '#ffffff' },
-  { text: '工作流编排',          fontSize: 24, color: '#22c55e' },
-  { text: '1998.04',            fontSize: 22, color: '#ffffff' },
-  { text: '多模态增量清洗',       fontSize: 24, color: '#ffffff' },
-  { text: '复杂业务流程解构',     fontSize: 26, color: '#ffffff' },
-  { text: '权限协同与资源调配',   fontSize: 28, color: '#ffffff' },
-  { text: '大模型落地产品',       fontSize: 34, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
+  { text: '大语言模型应用评估',     fontSize: 28, color: '#22c55e' },
+  { text: 'Agent 工作流设计',       fontSize: 26, color: '#ffffff' },
+  { text: 'RAG/GraphRAG 混合检索架构', fontSize: 26, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
+  { text: 'Function Calling',      fontSize: 24, color: '#ffffff' },
+  { text: 'Prompt Engineering',    fontSize: 24, color: '#22c55e' },
+  { text: '端到端交付体系搭建',     fontSize: 28, color: '#ffffff' },
+  { text: '中后台架构',            fontSize: 26, color: '#ffffff' },
+  { text: 'Axure RP',             fontSize: 22, color: '#ffffff' },
+  { text: 'Claude',               fontSize: 30, color: '#22c55e', glow: '0 0 20px rgba(34,197,94,0.4)' },
+  { text: 'Hermes',               fontSize: 24, color: '#ffffff' },
+  { text: '近5年企业级B端系统',     fontSize: 28, color: '#ffffff' },
+  { text: '华北理工大学',           fontSize: 20, color: '#ffffff' },
 ]
 
 /* ── Project Data ── */
