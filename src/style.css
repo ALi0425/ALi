@@ -190,6 +190,74 @@ html, body {
   transform: translateY(-50%) scale(1.5);
 }
 
+/* ── Card badge for AI projects (a1/a2) ── */
+.project-label.card .pl-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex; align-items: center; gap: 2px;
+  padding: 3px 8px 3px 6px;
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 500;
+  border-radius: 20px;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.2);
+  color: #22c55e;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* ── Desktop first-time connection guide ── */
+#drag-guide {
+  display: none;
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: rgba(5,5,5,0.92);
+  border: 1px solid rgba(34,197,94,0.15);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 60px rgba(34,197,94,0.04);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
+  text-align: center;
+  line-height: 1.5;
+  pointer-events: auto;
+  animation: guideFadeIn 0.4s ease-out;
+}
+#drag-guide.visible { display: block; }
+#drag-guide .dg-emoji { font-size: 18px; }
+#drag-guide .dg-arrow {
+  display: inline-block;
+  color: #22c55e;
+  font-weight: 600;
+}
+#drag-guide .dg-dismiss {
+  margin-top: 8px;
+  padding: 5px 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255,255,255,0.35);
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#drag-guide .dg-dismiss:hover {
+  border-color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.6);
+}
+@keyframes guideFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* ═══════════════════════════════════════
    BUBBLE (capability popup, State 03)
    ═══════════════════════════════════════ */
@@ -492,6 +560,53 @@ html, body {
 .cl-line {
   color: rgba(255,255,255,0.7);
   padding-left: 0;
+}
+
+/* ── Terminal CTA (mobile only) ── */
+.tt-cta {
+  display: none;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(34,197,94,0.04);
+  border: 1px solid rgba(34,197,94,0.1);
+  text-align: center;
+}
+.tt-cta-text {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.tt-cta-text strong {
+  color: #22c55e;
+  font-weight: 600;
+}
+.tt-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: 1px solid rgba(34,197,94,0.25);
+  border-radius: 8px;
+  background: rgba(34,197,94,0.08);
+  color: #22c55e;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tt-cta-btn:hover {
+  background: rgba(34,197,94,0.15);
+  border-color: rgba(34,197,94,0.4);
+}
+.tt-cta-btn:active {
+  transform: scale(0.97);
+}
+.tt-cta-btn.copied {
+  border-color: rgba(34,197,94,0.4);
+  background: rgba(34,197,94,0.15);
 }
 
 /* ── Text selection disable ── */
@@ -1173,6 +1288,9 @@ html, body {
   .conn-line, .conn-glow, .drag-line { display: none !important; }
   #safari-overlay, .safari-overlay, [id*="safari"] { display: none !important; }
   #sim-rare-overlay { display: none !important; }
+
+  /* ── CTA visible only on mobile ── */
+  .tt-cta { display: block; }
 
   /* ── Status bar ── */
   .tt-tag { font-size: 8px; padding: 2px 8px; }

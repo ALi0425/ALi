@@ -25,6 +25,7 @@ const FLOAT_STAGGER   = 50     // ms delay between node re-appearances
 /* ── Module-level state ── */
 let _triggered = false
 let _activeCamera = null
+let _firstFloatPulseDone = false  // one-time endpoint glow on desktop
 
 /* ── Fibonacci (shared with sphere.js logic) ── */
 function fibonacciPoints(count, radius) {
@@ -406,6 +407,7 @@ function initNodeFloating(sphere, camera) {
       showLeft ? '<span class="endpoint left" data-key="'+key+'"></span>' : '',
       '<div class="pl-body"><span class="pl-title">'+ref.data.label+'</span><span class="pl-desc">'+ref.data.desc+'</span></div>',
       showRight ? '<span class="endpoint right" data-key="'+key+'"></span>' : '',
+      (key === 'a1' || key === 'a2') ? '<span class="pl-badge">'+(isMobile ? '💻' : '🎮')+' 推演</span>' : '',
     ].join('')
     overlay.appendChild(cardEl)
 
@@ -593,6 +595,40 @@ function initNodeFloating(sphere, camera) {
     '%c◈  Nodes scattered: drag enabled, full‑page spread',
     'color: #22c55e; font-family: monospace;'
   )
+
+  /* ── One‑time endpoint pulse + drag guide on desktop ── */
+  if (window.innerWidth >= 768 && !_firstFloatPulseDone) {
+    _firstFloatPulseDone = true
+
+    // Endpoint glow
+    setTimeout(() => {
+      document.querySelectorAll('.project-label.card .endpoint').forEach(ep => ep.classList.add('pulse'))
+      setTimeout(() => {
+        document.querySelectorAll('.project-label.card .endpoint').forEach(ep => ep.classList.remove('pulse'))
+      }, 4000)
+    }, 1500)
+
+    // Drag guide overlay
+    setTimeout(() => {
+      if (document.getElementById('drag-guide')) return
+      const guide = document.createElement('div')
+      guide.id = 'drag-guide'
+      guide.className = 'visible'
+      guide.innerHTML = `
+        <div><span class="dg-emoji">🎮</span> 拖拽 <span class="dg-arrow">●</span> 端点连线 → 触发 AI 推演沙盒</div>
+        <button class="dg-dismiss" id="dg-dismiss">✕ 知道了</button>
+      `
+      document.body.appendChild(guide)
+
+      const dismiss = () => {
+        guide.classList.remove('visible')
+        setTimeout(() => guide.remove(), 400)
+      }
+      guide.querySelector('#dg-dismiss').addEventListener('click', dismiss)
+      // Auto-dismiss after 6s
+      setTimeout(dismiss, 6000)
+    }, 2200)
+  }
 }
 
 /* ── Bubble overlay (fixed, never affects card layout) ── */

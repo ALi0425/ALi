@@ -114,7 +114,7 @@ export function openTerminal(key) {
   const map = { a1: 'a1', a2: 'a2', b1: 'b1', b2: 'b2', b3: 'b3' }
   const p = NODE_PROFILES[map[key]] || NODE_PROFILES.a1
   ensureOverlay()
-  render(p)
+  render(p, key)
   document.body.style.overflow = 'hidden'
   _overlay.classList.add('active')
   _active = true
@@ -134,7 +134,7 @@ function ensureOverlay() {
   document.body.appendChild(_overlay)
 }
 
-function render(p) {
+function render(p, projectKey) {
   _overlay.innerHTML = `
     <!-- backdrop -->
     <div class="tt-backdrop"></div>
@@ -325,6 +325,38 @@ function render(p) {
   // Close
   _overlay.querySelector('#tt-close').addEventListener('click', closeTerminal)
   _overlay.querySelector('.tt-backdrop').addEventListener('click', closeTerminal)
+
+  /* ── Mobile CTA: guide to desktop sandbox ── */
+  const _isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+  if (_isMobile && (projectKey === 'a1' || projectKey === 'a2')) {
+    const consoleEl = _overlay.querySelector('.tt-console')
+    if (consoleEl) {
+      const cta = document.createElement('div')
+      cta.className = 'tt-cta'
+      cta.innerHTML = `
+        <div class="tt-cta-text">
+          看完演示了？去电脑打开体验 <strong>完整推演沙盒</strong>
+        </div>
+        <button class="tt-cta-btn" id="tt-copy-link">📋 复制链接到电脑打开</button>
+      `
+      consoleEl.appendChild(cta)
+
+      const btn = cta.querySelector('#tt-copy-link')
+      btn.addEventListener('click', () => {
+        const url = window.location.href
+        const shareTitle = projectKey === 'a1' ? 'OmniSight · 知识图谱推演' : 'RARE · 智能逆向沙盒'
+        if (navigator.share) {
+          navigator.share({ title: shareTitle, text: '🎮 发现一个好玩的 AI 推演沙盒，电脑打开可以拖拽连线！', url }).catch(() => {})
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(() => {
+            btn.textContent = '✅ 已复制！'
+            btn.classList.add('copied')
+            setTimeout(() => { btn.textContent = '📋 复制链接到电脑打开'; btn.classList.remove('copied') }, 2000)
+          }).catch(() => {})
+        }
+      })
+    }
+  }
 }
 
 /* ── Render content ── */
