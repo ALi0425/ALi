@@ -596,38 +596,148 @@ function initNodeFloating(sphere, camera) {
     'color: #22c55e; font-family: monospace;'
   )
 
-  /* ── One‑time endpoint pulse + drag guide on desktop ── */
+  /* ── One‑time animated drag demo on desktop ── */
   if (window.innerWidth >= 768 && !_firstFloatPulseDone) {
     _firstFloatPulseDone = true
+    setTimeout(() => showDragDemo(), 2600)
+  }
+}
 
-    // Endpoint glow
-    setTimeout(() => {
-      document.querySelectorAll('.project-label.card .endpoint').forEach(ep => ep.classList.add('pulse'))
-      setTimeout(() => {
-        document.querySelectorAll('.project-label.card .endpoint').forEach(ep => ep.classList.remove('pulse'))
-      }, 4000)
-    }, 1500)
+/* ═══════════════════════════════════════
+   ANIMATED DRAG DEMO — b3 → a2
+   ═══════════════════════════════════════ */
 
-    // Drag guide overlay
-    setTimeout(() => {
-      if (document.getElementById('drag-guide')) return
-      const guide = document.createElement('div')
-      guide.id = 'drag-guide'
-      guide.className = 'visible'
-      guide.innerHTML = `
-        <div><span class="dg-emoji">🎮</span> 拖拽 <span class="dg-arrow">●</span> 端点连线 → 触发 AI 推演沙盒</div>
-        <button class="dg-dismiss" id="dg-dismiss">✕ 知道了</button>
-      `
-      document.body.appendChild(guide)
+let _demoActive = false
 
-      const dismiss = () => {
-        guide.classList.remove('visible')
-        setTimeout(() => guide.remove(), 400)
+function showDragDemo() {
+  if (_demoActive) return
+  const fromCard = document.querySelector('.project-label.card[data-key="b3"]')
+  const toCard = document.querySelector('.project-label.card[data-key="a2"]')
+  const fromEp = fromCard?.querySelector('.endpoint.right')
+  const toEp = toCard?.querySelector('.endpoint.left')
+  if (!fromEp || !toEp) return
+  _demoActive = true
+
+  /* ── Snapshot endpoint positions ── */
+  const f = fromEp.getBoundingClientRect()
+  const t = toEp.getBoundingClientRect()
+  const sx = f.left + f.width / 2, sy = f.top + f.height / 2
+  const ex = t.left + t.width / 2, ey = t.top + t.height / 2
+
+  /* ── Create overlay ── */
+  const demo = document.createElement('div')
+  demo.id = 'drag-demo'
+  demo.className = 'active'
+
+  // SVG
+  const ns = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(ns, 'svg')
+  svg.classList.add('dd-svg')
+  const path = document.createElementNS(ns, 'path')
+  const dx = ex - sx, cpx = Math.abs(dx) * 0.4
+  const d = `M ${sx} ${sy} C ${sx + cpx} ${sy} ${ex - cpx} ${ey} ${ex} ${ey}`
+  path.setAttribute('d', d)
+  path.setAttribute('stroke', '#22c55e')
+  path.setAttribute('stroke-width', '2')
+  path.setAttribute('fill', 'none')
+  path.setAttribute('opacity', '0.5')
+  svg.appendChild(path)
+  demo.appendChild(svg)
+
+  // Cursor
+  const cursor = document.createElement('div')
+  cursor.className = 'dd-cursor'
+  cursor.textContent = '🖱️'
+  cursor.style.left = sx + 'px'
+  cursor.style.top = sy + 'px'
+  demo.appendChild(cursor)
+
+  // Label
+  const label = document.createElement('div')
+  label.className = 'dd-label'
+  label.innerHTML = '🎮 操作演示'
+  demo.appendChild(label)
+
+  document.body.appendChild(demo)
+
+  // Highlight the two demo cards
+  fromCard.classList.add('demo-highlight')
+  toCard.classList.add('demo-highlight')
+
+  /* ── Snapshot path length for dash animation ── */
+  const totalLen = path.getTotalLength()
+  path.setAttribute('stroke-dasharray', totalLen)
+  path.setAttribute('stroke-dashoffset', totalLen)
+
+  /* ── Abort handler ── */
+  let aborted = false
+  const abort = () => {
+    if (aborted) return
+    aborted = true
+    cleanup()
+  }
+  const abortOnClick = (e) => {
+    if (e.target.closest('.endpoint') || e.target.closest('.pl-body')) abort()
+  }
+  document.addEventListener('mousedown', abortOnClick)
+  const abortOnKey = (e) => { if (e.key === 'Escape') abort() }
+  document.addEventListener('keydown', abortOnKey)
+
+  /* ── Phase 2: show label + pulse target endpoints (a1/a2 only) ── */
+  setTimeout(() => {
+    if (aborted) return
+    label.classList.add('visible')
+    document.querySelectorAll('.project-label.card[data-key="a1"] .endpoint, .project-label.card[data-key="a2"] .endpoint')
+      .forEach(ep => ep.classList.add('pulse'))
+  }, 800)
+
+  /* ── Phase 3: animate cursor + line ── */
+  const animDelay = 1200
+  const animDur = 1800
+  let animId = null
+
+  setTimeout(() => {
+    if (aborted) return
+    label.innerHTML = '🖱️ 从 <span class="hl">项目管理应用</span> 拖拽到 <span class="hl">RARE</span>'
+
+    const start = performance.now()
+    function tick() {
+      if (aborted) { cleanup(); return }
+      const t = Math.min((performance.now() - start) / animDur, 1)
+      // easeInOutCubic
+      const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+
+      const cx = sx + (ex - sx) * e
+      const cy = sy + (ey - sy) * e
+      cursor.style.left = cx + 'px'
+      cursor.style.top = cy + 'px'
+      path.setAttribute('stroke-dashoffset', totalLen * (1 - e))
+
+      if (t < 1) {
+        animId = requestAnimationFrame(tick)
+      } else {
+        /* ── Phase 4: complete ── */
+        cursor.textContent = '✅'
+        label.innerHTML = '✨ 试试你自己连线吧！<br><span style="font-size:11px;color:rgba(255,255,255,0.4)">拖拽绿色端点即可</span>'
+
+        /* ── Phase 5: auto dismiss ── */
+        setTimeout(() => { if (!aborted) { aborted = true; cleanup() } }, 3000)
       }
-      guide.querySelector('#dg-dismiss').addEventListener('click', dismiss)
-      // Auto-dismiss after 6s
-      setTimeout(dismiss, 6000)
-    }, 2200)
+    }
+    animId = requestAnimationFrame(tick)
+  }, animDelay)
+
+  /* ── Cleanup ── */
+  function cleanup() {
+    if (animId) cancelAnimationFrame(animId)
+    document.removeEventListener('mousedown', abortOnClick)
+    document.removeEventListener('keydown', abortOnKey)
+    document.querySelectorAll('.project-label.card[data-key="a1"] .endpoint, .project-label.card[data-key="a2"] .endpoint')
+      .forEach(ep => ep.classList.remove('pulse'))
+    document.querySelectorAll('.project-label.card.demo-highlight').forEach(c => c.classList.remove('demo-highlight'))
+    const el = document.getElementById('drag-demo')
+    if (el) { el.classList.remove('active'); setTimeout(() => el.remove(), 400) }
+    _demoActive = false
   }
 }
 
