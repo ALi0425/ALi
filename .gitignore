@@ -10,3 +10,10 @@ screenshot-*.png
 开发计划-*.md
 /*.mp4
 # .github/workflows/ — needed for auto-deploy
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
