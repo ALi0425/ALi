@@ -48,6 +48,8 @@ const NODE_PROFILES = {
     tag: 'B端 · 科技管理应用',
     metrics: ['跨部门协同', '流程解构', '资产纳管'],
     video: _BASE + 'tm.webm',
+    modules: ['科研项目管理', '科技成果管理', '科技指标统计', '科技奖励评定', '专项看板', '技术报告在线签批', '科研立项管理'],
+    demoModule: '专项看板',
     content: `● 项目定位
 → 面向国网信通 53 家二级单位，集"科研立项、成果转化、知识产权、奖励评定"于一体的集团级核心科技管理数字化解决方案（历经 3 期建设）。
 
@@ -70,6 +72,8 @@ const NODE_PROFILES = {
     tag: 'B端 · 合规治理',
     metrics: ['合规双审', '人才分配', '全流程留痕'],
     video: _BASE + 'pb2.webm',
+    modules: ['任务管理', '人才信息管理', '人才库管理', '巡查问题管理', '指标统计'],
+    demoModule: '人才库管理',
     content: `● 项目定位
 → 面向集团总部及多级二级单位，聚焦巡察问题全生命周期的数字化治理、智能任务流转与高合规性双审风控系统。
 
@@ -89,6 +93,8 @@ const NODE_PROFILES = {
     tag: 'B端 · 全生命周期',
     metrics: ['复杂业务解构', '跨系统数据集成', '53家单位'],
     video: _BASE + 'pm.webm',
+    modules: ['项目立项', '进度管理', '交付物管理', '人员报工结算', '变更管理', '验收管理'],
+    demoModule: '项目立项',
     content: `● 项目定位
 → 面向国网信通 53 家二级单位、跨多业务板块协同的核心项目全生命周期管理解决方案。
 
@@ -162,7 +168,23 @@ function render(p, projectKey) {
               <div class="bb-url"><span class="bb-lock">🔒</span>${p.title}</div>
             </div>
             ${p.video
-              ? `<div class="bb-image"><video autoplay loop muted playsinline preload="auto"></video></div>`
+              ? `<div class="bb-image">
+                  ${(projectKey === 'b1' || projectKey === 'b2' || projectKey === 'b3')
+                    ? '<div class="bb-proto-top">高保真原型展示</div>'
+                    : ''}
+                  <video autoplay loop muted playsinline preload="auto"></video>
+                 </div>
+                 ${p.modules && p.modules.length > 0
+                   ? `<div class="bb-modules">
+                       <div class="bb-modules-header">
+                         <span class="bb-modules-title">${p.modules.length} 项功能模块</span>
+                         <span class="bb-modules-note">当前演示：${esc(p.demoModule)}</span>
+                       </div>
+                       <div class="bb-modules-list">
+                         ${p.modules.map(m => `<span class="bb-module-item">◈ ${esc(m)}</span>`).join('')}
+                       </div>
+                      </div>`
+                   : ''}`
               : p.image
               ? `<div class="bb-image"><img src="${p.image}" alt="${p.title}" /></div>`
               : `<div class="bb-content">

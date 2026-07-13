@@ -52,7 +52,7 @@ const PROJECT_DATA = [
   { label: 'OmniSight 知识图谱与蓝海分析', key: 'a1', desc: 'n8n · GraphRAG · LLM' },
   { label: 'RARE 逆向资产与智能评估',    key: 'a2', desc: '元数据逆向 · 嵌套画布 · LLM' },
   { label: '科技管理应用',              key: 'b1', desc: '3期项目 · 7项一级功能' },
-  { label: '巡查问题在线管理',           key: 'b2', desc: '4项一级功能 · 业务逻辑抽象' },
+  { label: '巡查问题在线管理',           key: 'b2', desc: '5项一级功能 · 业务逻辑抽象' },
   { label: '项目管理应用',              key: 'b3', desc: '复杂业务解构 · 53家单位' },
 ]
 
