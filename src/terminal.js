@@ -73,7 +73,7 @@ const NODE_PROFILES = {
     metrics: ['合规双审', '人才分配', '全流程留痕'],
     video: _BASE + 'pb2.webm',
     modules: ['任务管理', '人才信息管理', '人才库管理', '巡查问题管理', '指标统计'],
-    demoModule: '人才库管理',
+    demoModule: '人才库管理-人才入库',
     content: `● 项目定位
 → 面向集团总部及多级二级单位，聚焦巡察问题全生命周期的数字化治理、智能任务流转与高合规性双审风控系统。
 
@@ -94,7 +94,7 @@ const NODE_PROFILES = {
     metrics: ['复杂业务解构', '跨系统数据集成', '53家单位'],
     video: _BASE + 'pm.webm',
     modules: ['项目立项', '进度管理', '交付物管理', '人员报工结算', '变更管理', '验收管理'],
-    demoModule: '项目立项',
+    demoModule: '项目立项-基本信息',
     content: `● 项目定位
 → 面向国网信通 53 家二级单位、跨多业务板块协同的核心项目全生命周期管理解决方案。
 
@@ -322,6 +322,37 @@ function render(p, projectKey) {
       fill.style.width = '0%'
       setVideoSource(alt)
     })
+
+    /* ── Mobile fullscreen button ── */
+    const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+    if (isMobile) {
+      const fsBtn = document.createElement('button')
+      fsBtn.className = 'bb-fs-btn'
+      fsBtn.innerHTML = '⛶'
+      fsBtn.setAttribute('aria-label', '全屏播放')
+      container.appendChild(fsBtn)
+
+      function toggleFS() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen()
+          fsBtn.innerHTML = '⛶'
+        } else if (v.requestFullscreen) {
+          v.requestFullscreen().then(() => fsBtn.innerHTML = '✕').catch(() => {})
+        } else if (v.webkitEnterFullscreen) {
+          v.webkitEnterFullscreen()
+          fsBtn.innerHTML = '✕'
+        }
+      }
+      fsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleFS() })
+
+      // Update icon on fullscreen change
+      function onFSChange() {
+        fsBtn.innerHTML = (document.fullscreenElement || document.webkitFullscreenElement) ? '✕' : '⛶'
+      }
+      document.addEventListener('fullscreenchange', onFSChange)
+      document.addEventListener('webkitfullscreenchange', onFSChange)
+
+    }
   })
 
   /**

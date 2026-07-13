@@ -406,6 +406,7 @@ html, body {
 .bb-lock { font-size: 8px; }
 
 .bb-image {
+  position: relative;
   flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center;
   background: rgba(0,0,0,0.2);
 }
@@ -455,6 +456,25 @@ html, body {
   z-index: 3;
   pointer-events: none;
   user-select: none;
+}
+.bb-fs-btn {
+  display: none;
+  position: absolute;
+  bottom: 8px; right: 8px;
+  width: 32px; height: 32px;
+  border: none; border-radius: 8px;
+  background: rgba(0,0,0,0.5);
+  color: rgba(255,255,255,0.7);
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 4;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.bb-fs-btn:active { background: rgba(0,0,0,0.7); }
+@media (max-width: 767px) {
+  .bb-fs-btn { display: flex; }
 }
 .bb-modules-note {
   font-family: 'Space Mono', monospace;
